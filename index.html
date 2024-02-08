@@ -47,7 +47,7 @@
 
         <div>
           <h2>Login</h2>
-          <?php
+          <!--?php
           if(isset($_GET['error']) && $_GET['error'] == 1) {
               echo "<p style='color:red;'>ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!</p>";
               $way_flow = 1;
@@ -57,7 +57,8 @@
               $way_flow = 2; 
           }
 
-          ?>
+          ?-->
+          <?php include 'alert_login.php';?>
           <form method="post" action="login.php">
             <label for="username">Username:</label><br>
             <input type="text" id="username" name="username" required><br>
