@@ -9,10 +9,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($username === 'admin' && $password === '1234') {
         $_SESSION['username'] = $username;
         //header("Location: welcome.php");
-        header("Location: index.php?success=2");
+        header("Location: index.html?success=2");
         exit;
     } else {
-        header("Location: index.php?error=1"); // Redirect with error flag
+        header("Location: index.html?error=1"); // Redirect with error flag
         exit;
     }
 }
