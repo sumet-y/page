@@ -44,17 +44,14 @@
 
 <body>
     <div class="responsive-three-column-grid">
-        <div id="loginForm">
-          <!--p><b>Login</b></p-->    
-          <label for="username">Username:</label><br>
-          <input type="text" id="username" name="username" value="admin" required><br>
-          <label for="password">Password:</label><br>
-          <input type="password" id="password" name="password" placeholder="Pass = 1234" required><br><br>
+        <div id="loginForm">  
+          Username: <input type="text" id="username" name="username" value="admin" required><br><br>
+          Password : <input type="password" id="password" name="password" placeholder="Pass = 1234" required><br><br>
           <input type="submit" value="Login" onclick="validateLogin()">
           <p id="error-msg" style="color: red; display: none;">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
           <p id="success-msg" style="color: green; display: none;">เข้าสู่ระบบสำเร็จ</p>
         </div>
-
+        
         <div>
           <svg width="337" height="511" viewBox="0 0 337 511" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="36.5231" y="0.75" width="117.744" height="58.3361" rx="19.25" fill="white" stroke="#292C33" stroke-width="1.5"/>
