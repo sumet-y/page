@@ -45,16 +45,14 @@
 <body>
     <div class="responsive-three-column-grid">
         <div id="loginForm">
-        <h2>Login</h2>
+          <!--p><b>Login</b></p-->    
           <label for="username">Username:</label><br>
-          <input type="text" id="username" name="username" required><br>
+          <input type="text" id="username" name="username" value="admin" required><br>
           <label for="password">Password:</label><br>
-          <input type="password" id="password" name="password" required><br><br>
+          <input type="password" id="password" name="password" placeholder="Pass = 1234" required><br><br>
           <input type="submit" value="Login" onclick="validateLogin()">
           <p id="error-msg" style="color: red; display: none;">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
           <p id="success-msg" style="color: green; display: none;">เข้าสู่ระบบสำเร็จ</p>
-          <p>User = admin</p>
-          <p>Pass = 1234</p>
         </div>
 
         <div>
