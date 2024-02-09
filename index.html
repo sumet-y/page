@@ -39,6 +39,19 @@
     .blink {
       animation: blink 1s infinite;
     }
+    /******************************form*************************** */
+    input[type="text"],
+    input[type="password"] {
+      padding: 3px;
+    }
+    input[type="submit"] {
+      padding: 5px;
+      border: none;
+      border-radius: 3px;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
     </style>
 </head>
 
@@ -46,7 +59,7 @@
     <div class="responsive-three-column-grid">
         <div id="loginForm">  
           Username: <input type="text" id="username" name="username" value="admin" required><br><br>
-          Password : <input type="password" id="password" name="password" placeholder="Pass = 1234" required><br><br>
+          Password : <input type="password" id="password" name="password" placeholder="Pass = 1234" required>
           <input type="submit" value="Login" onclick="validateLogin()">
           <p id="error-msg" style="color: red; display: none;">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
           <p id="success-msg" style="color: green; display: none;">เข้าสู่ระบบสำเร็จ</p>
