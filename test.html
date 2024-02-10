@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moonlight Glow Circle</title>
+<style>
+  #container {
+    width: 400px;
+    height: 300px;
+    border: 1px solid black;
+    position: relative;
+    margin: 50px auto;
+  }
+  #circle {
+    width: 50px;
+    height: 50px;
+    background-color: blue;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for size and box-shadow changes */
+    box-shadow: 0 0 10px 10px rgba(0, 0, 255, 0); /* Initial glow effect */
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="circle"></div>
+</div>
+<button id="toggleButton">Toggle Size</button>
+
+<script>
+  var circle = document.getElementById("circle");
+  var toggleButton = document.getElementById("toggleButton");
+
+  toggleButton.addEventListener("mousedown", function() {
+    enlargeCircle();
+  });
+
+  toggleButton.addEventListener("mouseup", function() {
+    shrinkCircle();
+  });
+
+  function enlargeCircle() {
+    circle.style.width = "100px";
+    circle.style.height = "100px";
+    circle.style.boxShadow = "0 0 20px 20px rgba(0, 0, 255, 0.5)";
+  }
+
+  function shrinkCircle() {
+    circle.style.width = "50px";
+    circle.style.height = "50px";
+    circle.style.boxShadow = "0 0 10px 10px rgba(0, 0, 255, 0)";
+  }
+</script>
+</body>
+</html>
