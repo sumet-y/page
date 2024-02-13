@@ -1,38 +1,26 @@
-const APP = {
-    channel: new BroadcastChannel('wkrp'),
-    win: null,
-    init: () => {
-      //add button listeners
-      document.getElementById('btnOpen').addEventListener('click', APP.openTab);
-      document
-        .getElementById('btnSend')
-        .addEventListener('click', APP.sendMessage);
-      //register service worker
-      navigator.serviceWorker.register('broadsw.js');
-  
-      //listen for broadcasted messages
-      APP.channel.addEventListener('message', APP.gotMessage);
-    },
-    openTab: (ev) => {
-      //open a new tab / window
-      APP.win = window.open('./broadcast.html');
-    },
-    sendMessage: (ev) => {
-      let msg = document.getElementById('txtMessage').value;
-      //send the message on the broadcast channel
-      if (msg) {
-        APP.channel.postMessage({ message: msg });
-      }
-    },
-    gotMessage: (ev) => {
-      //message received on the wkrp broadcast channel
-      if (ev && ev.data) {
-        document.getElementById(
-          'messages'
-        ).innerHTML += `<p>RECEIVED: ${ev.data.message}</p>`;
-      }
-    },
-  };
-  
-  //once DOM has loaded as each page loads
-  document.addEventListener('DOMContentLoaded', APP.init);
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BroadcastChannel</title>
+    <link rel="stylesheet" href="main.css" />
+    <script defer src="broadcast.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>BroadcastChannel API</h1>
+      <h2>Between Windows, Tabs, Frames, Workers &amp; ServiceWorkers</h2>
+    </header>
+    <main>
+      <section class="actions">
+        <button id="btnOpen">Open a New Tab</button><br />
+        <input type="text" id="txtMessage" />
+        <button id="btnSend">Send Message</button>
+      </section>
+      <!-- messages go here -->
+      <section id="messages"></section>
+    </main>
+  </body>
+</html>
