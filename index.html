@@ -3,6 +3,16 @@
 <title>W3.CSS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<style>
+
+    iframe{      
+        display: block;  /* iframes are inline by default */   
+        height: 100vh;  /* Set height to 100% of the viewport height */   
+        width: 100vw;  /* Set width to 100% of the viewport width */     
+        border: none; /* Remove default border */
+        background: lightyellow; /* Just for styling */
+    }
+</style>
 <body>
 
 <div class="w3-sidebar w3-bar-block w3-light-grey w3-card" style="width:130px">
@@ -13,18 +23,13 @@
 </div>
 
 <div style="margin-left:130px">
-  <div class="w3-padding">Vertical Tab Example (sidebar)</div>
 
   <div id="London" class="w3-container city" style="display:none">
-    <h2>London</h2>
-    <p>London is the capital city of England.</p>
-    <p>It is the most populous city in the United Kingdom, with a metropolitan area of over 13 million inhabitants.</p>
+  <iframe src="login/index.html"></iframe>
   </div>
 
   <div id="Paris" class="w3-container city" style="display:none">
-    <h2>Paris</h2>
-    <p>Paris is the capital of France.</p> 
-    <p>The Paris area is one of the largest population centers in Europe, with more than 12 million inhabitants.</p>
+  <iframe src="into_data/index.html"></iframe>
   </div>
 
   <div id="Tokyo" class="w3-container city" style="display:none">
