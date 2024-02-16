@@ -1,7 +1,3 @@
-$(function(){  // link menu
-    $("#nav-placeholder").load("nav.html");
-    });
-
 function myFunction() {   //menu responsive
     var x = document.getElementById("myTopnav");
     if (x.className === "topnav") {
