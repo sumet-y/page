@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moonlight Glow Circle</title>
+<style>
+  #container {
+    width: 100%;
+    text-align: center;
+  }
+  #circle {
+    width: 50px;
+    height: 50px;
+    background-color: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 8.3s ease, height 8.3s ease, box-shadow 8.3s ease; /* Smooth transition for size and box-shadow changes */
+    box-shadow: 0 0 10px 10px rgba(0, 0, 255, 0); /* Initial glow effect */
+  }
+  .bottomleft {
+  position: absolute;
+  bottom: 8px;
+  left: 16px;
+  background-color: #555555;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #222;
+}
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="circle"></div>
+  <button class="bottomleft" id="toggleButton"></button>
+</div>
 
+
+<script>
+  var circle = document.getElementById("circle");
+  var toggleButton = document.getElementById("toggleButton");
+  toggleButton.addEventListener("mousedown", enlargeCircle);
+  toggleButton.addEventListener("touchstart", enlargeCircle);
+  toggleButton.addEventListener("mouseup", shrinkCircle);
+  toggleButton.addEventListener("touchend", shrinkCircle);
+  function enlargeCircle() {
+    circle.style.width = "300px";
+    circle.style.height = "300px";
+    circle.style.boxShadow = "0 0 20px 20px rgba(248, 248, 255, 0.5)";
+  }
+  function shrinkCircle() {
+    circle.style.width = "50px";
+    circle.style.height = "50px";
+    circle.style.boxShadow = "0 0 10px 10px rgba(248, 248, 255, 0)";
+  }
+</script>
+</body>
+</html>
