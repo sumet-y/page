@@ -1,2 +1,2 @@
 # profile
-https://sumet02468.github.io/profile/
+https://sumet-y.github.io/page/
