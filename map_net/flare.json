@@ -1,0 +1,350 @@
+{
+    "name": "Computer Newwork",
+    "children": [{
+        "name": "Basic",
+        "children": [{
+            "name": "Computer Network คืออะไร",
+            "children": [{
+                "name": "AgglomerativeCluster"
+                
+            }]
+        }, {
+            "name": "คำศัพท์พื้นฐาน",
+            "children": [{
+                "name": "Client"
+                
+            }, {
+                "name": "Server",
+                "url": "https://www.w3schools.com/",
+                "description": "aaa"
+            }, {
+                "name": "Peer"
+                
+            }, {
+                "name": "Host"
+                
+            }, {
+                "name": "BandWidth"
+                
+            }, {
+                "name": "Jitter"
+                
+            }, {
+                "name": "Packet"
+                
+            }, {
+                "name": "Frame"
+                
+            }, {
+                "name": "Local Host"
+                
+            }, {
+                "name": "Bit rate"
+                
+            }, {
+                "name": "noise"
+                
+            }, {
+                "name": "attenuation"
+                
+            }, {
+                "name": "distortion"
+                
+            }]
+        }, {
+            "name": "เว็บ คืออะไร",
+            "children": [{
+                "name": "อินเทอร์เน็ตและเว็บแตกต่างกันอย่างไร?"
+                
+            }]
+        }, {
+            "name": "ประเภทสื่อส่งสัญญาณ"
+        }, {
+            "name": "อุปกรณ์เครือข่ายคอมพิวเตอร์"
+        }, {
+            "name": "Unicast, BroadCast and Multicast"
+        }, {
+            "name": "Network Topology",
+            "children": [{
+                "name": "P2P"
+            },{
+                "name": "Bus"
+            },{
+                "name": "Ring"
+            },{
+                "name": "Star"
+            },{
+                "name": "Tree"
+            },{
+                "name": "Mesh"
+            },{
+                "name": "Hybrid"
+            }]
+        }, {
+            "name": "LAN, MAN and WAN"
+        }]
+    }, {
+        "name": "OSI Model",
+        "children": [{
+            "name": "OSI Model คืออะไร"
+            
+        }, {
+            "name": "Layers ต่างๆ",
+            "children": [{
+                "name": "Application",
+                "children": [{
+                    "name": "Protocols in Application Layer"
+                },{
+                    "name": "DNS"
+                },{
+                    "name": "Why does DNS use UDP and not TCP?"
+                },{
+                    "name": "Address Resolution in DNS (Domain Name Server) "
+                },{
+                    "name": "DNS Spoofing or DNS Cache poisoning"
+                },{
+                    "name": "Types of DNS Attacks "
+                },{
+                    "name": "Difference between http:// and https:// "
+                },{
+                    "name": "How DHCP server dynamically assigns IP address to a host?"
+                }]
+            }, {
+                "name": "Presentation"
+                
+            }, {
+                "name": "Session"
+                
+            }, {
+                "name": "Transport",
+                "children": [{
+                    "name": "TCP Connection Setup",
+                    "children": [{
+                        "name": "3-way Handshake"
+                    }]
+                },{
+                    "name": "UDP"
+                },{
+                    "name": "Peer2Peer Sharing"
+                },{
+                    "name": "Congestion in Computer Networks"
+                },{
+                    "name": "Error Control "
+                }]
+            }, {
+                "name": "Network",
+                "children": [{
+                    "name": "IP Addressing ?"
+                },{
+                    "name": "IPv4 vs IPv6 "
+                },{
+                    "name": "Supernet"
+                },{
+                    "name": "Types of Routing",
+                    "children": [{
+                        "name": "Static"
+                    },{
+                        "name": "Default"
+                    },{
+                        "name": "Dynamic"
+                    }]
+                },{
+                    "name": "Network Address Translation, NAT"
+                },{
+                    "name": "WPA vs WPS"
+                },{
+                    "name": "LiFl vs WiFi"
+                },{
+                    "name": "What is ACL[Access-list]?"
+                },{
+                    "name": "AAA in networking [Important]"
+                },{
+                    "name": "SONET"
+                }]
+                
+            }, {
+                "name": "Data Link",
+                "children": [{
+                    "name": "What is Ethernet ? "
+                },{
+                    "name": "Extranet vs Intranet vs Internet "
+                },{
+                    "name": "Virtual ckt vs Datagram Network "
+                },{
+                    "name": "Switch & its types"
+                },{
+                    "name": "what is Virtual LAN ?"
+                },{
+                    "name": "Basics of Wifi"
+                }]
+            }, {
+                "name": "Physical"
+                
+            }]
+        }, {
+            "name": "Packet Traveling"
+            
+        }]
+    }, {
+        "name": "System",
+        "children": [{
+            "name": "Common Networking commands",
+            "children": [{
+                "name": "ping"
+                
+            }, {
+                "name": "netstat"
+                
+            }, {
+                "name": "tracert"
+                
+            }, {
+                "name": "ipconfig"
+            }, {
+                "name": "nslookup"
+                
+            }, {
+                "name": "route"
+                
+            }, {
+                "name": "pathping"
+                
+            }, {
+                "name": "netDiag"
+                
+            }, {
+                "name": "hostname"
+                
+            }, {
+                "name": "arp"
+                
+            }]
+        }, {
+            "name": "Difference between http:// and https://"
+            
+        }, {
+            "name": "What is API Gateway?"
+            
+        }, {
+            "name": "SSL/TLS"
+            
+        }, {
+            "name": "Reverse Proxy ?"
+            
+        }, {
+            "name": "Load Balancer"
+            
+        }, {
+            "name": "ARP, Address Resolution Protocol"
+            
+        }, {
+            "name": "Horizontal vs Vertical Scaling"
+            
+        }, {
+            "name": "Caching & How does a website is cached"
+            
+        }, {
+            "name": "what is VIP in computer networks"
+            
+        }, {
+            "name": "REST API vs HTTP API"
+            
+        }, {
+            "name": "what is a Container in computer networks"
+            
+        }, {
+            "name": "Containerisation vs Virtualisation"
+            
+        }, {
+            "name": "Performance vs Scalability"
+            
+        }, {
+            "name": "Latency vs Throughput"
+            
+        }, {
+            "name": "2G vs 3G vs 4G vs 5G"
+            
+        }, {
+            "name": "How a VPN works?"
+            
+        }, {
+            "name": "Gateway vs Router"
+            
+        }, {
+            "name": "NIC and MAC Address"
+            
+        }, {
+            "name": "Public vs Private IP Address"
+            
+        }, {
+            "name": "What is Multiplexing"
+            
+        }, {
+            "name": "Modem vs Router"
+            
+        }, {
+            "name": "How Bluetooth works"
+            
+        }, {
+            "name": "How Hotspot works"
+            
+        }, {
+            "name": "how Email worksc"
+            
+        }, {
+            "name": "How file transfer works"
+            
+        }, {
+            "name": "how ATM work"
+            
+        }]
+    }, {
+        "name": "Security",
+        "children": [{
+            "name": "What is Firewall ?"
+            
+        }, {
+            "name": "Type of Firewall"
+            
+        }, {
+            "name": "Possible attacks on Firewall"
+            
+        }, {
+            "name": "Basic Network Attacks"
+            
+        }, {
+            "name": "Denial of Service and Prevention"
+            
+        }, {
+            "name": "Digital Signature & Certificates"
+            
+        }, {
+            "name": "Terms to know"
+            ,
+            "children": [{
+                "name": "Cryptography"
+                
+            },{
+                "name": "Symmetrics Key"
+                
+            },{
+                "name": "Assymetric Key"
+                
+            },{
+                "name": "Hashing"
+                
+            },{
+                "name": "Cryptanalysis"
+                
+            },{
+                "name": "AES/DES/RSA/MD5 hashing"
+                
+            }]
+        }, {
+            "name": "Active & Passive attacks in Infosec"
+            
+        }, {
+            "name": "Types of Email Attacks"
+        }]
+    }]
+}
