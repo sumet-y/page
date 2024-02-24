@@ -430,12 +430,14 @@ heighttreeJSON = d3.json("flare.json", function(error, treeData) {
             .style("fill-opacity", 0);
             
         // โหนด Phantom เพื่อให้เราวางเมาส์โอเวอร์ในรัศมีรอบๆ
+        /*---ปิดการลากวงกลมสีแดง
         nodeEnter.append("circle")
             .attr('class', 'ghostCircle')
             .attr("r", 30)
             .attr("opacity", 0.2) // เปลี่ยนค่านี้เป็นศูนย์เพื่อซ่อนพื้นที่เป้าหมาย
             .style("fill", "red")
             .attr('pointer-events', 'mouseover')
+            */
         /*---ปิดการลากตำแหน่ง
             .on("mouseover", function(node) {
                 overCircle(node);
@@ -454,8 +456,20 @@ heighttreeJSON = d3.json("flare.json", function(error, treeData) {
             .text(function(d) { return d.name; })
             //.on("click", function(d){ alert(d.url); })
             .style("fill-opacity", 1e-6); 
-        */
-      
+            เปิด link New Tab
+            .on("click", function(d) {
+            window.open(d.url, "Window","status=1,toolbar=1,width=500,height=300,resizable=yes");
+            });
+            */
+       
+        // Get the modal
+        var modal = document.getElementById("myModal");
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
       
         nodeEnter.append("a")
             .attr('xlink:href', function(d) {
@@ -465,8 +479,9 @@ heighttreeJSON = d3.json("flare.json", function(error, treeData) {
             .text(function(d) { return d.name; })
             .style("fill-opacity", 1e-6)
             .on("click", function(d) {
-                //window.open(d.url, "Window","status=1,toolbar=1,width=500,height=300,resizable=yes");
-                window.open("https://www.example.com", "popupWindow", "width=600,height=400");
+                modal.style.display = "block";
+                var website = d.url;
+                document.getElementById("modalIframe").src = website;
             });
 
         //  funtion show  title เมื่อเมาส์ชี้  
