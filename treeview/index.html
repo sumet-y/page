@@ -366,11 +366,12 @@
             .on("click", function(d) {
                 name_web = d.url;
                 if (name_web == null){
-                    //alert("N");
+                    //alert("No");
                 }else{
-                    //alert("Y");
+                    //alert("Yes");
                     modal.style.display = "block";
                     var website = d.url;
+		    document.body.style.zoom = (window.innerWidth / window.outerWidth);
                     document.getElementById("modalIframe").src = website;
                 }
             });
