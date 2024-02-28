@@ -30,44 +30,7 @@
       width: 100%;
       /*background-color: red;*/
 	}
-      /* Modal styles */
-      .modal {
-      display: none;
-      position: fixed;
-      z-index: 1;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.4);
-    }
-    .modal-content {
-      background-color: #fefefe;
-      margin: 1% auto;
-      padding: 5px;
-      border: 1px solid #888;
-      width: 98%;
-      height: 94%;
-      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-    }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-    }
-    .close:hover,
-    .close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    iframe {
-      width: 100%;
-      height: 96%; /* Adjust height as needed */
-      border: none; /* Remove iframe border */ 
-    }
+   
 </style>
 
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/select2/3.5.0/select2.min.css"></link>
@@ -78,15 +41,6 @@
 <body>
 <!-- สิ่งนี้จะแนบไปกับ select2 เฉพาะองค์ประกอบคงที่บนเพจ -->
 <div id="search"></div>
-  <!-- The Modal -->
-  <div id="myModal" class="modal">
-    <!-- Modal content -->
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <iframe id="modalIframe" src="" frameborder="0"></iframe>
-    </div>
-  </div>
-  <!-- End -->
 </body>
 
 <!-- Main -->
@@ -348,14 +302,6 @@
 			d.y0 = d.y;
 		  });
 
-        // Get the modal
-         var modal = document.getElementById("myModal");
-        // Get the <span> element that closes the modal
-        var span = document.getElementsByClassName("close")[0];
-        // When the user clicks on <span> (x), close the modal
-        span.onclick = function() {
-            modal.style.display = "none";
-        } 
         nodeEnter.append("a")
             .attr('xlink:href', function(d) {
             //return d.url; // เปิดลิ้งทันที
@@ -369,9 +315,7 @@
                     //alert("No");
                 }else{
                     //alert("Yes");
-                    modal.style.display = "block";
-                    var website = d.url;
-                    document.getElementById("modalIframe").src = website;
+					window.open(name_web,'_blank');
                 }
             });
 
