@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  .node {
+    cursor: pointer;
+  }
+  
+  .node circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+  }
+  
+  .node text {
+    font: 10px sans-serif;
+  }
+  
+  .link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+  }
+</style>
+
+<body>
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script>
+    var margin = {
+        top: 20,
+        right: 120,
+        bottom: 20,
+        left: 120
+      },
+      width = 960 - margin.right - margin.left,
+      height = 100 - margin.top - margin.bottom;
+ 
+    var i = 0,
+      duration = 750,
+      rectW = 120,
+      rectH = 30;
+
+    var tree = d3.layout.tree().nodeSize([height, width]);
+
+    var diagonal = d3.svg.diagonal()
+      .projection(function(d) {
+        return [d.y, d.x];
+      });
+
+    var accountSvg = d3.select("body").append("svg")
+      .attr("width", window.innerWidth - 20) 
+      .attr("height", window.innerHeight - 20)
+      .call(zm = d3.behavior.zoom().scaleExtent([0.2, 3]).on("zoom", redraw)).on("dblclick.zoom", null)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.left + ")");
+
+    d3.json("flare.json", function(error, flare) {
+      if (error) throw error;
+
+      root = flare;
+      root.x0 = height / 2;
+      root.y0 = 0;
+
+      function collapse(d) {
+        if (d.children) {
+          d._children = d.children;
+          d._children.forEach(collapse);
+          //d.children = null;
+        }
+      }
+
+      root.children.forEach(collapse);
+      update(root);
+    });
+
+    //จำเป็นเพื่อให้การซูมรู้ว่าจะซูมและเลิกซูมจากจุดใด
+    zm.translate([250, 20]);
+
+    d3.select("body").style("height", "455");
+
+    function update(source) {
+
+      // คำนวณเค้าโครงต้นไม้ใหม่
+      var nodes = tree.nodes(root).reverse(),
+        links = tree.links(nodes);
+
+      // ทำให้เป็นมาตรฐานสำหรับความลึกคงที่
+      nodes.forEach(function(d) {
+        d.y = d.depth * 180;
+      });
+
+      // Update the nodes…
+      var node = accountSvg.selectAll("g.node")
+        .data(nodes, function(d) {
+          return d.id || (d.id = ++i);
+        });
+
+      // ป้อนโหนดใหม่ที่ตำแหน่งก่อนหน้าของพาเรนต์
+      var nodeEnter = node.enter().append("g")
+        .attr("class", "node")
+        .attr("transform", function(d) {
+          return "translate(" + source.y0 + "," + source.x0 + ")";
+        })
+        .on("click", click);
+
+      nodeEnter.append("rect")
+        .attr("width", rectW)
+        .attr("height", rectH)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .style("fill", function(d) {
+          return d._children ? "lightsteelblue" : "#fff";
+        });
+
+      nodeEnter.append("text")
+        .attr("x", rectW / 2)
+        .attr("y", rectH / 2)
+        .attr("dy", ".35em")
+        .attr("text-anchor", "middle")
+        .text(function(d) {
+          return d.name;
+        });
+
+      // การเปลี่ยนโหนดไปยังตำแหน่งใหม่
+      var nodeUpdate = node.transition()
+        .duration(duration)
+        .attr("transform", function(d) {
+          return "translate(" + d.y + "," + d.x + ")";
+        });
+
+      nodeUpdate.select("rect")
+        .attr("width", rectW)
+        .attr("height", rectH)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .style("fill", function(d) {
+          return d._children ? "lightsteelblue" : "#fff";
+        });
+
+      nodeUpdate.select("text")
+        .style("fill-opacity", 1)
+        .style("fill", '#404080');
+
+      // การเปลี่ยนโหนดที่ออกจากโหนดไปยังตำแหน่งใหม่ของพาเรนต์
+      var nodeExit = node.exit().transition()
+        .duration(duration)
+        .attr("transform", function(d) {
+          return "translate(" + source.y + "," + source.x + ")";
+        })
+        .remove();
+
+      nodeExit.select("rect")
+        .attr("width", rectW)
+        .attr("height", rectH)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1);
+
+      nodeExit.select("text");
+
+      // Update the links…
+      var link = accountSvg.selectAll("path.link")
+        .data(links, function(d) {
+          return d.target.id;
+        });
+
+      // ป้อนลิงก์ใหม่ที่ตำแหน่งก่อนหน้าของผู้ปกครอง
+      link.enter().insert("path", "g")
+        .attr("class", "link")
+        //.attr("transform", function (d) {
+        //    return "translate(" + rectW + "," + rectH / 2 + ")";
+        //})
+        .attr("d", function(d) {
+          var o = {
+            x: source.x0,
+            y: source.y0
+          };
+          return diagonal({
+            source: o,
+            target: o
+          });
+        });
+
+      // การเปลี่ยนแปลงเชื่อมโยงไปยังตำแหน่งใหม่
+      link.transition()
+        .duration(duration)
+        .attr("d", function(d) {
+          var s = {
+            y: d.source.y + rectW,
+            x: d.source.x + rectH / 2
+          };
+          var t = {
+            x: d.target.x + rectH / 2, 
+            y: d.target.y
+          };
+          return diagonal({
+            source: s,
+            target: t
+          })
+        });
+      //.attr("d", diagonal);
+
+      // Transition exiting nodes to the parent's new position.
+      link.exit().transition()
+        .duration(duration)
+        .attr("d", function(d) {
+          var o = {
+            x: source.x,
+            y: source.y
+          };
+          return diagonal({
+            source: o,
+            target: o
+          });
+        })
+        .remove();
+
+      // สะสมตำแหน่งเก่าเพื่อการเปลี่ยนแปลง
+      nodes.forEach(function(d) {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    var doubleClickTime = 0;
+    var threshold = 200;
+    // สลับลูก ๆ เมื่อคลิก
+    function click(d) {
+      var t0 = new Date();
+      if (t0 - doubleClickTime > threshold) {
+        setTimeout(function() {
+          if (t0 - doubleClickTime > threshold) {
+
+            if (d.children) {
+              d._children = d.children;
+              d.children = null;
+            } else {
+              d.children = d._children;
+              d._children = null;
+            }
+            update(d);
+
+          }
+        }, threshold);
+      }
+    }
+
+    // วาดใหม่เพื่อซูม
+    function redraw() {
+      //console.log("here", d3.event.translate, d3.event.scale);
+      accountSvg.attr("transform",
+        "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+    }
+
+  </script>
