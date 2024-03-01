@@ -1,0 +1,34 @@
+{
+ "name": "L3 HP A5000 20.254",
+ "children": [
+  {
+   "name": "SWUC2F3QC 25.211",
+   "color_children": "sw",
+   "children": [
+    {
+     "name": "cluster",
+     "color_children": "com",
+     "localtion": "IT"
+    },
+    {
+     "name": "optimization"
+    }
+   ]
+  },
+  {
+   "name": "animate"
+  },
+  {
+   "name": "scale"
+  },
+  {
+   "name": "SWUC2F1PD 25.212",
+   "children": [
+    {
+     "name": "controls"
+    },
+    {"name": "Visualization"}
+   ]
+  }
+ ]
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.found {
+  fill: #ff4136;
+  stroke: #ff4136;
+}
+
+.search {
+  float: left;
+  font: 10px sans-serif;
+  width: 100%;
+}
+
+ul.select2-results {
+ max-height: 100px;
+}
+
+.select2-container,
+.select2-drop,
+.select2-search,
+.select2-search input {
+  font: 15px sans-serif;
+}
+
+#block_container {
+  display: inline;
+}
+
+</style>
+<body>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css">
+
+    <div id="block_container">
+    <div id="searchName"></div>
+    </div>
+
+<script>
+
+//===============================================
+function select2DataCollectName(d) {
+    if (d.children)
+        d.children.forEach(select2DataCollectName);
+    else if (d._children)
+        d._children.forEach(select2DataCollectName);
+    select2Data.push(d.name);
+}
+
+//===============================================
+function searchTree(d) {
+    if (d.children)
+        d.children.forEach(searchTree);
+    else if (d._children)
+        d._children.forEach(searchTree);
+    var searchFieldValue = eval(searchField);   
+    if (searchFieldValue && searchFieldValue.match(searchText)) {
+            // Walk parent chain
+            var ancestors = [];
+            var parent = d;
+            while (typeof(parent) !== "undefined") {
+                ancestors.push(parent);
+      //    console.log(parent);
+                parent.class = "found";
+                parent = parent.parent;
+            }
+     //  console.log(ancestors);
+    }
+}
+
+//===============================================
+function clearAll(d) {
+    d.class = "";
+    if (d.children)
+        d.children.forEach(clearAll);
+    else if (d._children)
+        d._children.forEach(clearAll);
+}
+
+//===============================================
+function collapse(d) {
+    if (d.children) {
+        d._children = d.children;
+        d._children.forEach(collapse);
+        d.children = null;
+    }
+}
+
+//===============================================
+function collapseAllNotFound(d) {
+    if (d.children) {
+      if (d.class !== "found") {
+          d._children = d.children;
+          d._children.forEach(collapseAllNotFound);
+          d.children = null;
+  } else 
+          d.children.forEach(collapseAllNotFound);
+    }
+}
+
+//===============================================
+function expandAll(d) {
+    if (d._children) {
+        d.children = d._children;
+        d.children.forEach(expandAll);
+        d._children = null;
+    } else if (d.children)
+        d.children.forEach(expandAll);
+}
+
+//===============================================
+function tick() {
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+}
+
+//===============================================
+function color(d) {
+  return d._children ? "#3182bd" // collapsed package
+      : d.children ? "#c6dbef" // expanded package
+      : "#fd8d3c"; // leaf node
+}
+
+//===============================================
+// Toggle children on click. 
+function click(d) {
+  if (d3.event.defaultPrevented) return; // ignore drag
+  if (d.children) {
+    d._children = d.children;
+    d.children = null;
+  } else {
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d);
+  $("#searchName").select2("val", "");
+}
+
+//===============================================
+$("#searchName").on("select2-selecting", function(e) {
+    clearAll(root);
+    expandAll(root);
+    update(root);
+
+    searchField = "d.name";
+    searchText = e.object.text;
+    searchTree(root);
+ //   root.children.forEach(collapseAllNotFound);
+    update(root);
+})
+
+// Returns a list of all nodes under the root.
+function flatten(root) {
+  var nodes = [], i = 0;
+
+  function recurse(node) {
+
+    if (node.children) node.children.forEach(recurse);
+    if (!node.id) node.id = ++i;
+    nodes.push(node);
+  }
+
+  recurse(root);
+  return nodes;
+}
+
+//===============================================
+var width = 960,
+    height = 500,
+    duration = 0,
+    root;
+
+var force = d3.layout.force()
+    .linkDistance(100)
+    .charge(-2000)
+    .gravity(.1)
+    .size([width, height])
+    .on("tick", tick);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", window.innerWidth-20)
+    .attr("height", window.innerHeight-48)
+    .call(zm = d3.behavior.zoom().scaleExtent([0.2, 3]).on("zoom", redraw)).on("dblclick.zoom", null)
+    .append("g")
+    .attr("transform", "translate(" + width + "," + height + ")");
+
+var link = svg.selectAll(".link"),
+    node = svg.selectAll(".node");
+
+    d3.json("flare.json", function(error, json) {
+      root = json;
+      update();
+
+  select2Data = []; 
+  select2DataCollectName(root);
+  select2DataObject = []; 
+  select2Data.sort(function(a, b) { 
+            if (a > b) return 1; // sort
+            if (a < b) return -1;
+            return 0;
+        })
+        .filter(function(item, i, ar) {
+            return ar.indexOf(item) === i;
+        }) // remove duplicate items
+        .filter(function(item, i, ar) {
+            select2DataObject.push({
+                "id": i,
+                "text": item
+            });
+        });
+    select2Data.sort(function(a, b) {
+            if (a > b) return 1; // sort
+            if (a < b) return -1;
+            return 0;
+        })
+        .filter(function(item, i, ar) {
+            return ar.indexOf(item) === i;
+        }) // remove duplicate items
+        .filter(function(item, i, ar) {
+            select2DataObject.push({
+                "id": i,
+                "text": item
+            });
+        });
+ 
+  $("#searchName").select2({
+        data: select2DataObject,
+        containerCssClass: "search"
+  });
+
+  function collapse(d) {
+    if (d.children) {
+      d._children = d.children;
+      d._children.forEach(collapse);
+      d.children = null;
+    }
+  }
+
+//  root.children.forEach(collapse);
+  update(root);
+});
+
+    //จำเป็นเพื่อให้การซูมรู้ว่าจะซูมและเลิกซูมจากจุดใด
+    zm.translate([250, 20]);
+
+    d3.select("body").style("height", "455");
+
+function update() {
+  var nodes = flatten(root),
+      links = d3.layout.tree().links(nodes);
+
+  // Restart the force layout.
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+
+     // Update nodes.
+  //node = node.data(nodes, function(d) { return d.id }); 
+  node = node.data(nodes, function(d) { return d.id }); 
+
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .on("click", click)
+      .call(force.drag);
+
+  nodeEnter.append("circle")
+      .attr("r",15)
+      .style("fill", color);
+
+  nodeEnter.append("text")
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name; });
+
+    //  funtion show  title เมื่อเมาส์ชี้  
+    nodeEnter.append("svg:title")
+        .text(function(d) {
+        return d.localtion;
+      });
+
+   // Transition nodes to their new position.
+      var nodeUpdate = node.transition()
+      .duration(duration);
+
+  nodeUpdate.select("circle")
+    //  .style("fill", color)
+      .style("fill", function(d) {
+            if (d.class === "found") {
+                return "#ff4136"; //red
+            } else if (d._children) {
+                return "lightsteelblue";
+            }else {
+                return "#fff"; //สีขาว
+            }
+        })
+        .style("stroke", function(d) {
+            if (d.class === "found") {
+                return "#ff4136"; //red
+            }
+        });
+
+
+ // Transition exiting nodes to the parent's new position.
+  var nodeExit = node.exit().transition()
+      .duration(duration)
+      .remove();
+
+
+  // Update links.
+  link = link.data(links, function(d) { return d.target.id; });
+
+  link.enter().insert("line", ".node")
+      .attr("class", "link")
+      .style("stroke", function(d) { return d.target.level; });
+     
+
+    // Transition links to their new position.
+  link.transition()
+      .duration(duration)
+  //    .attr("d", diagonal)
+      .style("stroke", function(d) {
+            if (d.target.class === "found") {
+                return "#ff4136";
+            }
+        });
+
+
+  // Transition exiting nodes to the parent's new position.
+  link.exit().transition()
+      .duration(duration)
+       .remove();
+
+  // Stash the old positions for transition.
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+
+  });
+
+}
+
+
+  // วาดใหม่เพื่อซูม
+  function redraw() {
+      //console.log("here", d3.event.translate, d3.event.scale);
+      svg.attr("transform",
+        "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+    }
+
+
+    
+</script>
+
+</body>
