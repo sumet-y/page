@@ -16,3 +16,4 @@
 16 Computer network-devices  คืออะไร
 17 ความแตกต่างระหว่าง Unicast, Broadcast และ Multicast ในเครือข่ายคอมพิวเตอร์
 18 Bus, Ring, Star, Mesh, Tree  คืออะไร
+19 ความแตกต่างระหว่าง LAN, MAN และ WAN
