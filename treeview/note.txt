@@ -17,3 +17,7 @@
 17 ความแตกต่างระหว่าง Unicast, Broadcast และ Multicast ในเครือข่ายคอมพิวเตอร์
 18 Bus, Ring, Star, Mesh, Tree  คืออะไร
 19 ความแตกต่างระหว่าง LAN, MAN และ WAN
+20 OSI Model คืออะไร
+21 Ethernet คืออะไร
+22 ความแตกต่างระหว่าง Internet, Intranet and Extranet
+23 ความแตกต่างระหว่าง Virtual Circuits and Datagram Networks
