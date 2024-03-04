@@ -14,3 +14,5 @@
 14 ความแตกต่างระหว่างอินเทอร์เน็ตและเว็บคืออะไร
 15 Types of Transmission Media 
 16 Computer network-devices  คืออะไร
+17 ความแตกต่างระหว่าง Unicast, Broadcast และ Multicast ในเครือข่ายคอมพิวเตอร์
+18 Bus, Ring, Star, Mesh, Tree  คืออะไร
