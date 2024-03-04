@@ -3,3 +3,9 @@
 03 peer to peer คือ
 04 Host คืออะไร
 05 Bandwidth คืออะไร
+06 BJitter คืออะไร
+07 Packet คืออะไร
+08 Ethernet Frame คืออะไร
+09 Local Host คืออะไร
+10 Bit rate  คืออะไร
+11 Noise in Network คืออะไร
