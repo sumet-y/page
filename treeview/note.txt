@@ -2,3 +2,4 @@
 02 client server คืออะไร
 03 peer to peer คือ
 04 Host คืออะไร
+05 Bandwidth คืออะไร
