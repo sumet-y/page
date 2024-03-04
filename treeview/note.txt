@@ -1,3 +1,4 @@
 01 Computer Network คืออะไร
 02 client server คืออะไร
-03 client server คืออะไร
+03 peer to peer คือ
+04 Host คืออะไร
