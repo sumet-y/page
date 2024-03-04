@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ethernet Frame คืออะไร</title>
+  <style>
+    .responsive {
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+    }
+</style>
+</head>
+<body>
+  <h3>Ethernet Frame คืออะไร</h3>
+  <p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Frame คือชื่อเรียกหน่วยข้อมูลหรือ Protocol Data Unit (PDU) ที่อยู่บน Layer 2 ซึ่งแต่ละ Layer ก็จะมีชื่อเรียกแต่ต่างกันไป เช่น Packet จะเป็นชื่อเรียกสำหรับหน่วยข้อมูลของ Layer 31.
+<br>
+สำหรับ Ethernet Frame, มันได้ถูกกำหนดภายใต้มาตรฐาน IEEE 802.3 ซึ่งมีขนาด 64-1518 Byte ตามรายละเอียดดังนี้:
+<br>
+1.Preamble: มีขนาด 7 Byte หรือ 56 Bits ซึ่งเป็นการส่งสัญญาณให้กับฝั่งรับเพื่อให้มีการ Synchronize เตรียมรับข้อมูล.
+<br>
+2.SFD (Start of Frame Delimiter): มีขนาด 1 Byte หรือ 8 Bits ซึ่ง Pattern เป็น 10101010 แบบเดียวกันกับ Preamble แต่ถ้าหาก 
+<br>
+3.Bit สุดท้ายเป็น 1 แสดงว่าเป็นจะมีการส่ง Ethernet Frame แล้ว.
+<br>
+4.Destination MAC Address: เป็น MAC Address ของปลายทาง (LAN Segment นั้นๆ) มีขนาด 6 Byte.
+Source MAC Address: เป็น MAC Address ของเครื่องต้นทาง (LAN Segment นั้นๆ) มีขนาด 6 Byte.
+<br>
+5.Type: ระบุว่า Data ที่มาจาก Layer 3 คืออะไร ยกตัวอย่างเช่น 0x806 คือ ARP, 0x800 เป็น IPv4, 0x86DD เป็น IPv6.
+<br>
+6.FCS (Frame Check Sequence): ใช้สำหรับในการตรวจสอบความผิดพลาดของ Frame โดยใช้ CRC (Cyclic Redundancy Check) ซึ่งฝั่งส่งจะทำการคำนวณค่า CRC แล้วส่งไปใน Field ของ FCS ถ้าหากฝั่งรับได้รับ Frame ก็จะทำการสร้าง CRC ของตัวเองแล้วมาเปรียบเทียบว่ามีค่า CRC ค่าเดียวกับฝั่งส่งหรือไม่ ถ้าหากค่า CRC ไม่ตรงกันแสดงว่า Frame มี Error1.
+</p>
+  <img src="https://www.computernetworkingnotes.org/images/cisco/ccna-study-guide/csg40-01-ethernet-frame.png" height="400">
+
+<p>ช้อมูลจาก : Bing: Chat with AI & GPT-4</p>
+<p>ภาพจาก : https://www.computernetworkingnotes.org/images/cisco/ccna-study-guide/csg40-01-ethernet-frame.png</p>
+</body>
+</html>
