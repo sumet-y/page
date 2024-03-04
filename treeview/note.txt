@@ -9,3 +9,8 @@
 09 Local Host คืออะไร
 10 Bit rate  คืออะไร
 11 Noise in Network คืออะไร
+12 Attenuation in Networking คืออะไร
+13 Distortion in Networking คืออะไร
+14 ความแตกต่างระหว่างอินเทอร์เน็ตและเว็บคืออะไร
+15 Types of Transmission Media 
+16 Computer network-devices  คืออะไร
