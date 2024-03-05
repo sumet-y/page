@@ -24,3 +24,15 @@
 24 ประเภทของ switches in Computer Network
 25 VLAN คืออะไร
 26 พื้นฐานของ Wi-Fi
+27 IP address คืออะไร
+28 ความแตกต่างระหว่าง IPv4 vs IPv6
+29 Supernetting in Network Layer คืออะไร
+30 types of Routing คืออะไร
+31 Network Address Translation (NAT) คืออะไร
+32 WPS and WPA ต่างกันอย่างไร
+33 LiFi and WiFi ต่างกันอย่างไร
+34 Access-Lists (ACL) คืออะไร
+35 Computer Network | AAA  คืออะไร
+36 SONET คืออะไร
+37 TCP Connection Establishment คืออะไร
+38 TCP 3-Way Handshake Process คืออะไร
