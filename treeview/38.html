@@ -17,10 +17,10 @@
 
 <div class="markdown prose w-full break-words dark:prose-invert light"><p>การติดตั้งการเชื่อมต่อ TCP แบบ 3-way handshake เป็นกระบวนการที่ใช้ในการกำหนดและติดตั้งการเชื่อมต่อ TCP (Transmission Control Protocol) ระหว่างอุปกรณ์สื่อสารในเครือข่ายคอมพิวเตอร์ เพื่อให้ทั้งสองอุปกรณ์สามารถส่งและรับข้อมูลได้อย่างมีประสิทธิภาพและปลอดภัย กระบวนการนี้เกิดขึ้นในขั้นตอนต้นๆ ของการสร้างการเชื่อมต่อ TCP ระหว่างอุปกรณ์</p><p>กระบวนการ TCP 3-way handshake ประกอบด้วยขั้นตอนดังนี้:</p><ol><li><p><strong>SYN (Synchronize):</strong> เป็นขั้นตอนแรกที่เครื่องต้นทาง (client) ส่ง SYN segment ไปยังเครื่องปลายทาง (server) โดยระบุหมายเลข sequence number เพื่อเริ่มต้นการเชื่อมต่อ และระบุฟิลด์ SYN flag เป็น 1 เพื่อแสดงว่าเป็นการร้องขอการเชื่อมต่อใหม่จาก client</p></li><li><p><strong>SYN-ACK (Synchronize-Acknowledgement):</strong> เมื่อเครื่องปลายทางได้รับ SYN segment จาก client อย่างถูกต้อง เครื่องปลายทางจะส่ง SYN-ACK segment กลับไปยัง client เพื่อยืนยันการรับข้อมูล โดย SYN-ACK segment จะระบุหมายเลข sequence number และ acknowledgement number ตามลำดับ และระบุฟิลด์ SYN และ ACK flag เป็น 1 เพื่อแสดงว่าเครื่องปลายทางยอมรับการเชื่อมต่อและกำลังจะสร้างการเชื่อมต่อ</p></li><li><p><strong>ACK (Acknowledgement):</strong> เมื่อเครื่องต้นทางได้รับ SYN-ACK segment จากเครื่องปลายทาง อุปกรณ์ต้นทางจะส่ง ACK segment กลับไปยังเครื่องปลายทางเพื่อยืนยันว่าเครื่องต้นทางยอมรับการเชื่อมต่อ ซึ่งใน segment นี้จะระบุฟิลด์ ACK flag เป็น 1 เพื่อแสดงว่าเครื่องต้นทางยอมรับการเชื่อมต่อ</p></li></ol><p>หลังจากกระบวนการ TCP 3-way handshake เสร็จสิ้นอย่างสมบูรณ์ การเชื่อมต่อ TCP ระหว่างเครื่องต้นทางและเครื่องปลายทางถือว่าเป็นสถานะ established และสามารถส่งข้อมูลได้ในทิศทางทั้งสองได้แล้ว</p></div>
 
-<img src="https://www.techopedia.com/wp-content/uploads/2023/03/ad900dc1-ad94-4c7b-a3f8-154ad27c35f1.png" height="400">
+<img src="https://th.bing.com/th/id/OIG4.TrrbQ_aZpxKdQ6jBH6Cb?pid=ImgGn" height="400">
 
 <p>ช้อมูลจาก : Chat GPT 3.5</p>
-<p>ภาพจาก : https://www.techopedia.com/wp-content/uploads/2023/03/ad900dc1-ad94-4c7b-a3f8-154ad27c35f1.png</p>
+<p>ภาพจาก : Bing Image Creator </p>
 
 </body>
 </html>
