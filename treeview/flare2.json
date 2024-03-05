@@ -4,6 +4,7 @@
         "name": "Basic",
         "children": [{
             "name": "Computer Network คืออะไร",
+            "url": "https://youtu.be/H5GTe49rJPk?si=rLIkdILYEXAtt1n8",
             "children": [{
                 "name": "AgglomerativeCluster"
                 
@@ -81,7 +82,8 @@
                 "name": "Hybrid"
             }]
         }, {
-            "name": "LAN, MAN and WAN"
+            "name": "LAN, MAN และ WAN ต่างกันอย่างไร"
+            "url": "https://youtu.be/OTTjihAdDfw?si=IGkKxatYL9zVQ7T9",
         }]
     }, {
         "name": "OSI Model",
