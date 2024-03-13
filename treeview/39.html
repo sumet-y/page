@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UDP (User Datagram Protocol) คืออะไร</title>
+  <style>
+    .responsive {
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+    }
+</style>
+</head>
+<body>
+  <h3>UDP (User Datagram Protocol) คืออะไร</h3>
+<div _ngcontent-ng-c3365590247="" class="markdown markdown-main-panel" dir="ltr" style="--animation-duration: 600ms; --fade-animation-function: linear;"><p data-sourcepos="1:1-1:266"><strong>UDP (User Datagram Protocol)</strong> คือหนึ่งในโปรโตคอลหลักของชุดโปรโตคอลอินเทอร์เน็ต ทำหน้าที่ในการส่งข้อมูลแบบง่ายและรวดเร็ว เน้นความเร็วมากกว่าความน่าเชื่อถือ โดยต่างจาก TCP (Transmission Control Protocol) ที่เน้นการรับประกันว่าข้อมูลจะถูกส่งไปถึงปลายทางอย่างครบถ้วน</p><p data-sourcepos="3:1-3:19"><strong>จุดเด่นของ UDP:</strong></p><ul data-sourcepos="5:1-10:0">
+<li data-sourcepos="5:1-8:19"><strong>ความเร็ว:</strong>  UDP ใช้การสื่อสารแบบไม่ต้องสร้างการเชื่อมต่อ (connectionless) ส่งข้อมูลเป็นแพ็กเก็จย่อยๆ ที่เรียกว่า "ดาตาแกรม" (Datagram) โดยไม่ต้องยืนยันว่าปลายทางได้รับข้อมูลหรือไม่ ทำให้การส่งข้อมูลรวดเร็ว เหมาะสำหรับการใช้งานที่ต้องการความเร็วสูง เช่น
+<ul data-sourcepos="6:5-8:19">
+<li data-sourcepos="6:5-6:21">การสตรีมวิดีโอ</li>
+<li data-sourcepos="7:5-7:17">การเล่นเกม</li>
+<li data-sourcepos="8:5-8:19">การถ่ายทอดสด</li>
+</ul>
+</li>
+<li data-sourcepos="9:1-10:0"><strong>ความง่าย:</strong> UDP มีโครงสร้างที่ง่าย ไม่ซับซ้อน</li>
+</ul><p data-sourcepos="11:1-11:20"><strong>ข้อจำกัดของ UDP:</strong></p><ul data-sourcepos="13:1-16:0">
+<li data-sourcepos="13:1-13:152"><strong>ความน่าเชื่อถือ:</strong>  UDP ไม่รับประกันว่าข้อมูลจะถูกส่งไปถึงปลายทางครบถ้วน หรือส่งไปถึงตามลำดับที่ถูกต้อง แพ็กเก็จข้อมูลอาจสูญหายหรือมาถึงผิดลำดับได้</li>
+<li data-sourcepos="14:1-16:0"><strong>การควบคุมความผิดพลาด:</strong> UDP ไม่มีกลไกตรวจสอบความผิดพลาดของข้อมูล ปลายทางต้องเป็นผู้รับผิดชอบในการตรวจสอบและแก้ไขข้อผิดพลาดด้วยตนเอง</li>
+</ul><p data-sourcepos="17:1-17:69"><strong>สรุป UDP เหมาะสำหรับการใช้งานที่ต้องการความเร็วมากกว่าความแม่นยำ</strong></p><p data-sourcepos="19:1-19:26"><strong>ตัวอย่างการใช้งาน UDP:</strong></p><ul data-sourcepos="21:1-23:95">
+<li data-sourcepos="21:1-21:125"><strong>สตรีมมิ่ง:</strong>  การรับชมวิดีโอหรือฟังเพลงแบบออนไลน์ ข้อมูลอาจมีการสูญหายบางส่วน แต่ไม่ส่งผลกระทบต่อการรับชมหรือรับฟังมากนัก</li>
+<li data-sourcepos="22:1-22:114"><strong>เกมส์ออนไลน์:</strong>  เน้นความรวดเร็วในการตอบสนอง อาจมีการสูญหายของข้อมูลบ้าง แต่ไม่ส่งผลกระทบต่อการเล่นเกมส์โดยรวม</li>
+<li data-sourcepos="23:1-23:95"><strong>DNS (Domain Name System):</strong>  การแปลชื่อเว็บไซต์เป็น IP address เน้นความรวดเร็วในการตอบสนอง</li>
+</ul></div>
+
+</body>
+</html>
