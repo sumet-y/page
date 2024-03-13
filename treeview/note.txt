@@ -36,3 +36,5 @@
 36 SONET คืออะไร
 37 TCP Connection Establishment คืออะไร
 38 TCP 3-Way Handshake Process คืออะไร
+39 UDP (User Datagram Protocol) คืออะไร
+40 Peer2Peer Sharing
