@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport"content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css"rel="stylesheet">
+	</head>
+	<body>
+		<div class="container">
+			<h1>Menu</h1>
+			<table id="mytableID" style="width:100%"class="table table-striped sampleTable"> 
+				<tr><td>01 ระบบ Login</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/login')">View</button></td></tr>
+				<tr><td>02 ระบบ ตัดเกรด</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/grade')">View</button></td></tr>
+				<tr><td>03 Network เบื้องต้น V1</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/treeview')">View</button></td></tr>
+				<tr><td>04 Network เบื้องต้น V2</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/network_basic2')">View</button></td></tr>
+				<tr><td>05 ตรวจสอบ Network</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/check_network')">View</button></td></tr>
+				<tr><td>06 ตรวจสอบ Computer</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/check_com')">View</button></td></tr>
+				<tr><td>07 CRUD</td><td><button type="button" class="btn btn-primary btn-sm"  onclick="window.open('https://sumet-y.github.io/page/into_data2')">View</button></td></tr>
+				<tr><td>08 Moon</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/Moon')">View</button></td></tr>
+				<tr><td>09 map_net</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/map_net')">View</button></td></tr>
+				<tr><td>10 zoom_mobile</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/zoom_mobile')">View</button></td></tr>
+				<tr><td>11 zoom</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/zoom')">View</button></td></tr>
+				<tr><td>12 link_net</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/link_net')">View</button></td></tr>
+				<tr><td>13 คอมไม่ติด V2</td><td><button type="button" class="btn btn-primary btn-sm" onclick="window.open('https://sumet-y.github.io/page/com_not')">View</button></td></tr>
+			</table> 
+		</div>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jquery.fancytable/dist/fancyTable.min.js"></script></script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				$(".sampleTable").fancyTable({
+				/* Column number for initial sorting*/
+				sortColumn:0,
+				/* Setting pagination or enabling */
+				pagination: true,
+				/* Rows per page kept for display */
+				perPage:10,
+				globalSearch:true,  /* false  */
+               //globalSearchExcludeColumns: [1] // Exclude 2nd and 5th column.
+				});				
+			});
+		</script>
+	</body>
+</html>
