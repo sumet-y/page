@@ -1,33 +1,33 @@
 {
- "name": "L3 HP A5000 20.254",
+ "name": "L3",
  "children": [
   {
-   "name": "SWUC2F3QC 25.211",
+   "name": "SW01",
    "color_children": "sw",
    "children": [
     {
-     "name": "cluster",
+     "name": "AP01",
      "color_children": "com",
      "localtion": "IT"
     },
     {
-     "name": "optimization"
+     "name": "AP02"
     }
    ]
   },
   {
-   "name": "animate"
+   "name": "Com01"
   },
   {
    "name": "scale"
   },
   {
-   "name": "SWUC2F1PD 25.212",
+   "name": "SW02",
    "children": [
     {
-     "name": "controls"
+     "name": "Com02"
     },
-    {"name": "Visualization"}
+    {"name": "IP Phone"}
    ]
   }
  ]
