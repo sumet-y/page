@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3 Tree Diagram</title>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+
+<style>
+    .node {
+        cursor: pointer;
+    }
+
+    .node circle {
+        fill: #fff;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+    }
+
+    .node text {
+        font: 10px sans-serif;
+    }
+
+    .link {
+        fill: none;
+        stroke: #ccc;
+        stroke-width: 1.5px;
+    }
+
+    body {
+        margin: 0;
+        overflow: hidden;
+    }
+
+    svg {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<body>
+    <div id="body"></div>
+    <script>
+        var margin = {
+            top: 20,
+            right: 120,
+            bottom: 20,
+            left: 120
+        };
+
+        var width = window.innerWidth - margin.right - margin.left;
+        var height = window.innerHeight - margin.top - margin.bottom;
+
+        var root = { name: "Top Level", children: [] }; // Initialize root with empty children
+
+        var i = 0,
+            duration = 750,
+            rectW = 60,
+            rectH = 30;
+
+        var tree = d3.layout.tree().nodeSize([70, 40]);
+        var diagonal = d3.svg.diagonal()
+            .projection(function (d) {
+                return [d.x + rectW / 2, d.y + rectH / 2];
+            });
+
+        var svg = d3.select("#body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .call(zm = d3.behavior.zoom().scaleExtent([0.3, 3]).on("zoom", redraw)).append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        zm.translate([margin.left, margin.top]);
+
+        root.x0 = 0;
+        root.y0 = height / 2;
+
+        // Fetch data from Google Sheets API
+        fetch('https://sheets.googleapis.com/v4/spreadsheets/10NrbF4SyJbbgNlOFJS7PuD-Bc2K9okIiKXjnIv39Oe8/values/Hos?alt=json&key=AIzaSyBmRhz6aorKI7ygPS0tDbHWQzw7aDdUmNc')
+            .then(response => response.json())
+            .then(data => {
+                const values = data.values;
+                // Build the hierarchical structure from the API data
+                const nodeMap = {};
+
+                // Parse rows and create a map of nodes by ID
+                values.slice(1).forEach(row => { // Skip header row
+                    const [id, name, parentID, color] = row;
+                    nodeMap[id] = { id, name, parentID, color, children: [] };
+                });
+
+                // Construct the tree
+                const rootChildren = [];
+
+                for (const id in nodeMap) {
+                    const node = nodeMap[id];
+                    if (node.parentID === "null" || node.parentID === undefined) {
+                        rootChildren.push(node);  // Top-level node
+                    } else if (nodeMap[node.parentID]) {
+                        nodeMap[node.parentID].children.push(node);  // Add as a child of the parent node
+                    }
+                }
+
+                root.children = rootChildren;  // Assign children to the root
+
+                // Collapse children and update
+                //root.children.forEach(collapse); //ยุบ nods เมื่อเริ่มต้น
+                update(root);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        function collapse(d) {
+            if (d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+            }
+        }
+
+        function update(source) {
+            var nodes = tree.nodes(root).reverse(),
+                links = tree.links(nodes);
+
+            nodes.forEach(function (d) {
+                d.y = d.depth * 100; //ความสูงระหว่าง node
+            });
+
+            var node = svg.selectAll("g.node")
+                .data(nodes, function (d) {
+                    return d.id || (d.id = ++i);
+                });
+
+            var nodeEnter = node.enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function (d) {
+                    return "translate(" + source.x0 + "," + source.y0 + ")";
+                })
+                .on("click", click);
+
+            nodeEnter.append("rect")
+                .attr("width", rectW)
+                .attr("height", rectH)
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .style("fill", function (d) {
+                    return d.color ? d.color : "#fff"; // Use color from the data
+                });
+
+            nodeEnter.append("text")
+                .attr("x", rectW / 2)
+                .attr("y", rectH / 2)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .text(function (d) {
+                    return d.name;
+                });
+
+            var nodeUpdate = node.transition()
+                .duration(duration)
+                .attr("transform", function (d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+
+            nodeUpdate.select("rect")
+                .style("fill", function (d) {
+                    return d.color ? d.color : "#fff"; // Use color from the data
+                });
+
+            var nodeExit = node.exit().transition()
+                .duration(duration)
+                .attr("transform", function (d) {
+                    return "translate(" + source.x + "," + source.y + ")";
+                })
+                .remove();
+
+            var link = svg.selectAll("path.link")
+                .data(links, function (d) {
+                    return d.target.id;
+                });
+
+            link.enter().insert("path", "g")
+                .attr("class", "link")
+                .attr("x", rectW / 2)
+                .attr("y", rectH / 2)
+                .attr("d", function (d) {
+                    var o = { x: source.x0, y: source.y0 };
+                    return diagonal({ source: o, target: o });
+                });
+
+            link.transition()
+                .duration(duration)
+                .attr("d", diagonal);
+
+            link.exit().transition()
+                .duration(duration)
+                .attr("d", function (d) {
+                    var o = { x: source.x, y: source.y };
+                    return diagonal({ source: o, target: o });
+                }).remove();
+
+            nodes.forEach(function (d) {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+        }
+
+        function click(d) {
+            if (d.children) {
+                d._children = d.children;
+                d.children = null;
+            } else {
+                d.children = d._children;
+                d._children = null;
+            }
+            update(d);
+        }
+
+        function redraw() {
+            svg.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+        }
+
+        // Resize the svg on window resize
+        window.addEventListener('resize', function () {
+            var width = window.innerWidth - margin.right - margin.left;
+            var height = window.innerHeight - margin.top - margin.bottom;
+            d3.select("svg")
+                .attr("width", width)
+                .attr("height", height);
+        });
+    </script>
+</body>
+
+</html>
