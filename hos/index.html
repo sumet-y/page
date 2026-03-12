@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Checkers Viewer</title>
 
 <style>
@@ -21,24 +21,16 @@ aspect-ratio:1/1;
 margin:auto;
 }
 
-.square{
-position:relative;
-}
+.square{position:relative;}
 
-.light{
-background:#f0d9b5;
-}
-
-.dark{
-background:#b58863;
-}
+.light{background:#f0d9b5;}
+.dark{background:#b58863;}
 
 .num{
 position:absolute;
 top:3px;
 right:5px;
 font-size:10px;
-color:#222;
 font-weight:bold;
 }
 
@@ -73,136 +65,181 @@ background:gold;
 }
 
 button{
-padding:8px 16px;
-margin:5px;
-font-size:16px;
+padding:8px 14px;
+margin:4px;
+font-size:14px;
 border-radius:6px;
 border:none;
 background:#444;
 color:white;
-cursor:pointer;
 }
 
-button:hover{
-background:#666;
+textarea{
+width:90%;
+max-width:500px;
+height:120px;
+margin-top:10px;
+font-size:14px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h2>Checkers Viewer</h2>
+<h3>Checkers Viewer</h3>
 
 <div id="board"></div>
 
 <div>
+
 <button onclick="prev()">Prev</button>
 <button onclick="next()">Next</button>
 <button onclick="play()">Play</button>
 <button onclick="stop()">Stop</button>
 <button onclick="resetBoard()">Reset</button>
+
 <p id="moveInfo"></p>
+
+<textarea id="movesInput">
+25-22
+8-11
+22-18
+4-8
+29-25
+7-10
+25-22
+5-9
+26-23
+10-15
+28-24
+6-10
+32-28
+9-13
+24-19
+15x24
+28x19
+2-7
+27-24
+</textarea>
+
+<br>
+<button onclick="loadMoves()">Run</button>
+
+<h4>Continue from current position</h4>
+
+<textarea id="continueInput"></textarea>
+
+<br>
+
+<button onclick="continueMoves()">Continue</button>
+
 </div>
 
 <script>
 
-let timer=null;
-let speed=1000;
-
-let step=0;
+let timer=null
+let speed=1000
+let step=0
 
 let data={
-
 start:{
 white:[1,2,3,4,5,6,7,8],
 black:[25,26,27,28,29,30,31,32]
 },
+moves:[]
+}
 
-moves:[
-"25-22","8-11","22-18","4-8","29-25","7-10","25-22","5-9",
-"26-23","10-15","28-24","6-10","32-28","9-13","24-19",
-"15x24","28x19","2-7","27-24","10-15","19x10","7x14",
-"18x9","1-6","9x2","8-12","2x16","12x19,19x28","23-18",
-"28-32","30-26","32x14","26-23","14x27","31x24"
-]
+drawBoard()
+loadMoves()
 
-};
+function loadMoves(){
 
-drawBoard();
-render();
+stop()
+
+let txt=document.getElementById("movesInput").value
+
+txt=txt.replace(/"/g,"")
+
+let arr=txt.split(/[\n,]+/).map(x=>x.trim()).filter(x=>x)
+
+data.moves=arr
+
+step=0
+render()
+
+}
 
 function play(){
 
-if(timer) return;
+if(timer) return
 
 timer=setInterval(()=>{
 
 if(step<data.moves.length){
-step++;
-render();
+step++
+render()
 }else{
-stop();
+stop()
 }
 
-},speed);
+},speed)
 
 }
 
 function stop(){
-clearInterval(timer);
-timer=null;
+
+clearInterval(timer)
+timer=null
+
 }
 
 function resetBoard(){
 
-stop();
-step=0;
-render();
+stop()
+step=0
+render()
 
 }
 
 function drawBoard(){
 
-const board=document.getElementById("board");
-board.innerHTML="";
+const board=document.getElementById("board")
+board.innerHTML=""
 
-let num=1;
+let num=1
 
 for(let r=0;r<8;r++){
 
 for(let c=0;c<8;c++){
 
-let square=document.createElement("div");
+let square=document.createElement("div")
 
-let dark=(r+c)%2==1;
+let dark=(r+c)%2==1
 
-square.className="square "+(dark?"dark":"light");
+square.className="square "+(dark?"dark":"light")
 
 if(dark){
 
-square.dataset.pos=num;
+square.dataset.pos=num
 
-let n=document.createElement("div");
-n.className="num";
-n.innerText=num;
+let n=document.createElement("div")
+n.className="num"
+n.innerText=num
 
-square.appendChild(n);
+square.appendChild(n)
 
-num++;
-
-}
-
-board.appendChild(square);
+num++
 
 }
 
-}
+board.appendChild(square)
 
 }
 
-function getCapturedSquare(from,to){
+}
+
+}
 
 const rc={
 1:[0,1],2:[0,3],3:[0,5],4:[0,7],
@@ -213,119 +250,106 @@ const rc={
 21:[5,0],22:[5,2],23:[5,4],24:[5,6],
 25:[6,1],26:[6,3],27:[6,5],28:[6,7],
 29:[7,0],30:[7,2],31:[7,4],32:[7,6]
-};
+}
 
-let r1=rc[from][0];
-let c1=rc[from][1];
-let r2=rc[to][0];
-let c2=rc[to][1];
+function getCapturedSquare(from,to){
 
-let r=(r1+r2)/2;
-let c=(c1+c2)/2;
+let r1=rc[from][0]
+let c1=rc[from][1]
+let r2=rc[to][0]
+let c2=rc[to][1]
+
+let r=(r1+r2)/2
+let c=(c1+c2)/2
 
 for(let k in rc){
 if(rc[k][0]==r && rc[k][1]==c){
-return parseInt(k);
+return parseInt(k)
 }
 }
 
-return null;
+return null
 
 }
 
 function getCapturedSquaresKing(from,to){
 
-const rc={
-1:[0,1],2:[0,3],3:[0,5],4:[0,7],
-5:[1,0],6:[1,2],7:[1,4],8:[1,6],
-9:[2,1],10:[2,3],11:[2,5],12:[2,7],
-13:[3,0],14:[3,2],15:[3,4],16:[3,6],
-17:[4,1],18:[4,3],19:[4,5],20:[4,7],
-21:[5,0],22:[5,2],23:[5,4],24:[5,6],
-25:[6,1],26:[6,3],27:[6,5],28:[6,7],
-29:[7,0],30:[7,2],31:[7,4],32:[7,6]
-};
+let r1=rc[from][0]
+let c1=rc[from][1]
 
-let r1=rc[from][0];
-let c1=rc[from][1];
+let r2=rc[to][0]
+let c2=rc[to][1]
 
-let r2=rc[to][0];
-let c2=rc[to][1];
+let dr=Math.sign(r2-r1)
+let dc=Math.sign(c2-c1)
 
-let dr=Math.sign(r2-r1);
-let dc=Math.sign(c2-c1);
+let captured=[]
 
-let captured=[];
-
-let r=r1+dr;
-let c=c1+dc;
+let r=r1+dr
+let c=c1+dc
 
 while(r!=r2 && c!=c2){
 
 for(let k in rc){
-
 if(rc[k][0]==r && rc[k][1]==c){
-captured.push(parseInt(k));
+captured.push(parseInt(k))
+}
 }
 
-}
-
-r+=dr;
-c+=dc;
+r+=dr
+c+=dc
 
 }
 
-return captured;
+return captured
 
 }
 
 function buildPosition(step){
 
-let white=data.start.white.map(s=>({square:s,king:false}));
-let black=data.start.black.map(s=>({square:s,king:false}));
+let white=data.start.white.map(s=>({square:s,king:false}))
+let black=data.start.black.map(s=>({square:s,king:false}))
 
 for(let i=0;i<step;i++){
 
-let move=data.moves[i];
-let sequences=move.split(",");
+let move=data.moves[i]
+let sequences=move.split(",")
 
 for(let seq of sequences){
 
-let capture=seq.includes("x");
-let parts=seq.split(/[-x]/);
+let capture=seq.includes("x")
+let parts=seq.split(/[-x]/)
 
-let from=parseInt(parts[0]);
-let to=parseInt(parts[1]);
+let from=parseInt(parts[0])
+let to=parseInt(parts[1])
 
-let arr=white.find(p=>p.square==from)?white:black;
-let enemy=arr===white?black:white;
+let arr=white.find(p=>p.square==from)?white:black
+let enemy=arr===white?black:white
 
-let piece=arr.find(p=>p.square==from);
+let piece=arr.find(p=>p.square==from)
 
-piece.square=to;
+piece.square=to
 
-if(arr===black && to<=4) piece.king=true;
-if(arr===white && to>=29) piece.king=true;
+if(arr===black && to<=4) piece.king=true
+if(arr===white && to>=29) piece.king=true
 
 if(capture){
 
 if(piece.king){
 
-let squares=getCapturedSquaresKing(from,to);
+let squares=getCapturedSquaresKing(from,to)
 
 squares.forEach(s=>{
-let idx=enemy.findIndex(p=>p.square==s);
-if(idx>-1) enemy.splice(idx,1);
-});
+let idx=enemy.findIndex(p=>p.square==s)
+if(idx>-1) enemy.splice(idx,1)
+})
 
 }else{
 
-let eaten=getCapturedSquare(from,to);
-let idx=enemy.findIndex(p=>p.square==eaten);
+let eaten=getCapturedSquare(from,to)
 
-if(idx>-1) enemy.splice(idx,1);
-
-}
+let idx=enemy.findIndex(p=>p.square==eaten)
+if(idx>-1) enemy.splice(idx,1)
 
 }
 
@@ -333,49 +357,49 @@ if(idx>-1) enemy.splice(idx,1);
 
 }
 
-return [
+}
+
+return[
 ...white.map(p=>({...p,color:"white"})),
 ...black.map(p=>({...p,color:"black"}))
-];
+]
 
 }
 
 function render(){
 
-document.querySelectorAll(".piece").forEach(e=>e.remove());
+document.querySelectorAll(".piece").forEach(e=>e.remove())
 
-let pos=buildPosition(step);
+let pos=buildPosition(step)
 
 for(let p of pos){
 
-let cell=document.querySelector(`[data-pos='${p.square}']`);
+let cell=document.querySelector(`[data-pos='${p.square}']`)
 
 if(cell){
 
-let piece=document.createElement("div");
-piece.className="piece "+p.color;
+let piece=document.createElement("div")
 
-if(p.king) piece.classList.add("king");
+piece.className="piece "+p.color
 
-cell.appendChild(piece);
+if(p.king) piece.classList.add("king")
+
+cell.appendChild(piece)
 
 }
 
 }
 
-if(step>0){
-document.getElementById("moveInfo").innerText=data.moves[step-1];
-}else{
-document.getElementById("moveInfo").innerText="Start position";
-}
+document.getElementById("moveInfo").innerText=
+step>0?data.moves[step-1]:"Start position"
 
 }
 
 function next(){
 
 if(step<data.moves.length){
-step++;
-render();
+step++
+render()
 }
 
 }
@@ -383,9 +407,27 @@ render();
 function prev(){
 
 if(step>0){
-step--;
-render();
+step--
+render()
 }
+
+}
+
+function continueMoves(){
+
+stop()
+
+let txt=document.getElementById("continueInput").value
+
+txt=txt.replace(/"/g,"")
+
+let arr=txt.split(/[\n,]+/)
+.map(x=>x.trim())
+.filter(x=>x)
+
+data.moves=data.moves.concat(arr)
+
+render()
 
 }
 
