@@ -2,10 +2,51 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Checkers Viewer</title>
 
 <style>
+
+.clearBtn{
+background:#999;
+font-size:12px;
+padding:4px 10px;
+margin-top:4px;
+}
+
+.clearBtn:hover{
+background:#bbb;
+}
+
+.runBtn{
+background:#2e8b57;
+}
+
+.runBtn:hover{
+background:#3fa46c;
+}
+
+.continueBtn{
+background:#2b6cb0;
+}
+
+.continueBtn:hover{
+background:#3c7ed1;
+}
+
+.row{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+margin-top:5px;
+}
+
+#moveInfo{
+font-weight:bold;
+min-width:120px;
+text-align:left;
+}
 
 body{
 font-family:Arial;
@@ -87,7 +128,7 @@ font-size:14px;
 
 <body>
 
-<h3>Checkers Viewer</h3>
+<br>
 
 <div id="board"></div>
 
@@ -98,8 +139,6 @@ font-size:14px;
 <button onclick="play()">Play</button>
 <button onclick="stop()">Stop</button>
 <button onclick="resetBoard()">Reset</button>
-
-<p id="moveInfo"></p>
 
 <textarea id="movesInput">
 25-22
@@ -123,20 +162,35 @@ font-size:14px;
 27-24
 </textarea>
 
-<br>
-<button onclick="loadMoves()">Run</button>
-
-<h4>Continue from current position</h4>
+<div class="row">
+<span id="moveInfo"></span>
+<button class="clearBtn" onclick="clearMain()">Clear</button>
+<button class="runBtn" onclick="loadMoves()">Run</button>
+</div>
 
 <textarea id="continueInput"></textarea>
 
-<br>
-
-<button onclick="continueMoves()">Continue</button>
+<div class="row">
+<span>เดินต่อ</span>
+<button class="clearBtn" onclick="clearContinue()">Clear</button>
+<button class="continueBtn" onclick="continueMoves()">Continue</button>
+</div>
 
 </div>
 
 <script>
+
+function clearMain(){
+
+document.getElementById("movesInput").value=""
+
+}
+
+function clearContinue(){
+
+document.getElementById("continueInput").value=""
+
+}
 
 let timer=null
 let speed=1000
