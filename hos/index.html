@@ -2,49 +2,55 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Thai Checkers Trainer</title>
+<title>Checkers Viewer</title>
 
 <style>
+
 body{
 font-family:Arial;
 text-align:center;
+margin:10px;
 }
 
-.board{
+/* BOARD RESPONSIVE */
+
+#board{
 display:grid;
-grid-template-columns:repeat(8,60px);
-grid-template-rows:repeat(8,60px);
-width:480px;
+grid-template-columns:repeat(8,1fr);
+width:min(92vw,480px);
+aspect-ratio:1/1;
 margin:auto;
-margin-bottom:20px;
 }
 
 .square{
-width:60px;
-height:60px;
 position:relative;
-cursor:pointer;
 }
 
-.light{background:#f0d9b5;}
-.dark{background:#b58863;}
+.light{
+background:#f0d9b5;
+}
+
+.dark{
+background:#b58863;
+}
 
 .num{
 position:absolute;
 top:3px;
 right:5px;
-font-size:11px;
+font-size:10px;
+color:#222;
 font-weight:bold;
 }
 
 .piece{
-width:40px;
-height:40px;
+width:70%;
+height:70%;
 border-radius:50%;
-margin:auto;
-margin-top:10px;
-position:relative;
-pointer-events:none;
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
 }
 
 .white{
@@ -59,16 +65,12 @@ background:black;
 .king::after{
 content:"";
 position:absolute;
-width:24px;
-height:24px;
+width:60%;
+height:60%;
 border-radius:50%;
-top:8px;
-left:8px;
+top:20%;
+left:20%;
 background:gold;
-}
-
-.selected{
-outline:3px solid yellow;
 }
 
 button{
@@ -85,71 +87,123 @@ cursor:pointer;
 button:hover{
 background:#666;
 }
+
 </style>
+
 </head>
 
 <body>
 
 <h2>Checkers Viewer</h2>
-<div id="bookBoard" class="board"></div>
+
+<div id="board"></div>
+
+<div>
 <button onclick="prev()">Prev</button>
 <button onclick="next()">Next</button>
+<button onclick="play()">Play</button>
+<button onclick="stop()">Stop</button>
+<button onclick="resetBoard()">Reset</button>
 <p id="moveInfo"></p>
-
-<hr>
-
-<h2>Training Board</h2>
-<div id="trainBoard" class="board"></div>
-<button onclick="resetTrainer()">Reset</button>
-<p id="status"></p>
+</div>
 
 <script>
+
+let timer=null;
+let speed=1000;
 
 let step=0;
 
 let data={
+
 start:{
 white:[1,2,3,4,5,6,7,8],
 black:[25,26,27,28,29,30,31,32]
 },
+
 moves:[
-"25-22",
-"8-11",
-"22-18",
-"4-8",
-"29-25",
-"7-10",
-"25-22",
-"5-9",
-"26-23",
-"10-15",
-"28-24",
-"6-10",
-"32-28",
-"9-13",
-"24-19",
-"15x24",
-"28x19",
-"2-7",
-"27-24",
-"10-15",
-"19x10",
-"7x14",
-"18x9",
-"1-6",
-"9x2",
-"8-12",
-"2x16",
-"12x19,19x28",
-"23-18",
-"28-32",
-"30-26",
-"32x14",
-"26-23",
-"14x27",
-"31x24"
+"25-22","8-11","22-18","4-8","29-25","7-10","25-22","5-9",
+"26-23","10-15","28-24","6-10","32-28","9-13","24-19",
+"15x24","28x19","2-7","27-24","10-15","19x10","7x14",
+"18x9","1-6","9x2","8-12","2x16","12x19,19x28","23-18",
+"28-32","30-26","32x14","26-23","14x27","31x24"
 ]
+
 };
+
+drawBoard();
+render();
+
+function play(){
+
+if(timer) return;
+
+timer=setInterval(()=>{
+
+if(step<data.moves.length){
+step++;
+render();
+}else{
+stop();
+}
+
+},speed);
+
+}
+
+function stop(){
+clearInterval(timer);
+timer=null;
+}
+
+function resetBoard(){
+
+stop();
+step=0;
+render();
+
+}
+
+function drawBoard(){
+
+const board=document.getElementById("board");
+board.innerHTML="";
+
+let num=1;
+
+for(let r=0;r<8;r++){
+
+for(let c=0;c<8;c++){
+
+let square=document.createElement("div");
+
+let dark=(r+c)%2==1;
+
+square.className="square "+(dark?"dark":"light");
+
+if(dark){
+
+square.dataset.pos=num;
+
+let n=document.createElement("div");
+n.className="num";
+n.innerText=num;
+
+square.appendChild(n);
+
+num++;
+
+}
+
+board.appendChild(square);
+
+}
+
+}
+
+}
+
+function getCapturedSquare(from,to){
 
 const rc={
 1:[0,1],2:[0,3],3:[0,5],4:[0,7],
@@ -161,37 +215,6 @@ const rc={
 25:[6,1],26:[6,3],27:[6,5],28:[6,7],
 29:[7,0],30:[7,2],31:[7,4],32:[7,6]
 };
-
-function drawBoard(id){
-let board=document.getElementById(id);
-board.innerHTML="";
-let num=1;
-
-for(let r=0;r<8;r++){
-for(let c=0;c<8;c++){
-
-let sq=document.createElement("div");
-let dark=(r+c)%2==1;
-
-sq.className="square "+(dark?"dark":"light");
-
-if(dark){
-sq.dataset.pos=num;
-
-let n=document.createElement("div");
-n.className="num";
-n.innerText=num;
-
-sq.appendChild(n);
-num++;
-}
-
-board.appendChild(sq);
-}
-}
-}
-
-function getCapturedSquare(from,to){
 
 let r1=rc[from][0];
 let c1=rc[from][1];
@@ -208,9 +231,21 @@ return parseInt(k);
 }
 
 return null;
+
 }
 
 function getCapturedSquaresKing(from,to){
+
+const rc={
+1:[0,1],2:[0,3],3:[0,5],4:[0,7],
+5:[1,0],6:[1,2],7:[1,4],8:[1,6],
+9:[2,1],10:[2,3],11:[2,5],12:[2,7],
+13:[3,0],14:[3,2],15:[3,4],16:[3,6],
+17:[4,1],18:[4,3],19:[4,5],20:[4,7],
+21:[5,0],22:[5,2],23:[5,4],24:[5,6],
+25:[6,1],26:[6,3],27:[6,5],28:[6,7],
+29:[7,0],30:[7,2],31:[7,4],32:[7,6]
+};
 
 let r1=rc[from][0];
 let c1=rc[from][1];
@@ -229,16 +264,20 @@ let c=c1+dc;
 while(r!=r2 && c!=c2){
 
 for(let k in rc){
+
 if(rc[k][0]==r && rc[k][1]==c){
 captured.push(parseInt(k));
 }
+
 }
 
 r+=dr;
 c+=dc;
+
 }
 
 return captured;
+
 }
 
 function buildPosition(step){
@@ -250,14 +289,13 @@ for(let i=0;i<step;i++){
 
 let move=data.moves[i];
 let sequences=move.split(",");
-let currentFrom=null;
 
 for(let seq of sequences){
 
 let capture=seq.includes("x");
 let parts=seq.split(/[-x]/);
 
-let from=currentFrom ?? parseInt(parts[0]);
+let from=parseInt(parts[0]);
 let to=parseInt(parts[1]);
 
 let arr=white.find(p=>p.square==from)?white:black;
@@ -292,28 +330,26 @@ if(idx>-1) enemy.splice(idx,1);
 
 }
 
-currentFrom=to;
-
 }
 
 }
 
-return[
+return [
 ...white.map(p=>({...p,color:"white"})),
 ...black.map(p=>({...p,color:"black"}))
 ];
 
 }
 
-function renderViewer(){
+function render(){
 
-document.querySelectorAll("#bookBoard .piece").forEach(e=>e.remove());
+document.querySelectorAll(".piece").forEach(e=>e.remove());
 
 let pos=buildPosition(step);
 
 for(let p of pos){
 
-let cell=document.querySelector(`#bookBoard [data-pos='${p.square}']`);
+let cell=document.querySelector(`[data-pos='${p.square}']`);
 
 if(cell){
 
@@ -328,123 +364,33 @@ cell.appendChild(piece);
 
 }
 
-document.getElementById("moveInfo").innerText=
-step>0?data.moves[step-1]:"Start position";
+if(step>0){
+document.getElementById("moveInfo").innerText=data.moves[step-1];
+}else{
+document.getElementById("moveInfo").innerText="Start position";
+}
+
 }
 
 function next(){
+
 if(step<data.moves.length){
 step++;
-renderViewer();
+render();
 }
+
 }
 
 function prev(){
+
 if(step>0){
 step--;
-renderViewer();
-}
-}
-
-/* TRAINER */
-
-let trainerPieces=[];
-let selected=null;
-let trainerStep=0;
-
-function resetTrainer(){
-
-trainerPieces=[
-...data.start.white.map(s=>({square:s,color:"white"})),
-...data.start.black.map(s=>({square:s,color:"black"}))
-];
-
-trainerStep=0;
-selected=null;
-
-renderTrainer();
+render();
 }
 
-function renderTrainer(){
-
-document.querySelectorAll("#trainBoard .piece").forEach(e=>e.remove());
-
-trainerPieces.forEach(p=>{
-
-let cell=document.querySelector(`#trainBoard [data-pos='${p.square}']`);
-
-let piece=document.createElement("div");
-piece.className="piece "+p.color;
-
-cell.appendChild(piece);
-
-});
 }
-
-document.addEventListener("click",e=>{
-
-let sq=e.target.closest("#trainBoard .square");
-if(!sq) return;
-
-let pos=parseInt(sq.dataset.pos);
-
-let piece=trainerPieces.find(p=>p.square==pos);
-
-if(piece){
-
-selected=piece;
-
-document.querySelectorAll("#trainBoard .square")
-.forEach(s=>s.classList.remove("selected"));
-
-sq.classList.add("selected");
-
-return;
-}
-
-if(selected){
-
-attemptMove(selected.square,pos);
-}
-
-});
-
-function attemptMove(from,to){
-
-let move=data.moves[trainerStep];
-if(!move) return;
-
-let clean=move.replace("x","-");
-let [mFrom,mTo]=clean.split("-").map(Number);
-
-if(from==mFrom && to==mTo){
-
-let piece=trainerPieces.find(p=>p.square==from);
-piece.square=to;
-
-trainerStep++;
-
-document.getElementById("status").innerText="Correct";
-
-}else{
-
-document.getElementById("status").innerText="Wrong move";
-
-}
-
-selected=null;
-
-renderTrainer();
-}
-
-/* INIT */
-
-drawBoard("bookBoard");
-drawBoard("trainBoard");
-
-renderViewer();
-resetTrainer();
 
 </script>
+
 </body>
 </html>
