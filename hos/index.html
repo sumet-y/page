@@ -372,9 +372,14 @@ let more=txt.split(/[\n,]+/)
 .map(x=>x.trim())
 .filter(x=>x)
 
+/* ตัดสูตรหลัง step ปัจจุบันทิ้ง */
+data.moves=data.moves.slice(0,step)
+
+/* ต่อสูตรใหม่ */
 data.moves=data.moves.concat(more)
 
 document.getElementById("timeline").value=data.moves.join("\n")
+
 document.getElementById("movesInput").value=""
 
 document.getElementById("slider").max=data.moves.length
