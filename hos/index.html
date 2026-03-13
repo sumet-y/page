@@ -1,79 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Checkers Viewer</title>
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
+
+<title>Checkers Trainer</title>
 
 <style>
-
-.clearBtn{
-background:#999;
-font-size:12px;
-padding:4px 10px;
-margin-top:4px;
-}
-
-.clearBtn:hover{
-background:#bbb;
-}
-
-.runBtn{
-background:#2e8b57;
-}
-
-.runBtn:hover{
-background:#3fa46c;
-}
-
-.continueBtn{
-background:#2b6cb0;
-}
-
-.continueBtn:hover{
-background:#3c7ed1;
-}
-
-.row{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:10px;
-margin-top:5px;
-}
-
-#moveInfo{
-font-weight:bold;
-min-width:120px;
-text-align:left;
-}
 
 body{
 font-family:Arial;
 text-align:center;
 margin:0;
-touch-action:manipulation;
 }
 
 #board{
 display:grid;
 grid-template-columns:repeat(8,1fr);
-width:calc(100vw - 20px);
+width:95vw;
+max-width:500px;
 aspect-ratio:1/1;
 margin:auto;
 }
 
-.square{position:relative;}
+.square{position:relative}
 
-.light{background:#f0d9b5;}
-.dark{background:#b58863;}
+.light{background:#f0d9b5}
+.dark{background:#b58863}
 
 .num{
 position:absolute;
 top:3px;
-right:5px;
+right:4px;
 font-size:10px;
-font-weight:bold;
 }
 
 .piece{
@@ -88,7 +50,7 @@ transform:translate(-50%,-50%);
 
 .white{
 background:white;
-border:2px solid #444;
+border:2px solid #333;
 }
 
 .black{
@@ -101,198 +63,122 @@ position:absolute;
 width:60%;
 height:60%;
 border-radius:50%;
+background:gold;
 top:20%;
 left:20%;
-background:gold;
-}
-
-button{
-padding:10px 16px;
-margin:4px;
-font-size:16px;
-border-radius:6px;
-border:none;
-background:#444;
-color:white;
-touch-action:manipulation;
 }
 
 textarea{
 width:90%;
-max-width:500px;
-height:120px;
-margin-top:10px;
-font-size:14px;
+height:80px;
+margin:5px;
+}
+
+button{
+padding:8px 10px;
+margin:3px;
 }
 
 </style>
 </head>
 
 <body>
+<br>
+<b>เลือกโหมด</b>
+
+<label>
+<input type="radio" name="mode" checked onclick="setPlayMode()">
+ปกติ
+</label>
+
+<label>
+<input type="radio" name="mode" onclick="setCustomMode()">
+วางหมากเอง
+</label>
+
+<br>
+<br>
+<b>ทิศทาง</b>
+<label>
+<input type="radio" name="dir" checked onclick="setBottomFirst()">
+ล่างเดินก่อน
+</label>
+
+<label>
+<input type="radio" name="dir" onclick="setTopFirst()">
+บนเดินก่อน
+</label>
+
+<br><br>
+
+Place:
+
+<button id="whiteBtn" onclick="placeColor='white'">White</button>
+<button id="blackBtn" onclick="placeColor='black'">Black</button>
+<button id="clearBoardBtn" onclick="clearBoard()">Clear Board</button>
+
+<br><br>
 
 <div id="board"></div>
 
-<div>
+<br>
 
-<button onclick="prev()">Prev</button>
-<button onclick="next()">Next</button>
-<button onclick="play()">Play</button>
-<button onclick="stop()">Stop</button>
-<button onclick="resetBoard()">Reset</button>
+<button id="prevBtn" onclick="prev()">Prev</button>
+<button id="nextBtn" onclick="next()">Next</button>
+<button id="playBtn" onclick="play()">Play</button>
+<button id="stopBtn" onclick="stop()">Stop</button>
+<button id="resetBtn" onclick="resetGame()">Reset</button>
 
-<textarea id="movesInput">
-25-22
-8-11
-22-18
-4-8
-29-25
-7-10
-25-22
-5-9
-26-23
-10-15
-28-24
-6-10
-32-28
-9-13
-24-19
-15x24
-28x19
-2-7
-27-24
-</textarea>
+<br><br>
 
-<div class="row">
-<span id="moveInfo"></span>
-<button class="clearBtn" onclick="clearMain()">Clear</button>
-<button class="runBtn" onclick="loadMoves()">Run</button>
-</div>
+<b>Moves Input</b><br>
 
-<textarea id="continueInput"></textarea>
+<textarea id="movesInput"></textarea>
 
-<div class="row">
-<span>เดินต่อ</span>
-<button class="clearBtn" onclick="clearContinue()">Clear</button>
-<button class="continueBtn" onclick="continueMoves()">Continue</button>
-</div>
+<br>
 
-</div>
+<button id="runBtn" onclick="loadMoves()">Run</button>
+<button onclick="continueMoves()">Continue</button>
+<button onclick="clearMoves()">Clear</button>
+
+<br><br>
+
+<b>Timeline</b><br>
+
+<textarea id="timeline" readonly></textarea>
+
+<p id="moveInfo"></p>
 
 <script>
 
-function clearMain(){
+function setPlayButtons(enabled){
 
-document.getElementById("movesInput").value=""
-
-}
-
-function clearContinue(){
-
-document.getElementById("continueInput").value=""
+document.getElementById("prevBtn").disabled=!enabled
+document.getElementById("nextBtn").disabled=!enabled
+document.getElementById("playBtn").disabled=!enabled
+document.getElementById("stopBtn").disabled=!enabled
+document.getElementById("resetBtn").disabled=!enabled
 
 }
 
+function setCustomButtons(enabled){
+
+document.getElementById("whiteBtn").disabled=!enabled
+document.getElementById("blackBtn").disabled=!enabled
+document.getElementById("clearBoardBtn").disabled=!enabled
+
+}
+
+let mode="play"
 let timer=null
-let speed=1000
 let step=0
+let speed=1000
+let placeColor="white"
+let flip=false
 
 let data={
-start:{
-white:[1,2,3,4,5,6,7,8],
-black:[25,26,27,28,29,30,31,32]
-},
+start:{white:[],black:[]},
 moves:[]
-}
-
-drawBoard()
-loadMoves()
-
-function loadMoves(){
-
-stop()
-
-let txt=document.getElementById("movesInput").value
-
-txt=txt.replace(/"/g,"")
-
-let arr=txt.split(/[\n,]+/).map(x=>x.trim()).filter(x=>x)
-
-data.moves=arr
-
-step=0
-render()
-
-}
-
-function play(){
-
-if(timer) return
-
-timer=setInterval(()=>{
-
-if(step<data.moves.length){
-step++
-render()
-}else{
-stop()
-}
-
-},speed)
-
-}
-
-function stop(){
-
-clearInterval(timer)
-timer=null
-
-}
-
-function resetBoard(){
-
-stop()
-step=0
-render()
-
-}
-
-function drawBoard(){
-
-const board=document.getElementById("board")
-board.innerHTML=""
-
-let num=1
-
-for(let r=0;r<8;r++){
-
-for(let c=0;c<8;c++){
-
-let square=document.createElement("div")
-
-let dark=(r+c)%2==1
-
-square.className="square "+(dark?"dark":"light")
-
-if(dark){
-
-square.dataset.pos=num
-
-let n=document.createElement("div")
-n.className="num"
-n.innerText=num
-
-square.appendChild(n)
-
-num++
-
-}
-
-board.appendChild(square)
-
-}
-
-}
-
 }
 
 const rc={
@@ -306,146 +192,204 @@ const rc={
 29:[7,0],30:[7,2],31:[7,4],32:[7,6]
 }
 
-function getCapturedSquare(from,to){
+function defaultPosition(){
 
-let r1=rc[from][0]
-let c1=rc[from][1]
-let r2=rc[to][0]
-let c2=rc[to][1]
+data.start.white=[]
+data.start.black=[]
 
-let r=(r1+r2)/2
-let c=(c1+c2)/2
+for(let i=1;i<=8;i++)
+data.start.white.push({square:i,king:false})
 
-for(let k in rc){
-if(rc[k][0]==r && rc[k][1]==c){
-return parseInt(k)
-}
-}
-
-return null
+for(let i=25;i<=32;i++)
+data.start.black.push({square:i,king:false})
 
 }
 
-function getCapturedSquaresKing(from,to){
-
-let r1=rc[from][0]
-let c1=rc[from][1]
-
-let r2=rc[to][0]
-let c2=rc[to][1]
-
-let dr=Math.sign(r2-r1)
-let dc=Math.sign(c2-c1)
-
-let captured=[]
-
-let r=r1+dr
-let c=c1+dc
-
-while(r!=r2 && c!=c2){
-
-for(let k in rc){
-if(rc[k][0]==r && rc[k][1]==c){
-captured.push(parseInt(k))
-}
+function setBottomFirst(){
+flip=false
+resetGame()
 }
 
-r+=dr
-c+=dc
+function setTopFirst(){
+flip=true
+resetGame()
+}
+
+function setPlayMode(){
+mode="play"
+}
+
+function setCustomMode(){
+
+mode="custom"
+stop()
+step=0
+
+setCustomButtons(true)
+
+render()
 
 }
 
-return captured
+function clearBoard(){
+
+data.start.white=[]
+data.start.black=[]
+step=0
+render()
 
 }
 
-function buildPosition(step){
+function clearMoves(){
 
-let white=data.start.white.map(s=>({square:s,king:false}))
-let black=data.start.black.map(s=>({square:s,king:false}))
+document.getElementById("movesInput").value=""
+document.getElementById("timeline").value=""
+data.moves=[]
+setPlayButtons(false)
+step=0
 
-for(let i=0;i<step;i++){
+document.getElementById("runBtn").disabled=false
 
-let move=data.moves[i]
-let sequences=move.split(",")
-
-for(let seq of sequences){
-
-let capture=seq.includes("x")
-let parts=seq.split(/[-x]/)
-
-let from=parseInt(parts[0])
-let to=parseInt(parts[1])
-
-let arr=white.find(p=>p.square==from)?white:black
-let enemy=arr===white?black:white
-
-let piece=arr.find(p=>p.square==from)
-
-piece.square=to
-
-if(arr===black && to<=4) piece.king=true
-if(arr===white && to>=29) piece.king=true
-
-if(capture){
-
-if(piece.king){
-
-let squares=getCapturedSquaresKing(from,to)
-
-squares.forEach(s=>{
-let idx=enemy.findIndex(p=>p.square==s)
-if(idx>-1) enemy.splice(idx,1)
-})
-
-}else{
-
-let eaten=getCapturedSquare(from,to)
-
-let idx=enemy.findIndex(p=>p.square==eaten)
-if(idx>-1) enemy.splice(idx,1)
+render()
 
 }
 
+function tapSquare(e){
+
+if(mode!="custom") return
+
+let pos=parseInt(e.currentTarget.dataset.pos)
+
+let arr=data.start[placeColor]
+
+let i=arr.findIndex(p=>p.square==pos)
+
+if(i==-1){
+arr.push({square:pos,king:false})
+}
+else if(!arr[i].king){
+arr[i].king=true
+}
+else{
+arr.splice(i,1)
 }
 
-}
+render()
 
 }
 
-return[
-...white.map(p=>({...p,color:"white"})),
-...black.map(p=>({...p,color:"black"}))
-]
+function drawBoard(){
+
+const board=document.getElementById("board")
+board.innerHTML=""
+
+let numbers=[...Array(32).keys()].map(i=>i+1)
+
+if(flip) numbers.reverse()
+
+let index=0
+
+for(let r=0;r<8;r++){
+for(let c=0;c<8;c++){
+
+let sq=document.createElement("div")
+
+let dark=(r+c)%2==1
+
+sq.className="square "+(dark?"dark":"light")
+
+if(dark){
+
+let pos=numbers[index++]
+
+sq.dataset.pos=pos
+sq.onclick=tapSquare
+
+let n=document.createElement("div")
+n.className="num"
+n.innerText=pos
+
+sq.appendChild(n)
 
 }
 
-function render(){
+board.appendChild(sq)
 
-document.querySelectorAll(".piece").forEach(e=>e.remove())
-
-let pos=buildPosition(step)
-
-for(let p of pos){
-
-let cell=document.querySelector(`[data-pos='${p.square}']`)
-
-if(cell){
-
-let piece=document.createElement("div")
-
-piece.className="piece "+p.color
-
-if(p.king) piece.classList.add("king")
-
-cell.appendChild(piece)
-
+}
 }
 
 }
 
-document.getElementById("moveInfo").innerText=
-step>0?data.moves[step-1]:"Start position"
+function loadMoves(){
+
+stop()
+
+let txt=document.getElementById("movesInput").value
+
+let newMoves=txt.split(/[\n,]+/)
+.map(x=>x.trim())
+.filter(x=>x)
+
+data.moves=newMoves
+
+document.getElementById("timeline").value=data.moves.join("\n")
+
+document.getElementById("movesInput").value=""
+
+document.getElementById("runBtn").disabled=true
+
+setPlayButtons(true)
+
+step=0
+render()
+}
+
+function continueMoves(){
+
+stop()
+
+let txt=document.getElementById("movesInput").value
+
+let more=txt.split(/[\n,]+/)
+.map(x=>x.trim())
+.filter(x=>x)
+
+data.moves=data.moves.concat(more)
+
+document.getElementById("timeline").value=data.moves.join("\n")
+
+document.getElementById("movesInput").value=""
+
+render()
+
+}
+
+function play(){
+
+if(timer) return
+
+timer=setInterval(()=>{
+
+if(step<data.moves.length){
+step++
+render()
+}else stop()
+
+},speed)
+
+}
+
+function stop(){
+clearInterval(timer)
+timer=null
+}
+
+function resetGame(){
+
+stop()
+step=0
+drawBoard()
+render()
 
 }
 
@@ -467,23 +411,132 @@ render()
 
 }
 
-function continueMoves(){
+function getCapturedSquares(from,to){
 
-stop()
+let r1=rc[from][0]
+let c1=rc[from][1]
 
-let txt=document.getElementById("continueInput").value
+let r2=rc[to][0]
+let c2=rc[to][1]
 
-txt=txt.replace(/"/g,"")
+let dr=Math.sign(r2-r1)
+let dc=Math.sign(c2-c1)
 
-let arr=txt.split(/[\n,]+/)
-.map(x=>x.trim())
-.filter(x=>x)
+let r=r1+dr
+let c=c1+dc
 
-data.moves=data.moves.concat(arr)
+let squares=[]
 
-render()
+while(r!=r2 && c!=c2){
+
+for(let k in rc){
+
+if(rc[k][0]==r && rc[k][1]==c)
+squares.push(parseInt(k))
 
 }
+
+r+=dr
+c+=dc
+
+}
+
+return squares
+
+}
+
+function promote(piece){
+
+let r=rc[piece.square][0]
+
+if(piece.color=="black" && r==0)
+piece.king=true
+
+if(piece.color=="white" && r==7)
+piece.king=true
+
+}
+
+function buildPosition(step){
+
+let white=data.start.white.map(p=>({...p,color:"white"}))
+let black=data.start.black.map(p=>({...p,color:"black"}))
+
+for(let i=0;i<step;i++){
+
+let move=data.moves[i]
+
+let parts=move.split(/[-x]/)
+
+let from=parseInt(parts[0])
+let to=parseInt(parts[1])
+
+let arr=white.find(p=>p.square==from)?white:black
+let enemy=arr===white?black:white
+
+let piece=arr.find(p=>p.square==from)
+if(!piece) continue
+
+piece.square=to
+
+if(move.includes("x")){
+
+let squares=getCapturedSquares(from,to)
+
+squares.forEach(s=>{
+
+let idx=enemy.findIndex(p=>p.square==s)
+
+if(idx>-1) enemy.splice(idx,1)
+
+})
+
+}
+
+promote(piece)
+
+}
+
+return [...white,...black]
+
+}
+
+function render(){
+
+document.querySelectorAll(".piece").forEach(e=>e.remove())
+
+let pos=buildPosition(step)
+
+pos.forEach(p=>{
+
+let cell=document.querySelector(`[data-pos='${p.square}']`)
+
+if(cell){
+
+let piece=document.createElement("div")
+
+piece.className="piece "+p.color
+
+if(p.king) piece.classList.add("king")
+
+cell.appendChild(piece)
+
+}
+
+})
+
+document.getElementById("moveInfo").innerText=
+step>0?data.moves[step-1]:"Start Position"
+
+}
+
+defaultPosition()
+drawBoard()
+
+setPlayButtons(false)
+setCustomButtons(false)
+
+render()
 
 </script>
 
