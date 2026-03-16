@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="UTF-8">
@@ -9,154 +8,191 @@
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
 :root {
-–bg:#f5f0e8; –panel:#fff; –border:#c8b89a;
-–accent:#c0392b; –gold:#b8860b;
-–light-sq:#f0d9b5; –dark-sq:#b58863;
-–text:#2c1810; –muted:#8a7060;
-–green:#27ae60; –blue:#2980b9;
+  --bg:#f5f0e8; --panel:#fff; --border:#c8b89a;
+  --accent:#c0392b; --gold:#b8860b;
+  --light-sq:#f0d9b5; --dark-sq:#b58863;
+  --text:#2c1810; --muted:#8a7060;
+  --green:#27ae60;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
+body.dark{
+  --bg:#1c1c1c; --panel:#272727; --border:#3a3a3a;
+  --accent:#cf4444; --gold:#c49a1a;
+  --light-sq:#3a3530; --dark-sq:#222018;
+  --text:#d4cec8; --muted:#7a7470;
+  --green:#3aaf63;
+  background:#1c1c1c;
+  color:#d4cec8;
+}
+body.dark #board{border-color:#4a4a4a;}
+body.dark .light{background:#3a3530;}
+body.dark .dark{background:#222018;}
+*{box-sizing:border-box;margin:0;padding:0;
+  -webkit-tap-highlight-color:transparent !important;
+  -webkit-touch-callout:none;
+  outline:none;}
 html{overscroll-behavior:none;}
-body{font-family:‘Sarabun’,sans-serif;background:var(–bg);color:var(–text);
-min-height:100vh;padding-bottom:50px;touch-action:manipulation;}
-
-h1{font-size:1.3rem;font-weight:700;color:var(–gold);text-align:center;
-padding:12px 0 2px;letter-spacing:2px;}
-.subtitle{text-align:center;font-size:.7rem;color:var(–muted);
-font-family:‘IBM Plex Mono’,monospace;margin-bottom:10px;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;padding-bottom:40px;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;}
 
 /* OPTIONS */
-.opt-section{background:var(–panel);border:1px solid var(–border);
-border-radius:10px;margin:6px 10px;padding:9px 14px;}
+.opt-section{background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;margin:6px 10px;padding:9px 14px;}
 .opt-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;}
-.opt-label{font-size:.7rem;font-family:‘IBM Plex Mono’,monospace;color:var(–muted);
-min-width:80px;letter-spacing:.5px;}
-.opt-row label{font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:4px;color:var(–text);}
-.opt-row input[type=radio]{accent-color:var(–accent);}
+.opt-label{font-size:.7rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);
+  min-width:80px;letter-spacing:.5px;}
+.opt-row label{font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:4px;color:var(--text);}
+.opt-row input[type=radio]{accent-color:var(--accent);}
 .opt-row label.disabled{color:#bbb;pointer-events:none;}
-.divider{height:1px;background:var(–border);margin:7px 0;}
+.divider{height:1px;background:var(--border);margin:7px 0;}
 .start-row{display:flex;justify-content:center;margin-top:6px;}
 
-/* STATUS */
-#statusBar{text-align:center;font-size:.88rem;min-height:26px;color:var(–accent);
-font-weight:700;padding:4px 10px 6px;}
-
-/* BOARD CONTAINER — relative so SVG overlay can sit on top */
-#boardWrap{display:flex;justify-content:center;padding:0 4px;position:relative;}
+/* BOARD CONTAINER */
+#boardWrap{display:flex;justify-content:center;padding:4px 12px;position:relative;}
 #board{display:grid;grid-template-columns:repeat(8,1fr);
-width:min(95vw,480px);aspect-ratio:1/1;
-border:3px solid #8b5e3c;border-radius:3px;overflow:hidden;
-box-shadow:0 4px 16px rgba(0,0,0,.25);}
+  border:3px solid #8b5e3c;border-radius:3px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);margin:0 auto;
+  box-sizing:content-box;}
 
-/* SVG arrow overlay — same size as #board, pointer-events none normally */
+/* SVG arrow overlay */
 #arrowSvg{
-position:absolute;top:0;left:50%;
-transform:translateX(-50%);
-width:min(95vw,480px);aspect-ratio:1/1;
-pointer-events:none;
-z-index:20;
-overflow:visible;
+  position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:20;
+  overflow:visible;
 }
 #arrowSvg.drawing-mode{pointer-events:all;cursor:crosshair;}
 
 .square{position:relative;cursor:pointer;}
-.light{background:var(–light-sq);}
-.dark{background:var(–dark-sq);}
+.square.light{background:var(--light-sq);}
+.square.dark{background:var(--dark-sq);}
 .num{position:absolute;top:2px;right:3px;font-size:9px;
-font-family:‘IBM Plex Mono’,monospace;pointer-events:none;font-weight:600;z-index:1;}
-.dark .num{color:rgba(0,0,0,.55);}
-.light .num{color:rgba(139,90,43,.5);}
+  font-family:'IBM Plex Mono',monospace;pointer-events:none;font-weight:700;z-index:1;}
+.dark .num{color:rgba(0,0,0,.6);}
+.light .num{color:rgba(80,50,20,.6);}
+body.dark .dark .num{color:rgba(255,220,150,.75);}
+body.dark .light .num{color:rgba(200,180,130,.65);}
 
 /* PIECES */
 .piece{width:76%;height:76%;border-radius:50%;position:absolute;
-top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;}
-.white-p{background:radial-gradient(circle at 35% 32%,#fff 0%,#e8ddd0 60%,#c8b8a8 100%);
-border:2.5px solid #9a8878;
-box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 1px 3px rgba(255,255,255,.9);}
-.black-p{background:radial-gradient(circle at 35% 32%,#5a4030 0%,#2a1808 60%,#100500 100%);
-border:2.5px solid #6a4820;
-box-shadow:0 3px 6px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,180,60,.2);}
-.king::after{content:“♛”;position:absolute;inset:0;display:flex;
-align-items:center;justify-content:center;font-size:105%;
-color:#f5c842;text-shadow:0 1px 4px rgba(0,0,0,1);pointer-events:none;}
+  top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;}
+.white-p{
+  background:radial-gradient(circle at 38% 30%,#ffffff 0%,#f8f0d8 35%,#d4aa60 80%,#b88a30 100%);
+  border:3px solid #7a5c28;
+  box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 3px 6px rgba(255,255,255,1),inset 0 -2px 4px rgba(100,60,0,.3);}
+.black-p{
+  background:radial-gradient(circle at 35% 30%,#4a4a4a 0%,#1a1a1a 45%,#050505 100%);
+  border:3px solid #888888;
+  box-shadow:0 4px 10px rgba(0,0,0,.8),inset 0 2px 4px rgba(180,180,180,.2),inset 0 -2px 4px rgba(0,0,0,.7);}
+.king::after{content:"♛";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:130%;
+  color:#f5c842;text-shadow:0 0 6px rgba(0,0,0,1),0 1px 4px rgba(0,0,0,1);pointer-events:none;}
 
 /* HIGHLIGHTS */
 .sq-last{outline:3px solid #27ae60;outline-offset:-3px;}
 .sq-cap{outline:3px solid #c0392b;outline-offset:-3px;}
-.sq-sel{outline:3px solid #2980b9;outline-offset:-3px;background:#d4e8f8!important;}
-.sq-hint::before{content:’’;position:absolute;inset:20%;border-radius:50%;
-background:rgba(39,174,96,.5);border:2px solid #27ae60;pointer-events:none;z-index:1;}
+.sq-sel{outline:3px solid #2980b9;outline-offset:-3px;}
+.sq-hint::before{content:'';position:absolute;inset:22%;border-radius:50%;
+  background:rgba(39,174,96,.55);border:2px solid #27ae60;pointer-events:none;z-index:1;}
 
 /* PLACE BAR */
 #placeBar{display:none;justify-content:center;align-items:center;gap:10px;
-padding:6px 10px;flex-wrap:wrap;}
+  padding:6px 10px;flex-wrap:wrap;}
 #placeBar.visible{display:flex;}
-.place-label{font-size:.8rem;color:var(–muted);}
+.place-label{font-size:.8rem;color:var(--muted);}
 .color-btn{padding:5px 14px;border-radius:20px;border:2px solid transparent;cursor:pointer;
-font-family:‘Sarabun’,sans-serif;font-size:.8rem;font-weight:600;transition:all .15s;}
+  font-family:'Sarabun',sans-serif;font-size:.8rem;font-weight:600;transition:all .15s;}
 .color-btn.white-btn{background:#f8f0e3;color:#3a2a1a;border-color:#c0b0a0;}
 .color-btn.black-btn{background:#2a1808;color:#f0d090;border-color:#6a4820;}
-.color-btn.active{box-shadow:0 0 0 3px var(–gold);}
+.color-btn.active{box-shadow:0 0 0 3px var(--gold);}
 
 /* CTRL BUTTONS */
 .ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px 8px 4px;}
-.btn{font-family:‘Sarabun’,sans-serif;font-size:.82rem;font-weight:600;
-padding:7px 14px;border:none;border-radius:8px;cursor:pointer;transition:all .15s;}
+.btn{font-family:'Sarabun',sans-serif;font-size:.82rem;font-weight:600;
+  padding:7px 14px;border:none;border-radius:8px;cursor:pointer;transition:background .15s;
+  outline:none;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;
+  box-shadow:none;}
+.btn:focus,.btn:active{outline:none;box-shadow:none;}
 .btn:disabled{opacity:.35;cursor:default;}
-.btn-primary{background:var(–accent);color:#fff;}
-.btn-primary:not(:disabled):hover{filter:brightness(1.1);}
-.btn-sec{background:#e8ddd0;color:var(–text);border:1px solid var(–border);}
-.btn-sec:not(:disabled):hover{background:#d8ccc0;}
-.btn-gold{background:var(–gold);color:#fff;}
-.btn-gold:not(:disabled):hover{filter:brightness(1.1);}
-.btn-green{background:var(–green);color:#fff;}
-.btn-green:not(:disabled):hover{filter:brightness(1.1);}
-/* Arrow button — toggles red when active */
-.btn-arrow{background:#e8ddd0;color:var(–text);border:1px solid var(–border);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{background:var(--accent);}
+.btn-sec{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
+.btn-sec:active{background:#d4ccbf;}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-arrow{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
 .btn-arrow.active{background:#c0392b;color:#fff;border-color:#c0392b;}
-.btn-arrow:not(:disabled):hover{filter:brightness(1.05);}
-
 .btn-start{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;
-font-size:1rem;font-weight:700;padding:10px 36px;border:none;border-radius:10px;
-cursor:pointer;box-shadow:0 3px 10px rgba(39,174,96,.4);
-transition:all .18s;letter-spacing:.5px;}
-.btn-start:hover{transform:translateY(-1px);filter:brightness(1.1);}
-
-/* SLIDER */
+  font-size:.95rem;font-weight:700;padding:8px 28px;border:none;border-radius:9px;
+  cursor:pointer;letter-spacing:.3px;outline:none;-webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;box-shadow:none;}
+.btn-replay{background:#e0d8cc;color:#1a6090;border:1px solid #b0a898;font-weight:700;}
+.btn-replay:disabled{opacity:.35;cursor:default;}
+body.dark .btn-replay{background:#333333;color:#5aaedf;border-color:#484848;}
+.square{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.square:focus{outline:none;}
+body.dark .opt-section{background:#272727;border-color:#3a3a3a;}
+body.dark .panel{background:#272727;border-color:#3a3a3a;}
+body.dark .opt-row label{color:#d4cec8;}
+body.dark .opt-label{color:#7a7470;}
+body.dark .divider{background:#3a3a3a;}
+body.dark .btn-sec{background:#333;color:#d4cec8;border-color:#484848;}
+body.dark .btn-arrow{background:#333;color:#d4cec8;border-color:#484848;}
+body.dark textarea{background:#202020;color:#d4cec8;border-color:#3a3a3a;}
+body.dark #timeline{color:#6ecf6e;}
+body.dark .panel-title{color:#7a7470;}
+body.dark #stepLabel{color:#7a7470;}
+body.dark .place-label{color:#7a7470;}
+body.dark #board{border-color:#4a4a4a;}
+/* number color in dark mode handled by resizeBoard JS */
 .slider-wrap{display:flex;align-items:center;gap:10px;padding:6px 16px 2px;}
-#slider{flex:1;accent-color:var(–accent);}
-#stepLabel{font-family:‘IBM Plex Mono’,monospace;font-size:.75rem;color:var(–muted);
-min-width:55px;text-align:right;}
+#slider{flex:1;accent-color:var(--accent);}
+#stepLabel{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--muted);
+  min-width:55px;text-align:right;}
 
 /* PANELS */
-.panel{background:var(–panel);border:1px solid var(–border);border-radius:10px;
-margin:8px 10px 0;padding:10px 12px;}
-.panel-title{font-size:.7rem;font-family:‘IBM Plex Mono’,monospace;color:var(–muted);
-letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase;}
-textarea{width:100%;background:#f8f4ee;border:1px solid var(–border);border-radius:7px;
-color:var(–text);font-family:‘IBM Plex Mono’,monospace;font-size:.78rem;
-padding:7px 9px;resize:vertical;min-height:68px;outline:none;transition:border-color .2s;}
-textarea:focus{border-color:var(–accent);}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  margin:8px 10px 0;padding:10px 12px;}
+.panel-title{font-size:.7rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);
+  letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase;}
+textarea{width:100%;background:#f8f4ee;border:1px solid var(--border);border-radius:7px;
+  color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+  padding:7px 9px;resize:vertical;min-height:68px;outline:none;transition:border-color .2s;}
+textarea:focus{border-color:var(--accent);}
 #timelineWrap{position:relative;}
-#timeline{color:#1a5c1a;min-height:75px;}
-.copy-btn{position:absolute;top:7px;right:7px;font-size:.68rem;padding:3px 8px;
-border-radius:5px;background:var(–border);color:var(–text);border:none;cursor:pointer;
-font-family:‘IBM Plex Mono’,monospace;}
-.copy-btn:hover{background:#b8a898;}
-#moveInfo{text-align:center;font-family:‘IBM Plex Mono’,monospace;font-size:.82rem;
-color:var(–gold);min-height:20px;margin-top:6px;}
+#timeline{color:#1a6e1a;min-height:85px;padding-bottom:42px;}
+body.dark #timeline{color:#5db85d;}
+.copy-btn{
+  position:absolute;bottom:8px;right:6px;
+  font-size:.85rem;padding:6px 18px;
+  border-radius:7px;
+  background:#2980b9;color:#fff;
+  border:none;cursor:pointer;
+  font-family:'Sarabun',sans-serif;font-weight:700;
+  outline:none;letter-spacing:.3px;
+}
 .turn-dot{display:inline-block;width:10px;height:10px;border-radius:50%;
-margin-right:5px;vertical-align:middle;}
-</style>
+  margin-right:5px;vertical-align:middle;}
 
+/* toast notification */
+#copyToast{
+  position:fixed;top:30px;left:50%;transform:translateX(-50%);
+  background:#27ae60;color:#fff;
+  font-family:'Sarabun',sans-serif;font-size:.9rem;font-weight:700;
+  padding:10px 24px;border-radius:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:9999;
+}
+</style>
 </head>
 <body>
 
-<h1>หมากฮอสไทย</h1>
-<div class="subtitle">THAI CHECKERS</div>
+<!-- TOAST -->
+<div id="copyToast">✓ Copy สำเร็จ!</div>
 
 <!-- SETTINGS PANEL -->
-
 <div class="opt-section" id="settingsPanel">
   <!-- ROW 1: MODE -->
   <div class="opt-row">
@@ -166,101 +202,101 @@ margin-right:5px;vertical-align:middle;}
     <label><input type="radio" name="mode" value="custom" onchange="onModeChange(this.value)"> วางหมากเอง</label>
   </div>
   <div class="divider"></div>
-  <!-- ROW 2: BOARD ORIENTATION — ดำเดินก่อนเสมอ -->
+  <!-- ROW 2: ORIENT -->
   <div class="opt-row">
     <span class="opt-label">หมุนกระดาน</span>
     <label><input type="radio" name="orient" value="blackBottom" checked onchange="onOrientChange(this.value)"> ล่างเดินก่อน</label>
     <label><input type="radio" name="orient" value="blackTop" onchange="onOrientChange(this.value)"> บนเดินก่อน</label>
   </div>
-  <!-- START BUTTON -->
+  <!-- ROW 3: start + darkmode button, turn badge row -->
   <div class="divider"></div>
-  <div class="start-row" id="startRow">
-    <button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div id="startRow" style="flex:1;display:flex;align-items:center;gap:8px;">
+      <button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>
+    </div>
+    <span id="turnBadge" style="font-size:.82rem;font-weight:700;color:var(--accent);flex:1;text-align:center;"></span>
+    <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 10px;font-size:.8rem;white-space:nowrap;">🌙 กลางคืน</button>
   </div>
 </div>
 
-<!-- STATUS -->
-
-<div id="statusBar">เลือกตั้งค่าแล้วกดเริ่มเกม</div>
-
 <!-- PLACE BAR (custom mode) -->
-
 <div id="placeBar">
   <span class="place-label">วาง:</span>
   <button class="color-btn white-btn active" id="btnWhite" onclick="setPlaceColor('white')">⬤ ขาว</button>
   <button class="color-btn black-btn" id="btnBlack" onclick="setPlaceColor('black')">⬤ ดำ</button>
   <button class="btn btn-sec" style="padding:5px 10px;font-size:.78rem" onclick="clearBoard()">✕ Clear</button>
-  <button class="btn btn-green" style="padding:5px 10px;font-size:.78rem" onclick="confirmCustom()">✓ ยืนยัน</button>
+  <button style="padding:6px 16px;font-size:.85rem;font-weight:700;background:#1a9c3e;color:#fff;border:none;border-radius:8px;cursor:pointer;" onclick="confirmCustom()">✓ ยืนยัน</button>
 </div>
 
 <!-- BOARD -->
-
 <div id="boardWrap">
   <div id="board"></div>
   <!-- SVG arrow overlay -->
   <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <marker id="arrowhead" markerWidth="6" markerHeight="6"
+      <marker id="arrowhead-red" markerWidth="6" markerHeight="6"
               refX="5" refY="3" orient="auto">
         <path d="M0,0 L6,3 L0,6 Z" fill="#e02020" opacity="0.92"/>
       </marker>
+      <marker id="arrowhead-green" markerWidth="6" markerHeight="6"
+              refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#20c020" opacity="0.92"/>
+      </marker>
     </defs>
-    <!-- arrows rendered here -->
   </svg>
 </div>
 
-<!-- Arrow toggle button row -->
-
-<div class="ctrl-row" id="arrowRow" style="display:none">
-  <button class="btn btn-arrow" id="arrowToggleBtn" onclick="toggleArrowMode()">✏️ วาดลูกศร</button>
+<!-- GAME ACTION ROW: undo + arrow tools (shown when game started) -->
+<div class="ctrl-row" id="gameActionRow" style="display:none">
+  <button class="btn btn-sec" onclick="undoMove()">↩ Undo</button>
+  <button class="btn btn-arrow" id="arrowToggleBtn" onclick="toggleArrowMode('red')">🔴 ลูกศร</button>
+  <button class="btn btn-arrow" id="arrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ลูกศร</button>
   <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
 </div>
 
-<!-- PLAY CONTROLS -->
-
-<div class="ctrl-row" id="playCtrl" style="display:none">
-  <button class="btn btn-sec" onclick="undoMove()">↩ Undo</button>
-  <button class="btn btn-primary" onclick="newGame()">↺ New Game</button>
+<!-- REPLAY CONTROLS -->
+<div class="ctrl-row" id="replayCtrl" style="display:none">
+  <button class="btn btn-replay" id="rPrev"  onclick="prev()"         disabled>◀ Prev</button>
+  <button class="btn btn-replay" id="rPlay"  onclick="togglePlay()"   disabled>▶ Play</button>
+  <button class="btn btn-replay" id="rNext"  onclick="next()"         disabled>Next ▶</button>
+  <button class="btn btn-replay" id="rStop"  onclick="stop()"         disabled>■ Stop</button>
+  <button class="btn btn-replay" id="rReset" onclick="resetToStart()" disabled>↺ Reset</button>
 </div>
 
-<!-- REPLAY CONTROLS -->
-
-<div class="ctrl-row" id="replayCtrl" style="display:none">
-  <button class="btn btn-sec" onclick="prev()">◀ Prev</button>
-  <button class="btn btn-primary" id="playBtn" onclick="togglePlay()">▶ Play</button>
-  <button class="btn btn-sec" onclick="next()">Next ▶</button>
-  <button class="btn btn-sec" onclick="stop()">■ Stop</button>
-  <button class="btn btn-gold" onclick="resetToStart()">↺ Reset</button>
+<!-- REPLAY ARROW ROW -->
+<div class="ctrl-row" id="replayArrowRow" style="display:none">
+  <button class="btn btn-arrow" id="replayArrowBtn" onclick="toggleArrowMode('red')">🔴 ลูกศร</button>
+  <button class="btn btn-arrow" id="replayArrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ลูกศร</button>
+  <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
 </div>
 
 <!-- SLIDER -->
-
 <div class="slider-wrap" id="sliderWrap" style="display:none">
   <input id="slider" type="range" min="0" max="0" value="0" oninput="sliderMove(this.value)">
   <span id="stepLabel">0 / 0</span>
 </div>
 
 <!-- MOVES INPUT (replay) -->
-
 <div class="panel" id="inputPanel" style="display:none">
   <div class="panel-title">Moves Input</div>
-  <textarea id="movesInput" placeholder="วาง timeline ที่นี่แล้วกด Run&#10;เช่น&#10;@white:10,14K&#10;@black:23,31K&#10;@first:black&#10;black 25-22&#10;white 8-11"></textarea>
+  <textarea id="movesInput" placeholder="วาง timeline ที่นี่แล้วกด Run&#10;เช่น&#10;@white:1,2,3,4,5,6,7,8&#10;@black:25,26,27,28,29,30,31,32&#10;@first:black&#10;black 25-22&#10;white 8-11" style="min-height:80px;" onclick="this.scrollTop=0"></textarea>
   <div class="ctrl-row" style="padding:6px 0 0">
-    <button class="btn btn-primary" onclick="loadMoves()">▶ Run</button>
-    <button class="btn btn-sec" onclick="continueMoves()">+ Continue</button>
-    <button class="btn btn-sec" onclick="clearMoves()">✕ Clear</button>
+    <button class="btn btn-replay" id="runBtn"          onclick="loadMoves()">▶ Run</button>
+    <button class="btn btn-replay" id="continueBtn"     onclick="continueMoves()" disabled>+ Continue</button>
+    <button class="btn btn-replay" id="clearTimelineBtn" onclick="clearMoves()"  disabled>Clear Timeline</button>
   </div>
 </div>
 
 <!-- TIMELINE -->
-
 <div class="panel">
-  <div class="panel-title">Timeline</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <span class="panel-title" style="margin-bottom:0;">Timeline</span>
+    <span id="moveInfo" style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--gold);"></span>
+  </div>
   <div id="timelineWrap">
     <textarea id="timeline" readonly placeholder="timeline จะแสดงที่นี่..."></textarea>
     <button class="copy-btn" onclick="copyTimeline()">Copy</button>
   </div>
-  <div id="moveInfo"></div>
 </div>
 
 <script>
@@ -306,9 +342,9 @@ function onModeChange(m){
   let isPlay=m==="play", isReplay=m==="replay", isCustom=m==="custom";
   document.getElementById("startRow").style.display=isPlay?"flex":"none";
   document.getElementById("placeBar").classList.toggle("visible",isCustom);
-  document.getElementById("playCtrl").style.display="none";
-  document.getElementById("arrowRow").style.display="none";
+  document.getElementById("gameActionRow").style.display="none";
   document.getElementById("replayCtrl").style.display=isReplay?"flex":"none";
+  document.getElementById("replayArrowRow").style.display=isReplay?"flex":"none";
   document.getElementById("sliderWrap").style.display=isReplay?"flex":"none";
   document.getElementById("inputPanel").style.display=isReplay?"block":"none";
 
@@ -317,15 +353,25 @@ function onModeChange(m){
     document.getElementById("slider").max=0;
     document.getElementById("stepLabel").innerText="0 / 0";
     document.getElementById("moveInfo").innerText="";
-    drawBoard();clearHighlights();setStatus("วาง timeline ใน Moves Input แล้วกด Run");
+    document.getElementById("timeline").value="";
+    setReplayBtnsState(false); // all disabled except Run
+    drawBoard();clearHighlights();setStatus("");
   }
   if(isCustom){
     gameStarted=false;data.start.white=[];data.start.black=[];
-    drawBoard();clearHighlights();
-    setStatus("คลิกช่องมืดเพื่อวางหมาก • คลิกซ้ำ = King • คลิกซ้ำอีก = ลบ");
+    drawBoard();clearHighlights();setStatus("");
   }
   if(isPlay&&gameStarted){renderPlay();}
-  if(isPlay&&!gameStarted){drawBoard();clearHighlights();setStatus("เลือกตั้งค่าแล้วกดเริ่มเกม");}
+  if(isPlay&&!gameStarted){drawBoard();clearHighlights();setStatus("");}
+}
+
+function setReplayBtnsState(enabled){
+  ["rPrev","rPlay","rNext","rStop","rReset","continueBtn","clearTimelineBtn"].forEach(id=>{
+    let el=document.getElementById(id);
+    if(el) el.disabled=!enabled;
+  });
+  let runBtn=document.getElementById("runBtn");
+  if(runBtn) runBtn.disabled=enabled; // Run disabled AFTER loading
 }
 
 function onOrientChange(v){
@@ -360,16 +406,52 @@ function drawBoard(){
       board.appendChild(sq);
     }
   }
-  // reposition SVG to match board
-  positionArrowSvg();
+  resizeBoard();
 }
 
-function positionArrowSvg(){
-  // SVG is absolutely positioned via CSS; just match board size
-  let b=document.getElementById("board");
-  let svg=document.getElementById("arrowSvg");
-  svg.style.width=b.style.width||"";
+/* ══════════════════════════════════════
+   BOARD SIZING — JS controlled, no CSS min() or aspect-ratio
+══════════════════════════════════════ */
+function resizeBoard(){
+  // padding: 12px*2=24, border: 3px*2=6, safety: 10 → total 40px
+  let available = Math.min(window.innerWidth - 40, 480);
+  if(available < 80) available = 80;
+  let cell = Math.floor(available / 8);
+  let size = cell * 8;
+
+  let board = document.getElementById("board");
+  board.style.width  = size + "px";
+  board.style.height = size + "px";
+  board.style.gridTemplateColumns = "repeat(8," + cell + "px)";
+  board.style.gridTemplateRows    = "repeat(8," + cell + "px)";
+
+  // set color and size inline — no CSS variables, works in all browsers
+  let isDark = document.body.classList.contains("dark");
+  let lightColor  = isDark ? "#3d3730" : "#f0d9b5";
+  let darkColor   = isDark ? "#252018" : "#b58863";
+  let numDarkClr  = isDark ? "rgba(255,220,160,.85)" : "rgba(0,0,0,.55)";
+  let numLightClr = isDark ? "rgba(220,195,140,.7)"  : "rgba(139,90,43,.5)";
+
+  board.querySelectorAll(".square").forEach(sq => {
+    sq.style.width  = cell + "px";
+    sq.style.height = cell + "px";
+    sq.style.background = sq.classList.contains("light") ? lightColor : darkColor;
+    let num = sq.querySelector(".num");
+    if(num) num.style.color = sq.classList.contains("light") ? numLightClr : numDarkClr;
+  });
+
+  // SVG overlay matches board exactly
+  let svg = document.getElementById("arrowSvg");
+  svg.style.width  = size + "px";
+  svg.style.height = size + "px";
+  svg.setAttribute("width",  size);
+  svg.setAttribute("height", size);
+
+  renderArrows();
 }
+
+window.addEventListener("resize",resizeBoard);
+
 
 /* ══════════════════════════════════════
    DEFAULT POSITION
@@ -388,14 +470,13 @@ function startGame(){
   defaultPosition();
   playWhite=data.start.white.map(p=>({...p}));
   playBlack=data.start.black.map(p=>({...p}));
-  currentTurn="black"; // ดำเดินก่อนเสมอ
+  currentTurn="black";
   selected=null;chainPiece=null;playHistory=[];data.moves=[];
   saveInitPosition();
   updateTimeline();
   document.getElementById("startRow").innerHTML=
-    '<button class="btn btn-primary" onclick="newGame()" style="padding:8px 22px">↺ New Game</button>';
-  document.getElementById("playCtrl").style.display="flex";
-  document.getElementById("arrowRow").style.display="flex";
+    '<button class="btn btn-primary" onclick="newGame()" style="padding:7px 20px;font-size:.9rem;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;">↺ New Game</button>';
+  document.getElementById("gameActionRow").style.display="flex";
   drawBoard();renderPlay();
 }
 
@@ -403,11 +484,11 @@ function newGame(){
   document.getElementById("startRow").innerHTML=
     '<button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>';
   gameStarted=false;selected=null;chainPiece=null;playHistory=[];data.moves=[];
+  setStatus("");
   updateTimeline();
-  document.getElementById("playCtrl").style.display="none";
-  document.getElementById("arrowRow").style.display="none";
+  document.getElementById("gameActionRow").style.display="none";
   clearArrows();setArrowModeOff();
-  drawBoard();clearHighlights();setStatus("เลือกตั้งค่าแล้วกดเริ่มเกม");
+  drawBoard();clearHighlights();
 }
 
 /* ══════════════════════════════════════
@@ -696,18 +777,19 @@ function clearBoard(){data.start.white=[];data.start.black=[];render();}
 function confirmCustom(){
   playWhite=data.start.white.map(p=>({...p}));
   playBlack=data.start.black.map(p=>({...p}));
-  currentTurn="black"; // ดำเดินก่อนเสมอ
+  currentTurn="black";
   gameStarted=true;selected=null;chainPiece=null;playHistory=[];data.moves=[];
   saveInitPosition();
   updateTimeline();
   document.querySelector('input[name="mode"][value="play"]').checked=true;
   mode="play";
   document.getElementById("placeBar").classList.remove("visible");
+  document.getElementById("startRow").style.display="flex";
   document.getElementById("startRow").innerHTML=
-    '<button class="btn btn-primary" onclick="newGame()" style="padding:8px 22px">↺ New Game</button>';
-  document.getElementById("playCtrl").style.display="flex";
-  document.getElementById("arrowRow").style.display="flex";
+    '<button class="btn btn-primary" onclick="newGame()" style="padding:7px 20px;font-size:.9rem;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;">↺ New Game</button>';
+  document.getElementById("gameActionRow").style.display="flex";
   document.getElementById("replayCtrl").style.display="none";
+  document.getElementById("replayArrowRow").style.display="none";
   document.getElementById("sliderWrap").style.display="none";
   document.getElementById("inputPanel").style.display="none";
   renderPlay();
@@ -733,19 +815,37 @@ function updateTimeline(){
   document.getElementById("timeline").value=lines.join("\n");
 }
 
+function showToast(msg){
+  let t=document.getElementById("copyToast");
+  t.innerText=msg;t.style.opacity="1";
+  setTimeout(()=>t.style.opacity="0",2000);
+}
+
 function copyTimeline(){
   let txt=document.getElementById("timeline").value;
-  if(!txt)return;
-  navigator.clipboard.writeText(txt).then(()=>{
-    let btn=document.querySelector(".copy-btn");
-    btn.innerText="✓ Copied!";setTimeout(()=>btn.innerText="Copy",1500);
-  }).catch(()=>{
-    let ta=document.getElementById("timeline");
-    ta.removeAttribute("readonly");ta.select();document.execCommand("copy");
+  if(!txt.trim()){showToast("ไม่มีข้อมูล");return;}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt)
+      .then(()=>showToast("✓ Copy สำเร็จ!"))
+      .catch(()=>fallbackCopy(txt));
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  // ต้องใช้ textarea เพื่อรักษา newline (\n) — input element จะแปลง \n เป็น space
+  try{
+    let ta=document.createElement("textarea");
     ta.setAttribute("readonly","");
-    let btn=document.querySelector(".copy-btn");
-    btn.innerText="✓";setTimeout(()=>btn.innerText="Copy",1500);
-  });
+    ta.style.cssText="position:fixed;top:-9999px;left:-9999px;opacity:0;font-size:16px;";
+    ta.value=txt;
+    document.body.appendChild(ta);
+    ta.focus({preventScroll:true});
+    ta.select();
+    ta.setSelectionRange(0,99999);
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    window.getSelection&&window.getSelection().removeAllRanges();
+    showToast("✓ Copy สำเร็จ!");
+  }catch(e){showToast("Copy ไม่สำเร็จ");}
 }
 
 /* ══════════════════════════════════════
@@ -754,6 +854,7 @@ function copyTimeline(){
 function loadMoves(){
   stop();
   let txt=document.getElementById("movesInput").value.trim();
+  if(!txt){showToast("กรุณาใส่ข้อมูลใน Moves Input ก่อน");return;}
   let lines=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
   data.start.white=[];data.start.black=[];
   let moves=[];let firstColor=null;
@@ -780,7 +881,8 @@ function loadMoves(){
   }
   if(!data.start.white.length&&!data.start.black.length) defaultPosition();
   data.moves=moves;
-  document.getElementById("movesInput").value="";
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0; // clear and scroll to top
   document.getElementById("slider").max=moves.length;
   document.getElementById("stepLabel").innerText="0 / "+moves.length;
   step=0;
@@ -791,6 +893,7 @@ function loadMoves(){
   if(firstColor) tl.push("@first:"+firstColor);
   data.moves.forEach(m=>tl.push((m.color||"?")+" "+m.move));
   document.getElementById("timeline").value=tl.join("\n");
+  setReplayBtnsState(true); // enable playback, disable run
   render();
 }
 
@@ -798,40 +901,50 @@ function continueMoves(){
   stop();
   let txt=document.getElementById("movesInput").value;
   let more=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
+  if(!more.length) return;
   let parsed=more.map(line=>{
     let m=line.match(/^(white|black)\s+(.+)$/i);
     return m?{color:m[1].toLowerCase(),move:m[2]}:{color:null,move:line};
   });
   data.moves=data.moves.slice(0,step).concat(parsed);
-  document.getElementById("movesInput").value="";
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0;
   document.getElementById("slider").max=data.moves.length;
   render();
 }
 
 function sliderMove(v){step=parseInt(v);render();}
 function togglePlay(){
-  if(timer){stop();document.getElementById("playBtn").innerText="▶ Play";}
-  else{play();document.getElementById("playBtn").innerText="⏸ Pause";}
+  let btn=document.getElementById("rPlay");
+  if(timer){stop();}
+  else{play();if(btn)btn.innerText="⏸ Pause";}
 }
 function play(){
   if(timer)return;
   timer=setInterval(()=>{
     if(step<data.moves.length){step++;render();}
-    else{stop();document.getElementById("playBtn").innerText="▶ Play";}
+    else{stop();}
   },speed);
 }
-function stop(){clearInterval(timer);timer=null;let pb=document.getElementById("playBtn");if(pb)pb.innerText="▶ Play";}
+function stop(){
+  clearInterval(timer);timer=null;
+  let pb=document.getElementById("rPlay")||document.getElementById("playBtn");
+  if(pb&&!pb.disabled)pb.innerText="▶ Play";
+}
 function resetToStart(){stop();step=0;render();}
 function next(){if(step<data.moves.length){step++;render();}}
 function prev(){if(step>0){step--;render();}}
 function clearMoves(){
   stop();data.moves=[];step=0;
-  document.getElementById("movesInput").value="";
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0;
   document.getElementById("slider").max=0;
   document.getElementById("stepLabel").innerText="0 / 0";
   document.getElementById("timeline").value="";
   document.getElementById("moveInfo").innerText="";
+  setReplayBtnsState(false);
   clearHighlights();
+  drawBoard();
 }
 
 /* ══════════════════════════════════════
@@ -929,44 +1042,55 @@ function markSquare(s,cls){
   let cell=document.querySelector(`[data-pos='${s}']`);
   if(cell)cell.classList.add(cls);
 }
-function setStatus(html){document.getElementById("statusBar").innerHTML=html;}
+function setStatus(html){
+  let tb=document.getElementById("turnBadge");
+  if(tb) tb.innerHTML=html;
+}
 
 /* ══════════════════════════════════════
-   ARROW ANNOTATION SYSTEM
-   - ปุ่ม "วาดลูกศร" toggle drawing mode
-   - ใน drawing mode: drag บนกระดาน = วาดลูกศรแดง
-   - รองรับ mouse & touch
-   - ลากจากช่องหนึ่งไปอีกช่อง (snap to square center)
-   - ถ้าลากซ้ำเส้นเดิม = ลบเส้นนั้น
+   ARROW ANNOTATION SYSTEM  (2 สี: แดง/เขียว)
 ══════════════════════════════════════ */
 let arrowMode=false;
+let arrowColor="red"; // "red" | "green"
 let arrowDrag={active:false,fromSq:null,toSq:null};
-let arrows=[]; // [{from, to}]  square numbers
+let arrows=[]; // [{from, to, color}]
 
-function toggleArrowMode(){
-  arrowMode=!arrowMode;
-  let btn=document.getElementById("arrowToggleBtn");
-  let svg=document.getElementById("arrowSvg");
-  if(arrowMode){
-    btn.classList.add("active");
-    btn.innerText="✏️ วาดอยู่ (กดปิด)";
-    svg.classList.add("drawing-mode");
-    // disable board square clicks while drawing
-    document.querySelectorAll(".square").forEach(sq=>sq.style.pointerEvents="none");
-  } else {
-    setArrowModeOff();
+function toggleArrowMode(color){
+  // ถ้ากดปุ่มสีเดิมที่ active อยู่ = ปิด mode
+  if(arrowMode && arrowColor===color){
+    setArrowModeOff(); return;
   }
+  arrowColor=color||"red";
+  arrowMode=true;
+  // update button states
+  _updateArrowBtns();
+  document.getElementById("arrowSvg").classList.add("drawing-mode");
+  document.querySelectorAll(".square").forEach(sq=>sq.style.pointerEvents="none");
+}
+
+function _updateArrowBtns(){
+  // red buttons
+  ["arrowToggleBtn","replayArrowBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="red"){b.classList.add("active");b.innerText="🔴 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🔴 ลูกศร";}
+  });
+  // green buttons
+  ["arrowGreenBtn","replayArrowGreenBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="green"){b.classList.add("active");b.innerText="🟢 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🟢 ลูกศร";}
+  });
 }
 
 function setArrowModeOff(){
   arrowMode=false;
-  let btn=document.getElementById("arrowToggleBtn");
-  if(btn){btn.classList.remove("active");btn.innerText="✏️ วาดลูกศร";}
-  let svg=document.getElementById("arrowSvg");
-  svg.classList.remove("drawing-mode");
+  _updateArrowBtns();
+  document.getElementById("arrowSvg").classList.remove("drawing-mode");
   document.querySelectorAll(".square").forEach(sq=>sq.style.pointerEvents="");
   arrowDrag={active:false,fromSq:null,toSq:null};
-  // remove ghost line
   let ghost=document.getElementById("arrowGhost");
   if(ghost)ghost.remove();
 }
@@ -978,9 +1102,7 @@ function clearArrows(){
 
 /* get square number from a point (x,y) within the SVG element */
 function sqFromPoint(x,y){
-  let svg=document.getElementById("arrowSvg");
-  let rect=svg.getBoundingClientRect();
-  let size=rect.width; // square since aspect-ratio 1:1
+  let size=getBoardSize();
   let cellSize=size/8;
   let col=Math.floor(x/cellSize);
   let row=Math.floor(y/cellSize);
@@ -1000,13 +1122,15 @@ function sqFromPoint(x,y){
   return null;
 }
 
-/* center of a square in SVG coordinates (0..1 space, multiplied by SVG size) */
+function getBoardSize(){
+  let board=document.getElementById("board");
+  return parseInt(board.style.width)||Math.min(Math.floor(window.innerWidth*0.95),480);
+}
+
+/* center of a square in SVG coordinates */
 function sqCenter(sq){
-  let [r,c]=RC[sq];
-  // but if board is flipped we need visual row/col
   let nums=[...Array(32).keys()].map(i=>i+1);
   if(!blackBottom)nums.reverse();
-  // find visual position of sq
   let darkIdx=0,vr=-1,vc=-1;
   for(let row=0;row<8;row++)for(let col=0;col<8;col++){
     if((row+col)%2===1){
@@ -1015,8 +1139,7 @@ function sqCenter(sq){
     }
   }
   if(vr===-1)return null;
-  let svg=document.getElementById("arrowSvg");
-  let size=svg.getBoundingClientRect().width||parseFloat(svg.style.width)||320;
+  let size=getBoardSize();
   let cell=size/8;
   return[(vc+0.5)*cell,(vr+0.5)*cell];
 }
@@ -1064,60 +1187,163 @@ function svgUp(e){
   let from=arrowDrag.fromSq, to=arrowDrag.toSq;
   arrowDrag={active:false,fromSq:null,toSq:null};
   if(!from||!to||from===to){renderArrows();return;}
-  // toggle: if same arrow exists remove it, else add
-  let existing=arrows.findIndex(a=>a.from===from&&a.to===to);
+  // toggle: same arrow (same from/to/color) = remove; else add
+  let existing=arrows.findIndex(a=>a.from===from&&a.to===to&&a.color===arrowColor);
   if(existing>-1) arrows.splice(existing,1);
-  else arrows.push({from,to});
+  else arrows.push({from,to,color:arrowColor});
   renderArrows();
 }
 
 function renderArrows(ghostX,ghostY){
   let svg=document.getElementById("arrowSvg");
-  // remove old arrows (keep defs)
   svg.querySelectorAll(".arrow-line,#arrowGhost").forEach(e=>e.remove());
-
   for(let arrow of arrows){
     let fc=sqCenter(arrow.from), tc=sqCenter(arrow.to);
     if(!fc||!tc)continue;
-    drawArrowLine(svg,fc[0],fc[1],tc[0],tc[1],"arrowhead",false);
+    drawArrowLine(svg,fc[0],fc[1],tc[0],tc[1],arrow.color||"red",false);
   }
-
-  // ghost while dragging
   if(arrowDrag.active&&arrowDrag.fromSq&&ghostX!==undefined){
     let fc=sqCenter(arrowDrag.fromSq);
-    if(fc) drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,"arrowhead",true);
+    if(fc) drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,arrowColor,true);
   }
 }
 
-function drawArrowLine(svg,x1,y1,x2,y2,markerId,isGhost){
-  // shorten line near endpoints so arrowhead looks clean
+function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
   let dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
   if(len<5)return;
   let ux=dx/len,uy=dy/len;
-  let pad=len*0.18; // shorten tail
-  let padHead=len*0.12; // shorten near head
+  let pad=len*0.18, padHead=len*0.12;
   let sx=x1+ux*pad, sy=y1+uy*pad;
   let ex=x2-ux*padHead, ey=y2-uy*padHead;
-
+  let clr=color==="green"?"#20c020":"#e02020";
+  let markerId=color==="green"?"arrowhead-green":"arrowhead-red";
   let line=document.createElementNS("http://www.w3.org/2000/svg","line");
   line.setAttribute("x1",sx);line.setAttribute("y1",sy);
   line.setAttribute("x2",ex);line.setAttribute("y2",ey);
-  line.setAttribute("stroke","#e02020");
+  line.setAttribute("stroke",clr);
   line.setAttribute("stroke-width","4.5");
   line.setAttribute("stroke-linecap","round");
-  line.setAttribute("opacity",isGhost?"0.45":"0.82");
-  line.setAttribute("marker-end","url(#arrowhead)");
+  line.setAttribute("opacity",isGhost?"0.45":"0.85");
+  line.setAttribute("marker-end","url(#"+markerId+")");
   line.setAttribute("class",isGhost?"":"arrow-line");
   if(isGhost)line.id="arrowGhost";
   svg.appendChild(line);
+}
+
+
+/* ══════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════ */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  let isDark=document.body.classList.contains("dark");
+  let btn=document.getElementById("darkBtn");
+  if(btn) btn.innerText=isDark?"☀️ กลางวัน":"🌙 กลางคืน";
+  resizeBoard();
+}
+
+/* ══════════════════════════════════════
+   DRAG TO MOVE
+   - mousedown/touchstart on a piece square → start drag
+   - mousemove/touchmove → show ghost highlight on target square
+   - mouseup/touchend → complete move if valid target
+══════════════════════════════════════ */
+let dragState={active:false,fromSq:null,overSq:null};
+
+function getBoardEl(){ return document.getElementById("board"); }
+
+function sqFromClientXY(clientX,clientY){
+  let board=getBoardEl();
+  let rect=board.getBoundingClientRect();
+  let x=clientX-rect.left, y=clientY-rect.top;
+  let size=rect.width;
+  let cell=size/8;
+  // find visual square
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  let col=Math.floor(x/cell), row=Math.floor(y/cell);
+  if(col<0||col>7||row<0||row>7)return null;
+  if((row+col)%2!==1)return null;
+  let darkIdx=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if((r+c)%2===1){
+      if(r===row&&c===col)return nums[darkIdx];
+      darkIdx++;
+    }
+  }
+  return null;
+}
+
+// Attach drag listeners once on document (survive drawBoard rebuilds)
+function attachDragListeners(){
+  // boardWrap never gets rebuilt, safe to attach once
+  let wrap=document.getElementById("boardWrap");
+  wrap.addEventListener("mousedown",dragStart);
+  wrap.addEventListener("touchstart",dragStart,{passive:false});
+  document.addEventListener("mousemove",dragMove);
+  document.addEventListener("touchmove",dragMove,{passive:false});
+  document.addEventListener("mouseup",dragEnd);
+  document.addEventListener("touchend",dragEnd);
+}
+
+function dragStart(e){
+  if(arrowMode) return;
+  if(mode!=="play"||!gameStarted) return;
+
+  let src=e.touches?e.touches[0]:e;
+  let sq=sqFromClientXY(src.clientX,src.clientY);
+  if(!sq) return;
+
+  // only start drag on a piece of current turn
+  let allPieces=[...playWhite.map(p=>({...p,color:"white"})),...playBlack.map(p=>({...p,color:"black"}))];
+  let piece=allPieces.find(p=>p.square===sq);
+  if(!piece||piece.color!==currentTurn) return;
+
+  let legalMoves=getLegalMoves(playWhite,playBlack,currentTurn,chainPiece);
+  let movesFrom=legalMoves.filter(m=>m.from===sq);
+  if(!movesFrom.length) return;
+
+  // start drag — also set selected so hints show
+  dragState={active:true,fromSq:sq,overSq:null};
+  selected={square:sq};
+  e.preventDefault();
+  renderPlay();
+}
+
+function dragMove(e){
+  if(!dragState.active) return;
+  e.preventDefault();
+  let src=e.touches?e.touches[0]:e;
+  let sq=sqFromClientXY(src.clientX,src.clientY);
+  dragState.overSq=sq;
+}
+
+function dragEnd(e){
+  if(!dragState.active) return;
+  let from=dragState.fromSq;
+  let to=dragState.overSq;
+  dragState={active:false,fromSq:null,overSq:null};
+
+  if(to && from && to!==from){
+    // attempt move
+    playTap(from); // ensure selected
+    playTap(to);   // attempt to land
+  } else {
+    // short tap/click on same square — keep selected, let normal click handle
+    if(!to || to===from){
+      // already selected via dragStart, just re-render
+      renderPlay();
+    }
+  }
 }
 
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
 drawBoard();
+resizeBoard();
+attachDragListeners();
 onModeChange("play");
 </script>
-
 </body>
 </html>
