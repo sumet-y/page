@@ -1402,7 +1402,7 @@ let aiJobId  = 0;
 
 function initAI(){
   try{
-    aiWorker = new Worker('./worker.js', {type:'module'});
+    aiWorker = new Worker('./worker.js');
     aiWorker.onmessage = onWorkerMsg;
     aiWorker.onerror = ()=> setAIStatus('⚠️ โหลด engine ไม่สำเร็จ');
   } catch(e){
