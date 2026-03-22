@@ -1,13 +1,14 @@
-// worker.js — Web Worker that loads WASM engine and handles analysis requests
+// worker.js — Web Worker that loads WASM engine
 
 let engine = null;
 let engineReady = false;
 
 async function loadEngine() {
 try {
-// Import the wasm-bindgen generated JS glue
-const { default: init, analyze } = await import(’./thai_checkers_engine.js’);
-await init(’./thai_checkers_engine_bg.wasm’);
+// ใช้ self.location เพื่อหา base path ของ worker ไม่ว่าจะอยู่ subfolder ไหน
+const base = self.location.href.replace(/worker.js.*$/, ‘’);
+const { default: init, analyze } = await import(base + ‘thai_checkers_engine.js’);
+await init(base + ‘thai_checkers_engine_bg.wasm’);
 engine = { analyze };
 engineReady = true;
 postMessage({ type: ‘ready’ });
@@ -34,26 +35,15 @@ return;
 try {
 const { white, black, isBlackTurn, maxDepth, timeLimitMs } = data;
 const start = Date.now();
-
-```
-  const results = engine.analyze(
-    white,
-    black,
-    isBlackTurn,
-    maxDepth,
-    timeLimitMs
-  );
-
-  postMessage({
-    type: 'result',
-    id,
-    results: Array.from(results),
-    elapsed: Date.now() - start
-  });
+const results = engine.analyze(white, black, isBlackTurn, maxDepth, timeLimitMs);
+postMessage({
+type: ‘result’,
+id,
+results: Array.from(results),
+elapsed: Date.now() - start
+});
 } catch (e) {
-  postMessage({ type: 'result', id, results: [], error: e.message });
+postMessage({ type: ‘result’, id, results: [], error: e.message });
 }
-```
-
 }
 };
