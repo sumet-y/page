@@ -328,9 +328,9 @@ transition:opacity .2s;z-index:9999;
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <span id="aiStatus" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);">กำลังโหลด...</span>
       <select id="aiDepth" style="font-size:.75rem;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);outline:none;">
-        <option value="8">เร็ว</option>
-        <option value="14" selected>กลาง</option>
-        <option value="20">แม่น</option>
+        <option value="4">เร็ว (1วิ)</option>
+        <option value="6" selected>กลาง (3วิ)</option>
+        <option value="8">แม่น (5วิ)</option>
       </select>
       <button class="btn btn-replay" id="aiAnalyzeBtn" onclick="requestAnalysis()" disabled style="padding:5px 12px;font-size:.8rem;font-weight:700;">🔍 วิเคราะห์</button>
     </div>
@@ -1445,8 +1445,8 @@ function requestAnalysis(){
   let btn=document.getElementById('aiAnalyzeBtn');
   if(btn) btn.disabled=true;
 
-  let depthVal=parseInt(document.getElementById('aiDepth').value)||14;
-  let timeMap={8:1500, 14:3000, 20:6000};
+  let depthVal=parseInt(document.getElementById('aiDepth').value)||6;
+  let timeMap={4:1000, 6:3000, 8:5000};
   let timeMs=timeMap[depthVal]||3000;
 
   // ใช้ setTimeout เพื่อให้ UI update ก่อนที่จะเริ่มคำนวณ
