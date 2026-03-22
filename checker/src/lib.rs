@@ -594,7 +594,7 @@ pub fn analyze(
             from_sq: mv.from,
             to_sq: mv.final_sq(),
             captures: mv.captures.clone(),
-            score,
+            score: *score,   // ← เพิ่ม * นำหน้า
             depth_reached: best_depth,
         }
     }).collect();
