@@ -588,7 +588,7 @@ pub fn analyze(
     }
 
     // Return top 5
-    let results: Vec<AnalysisResult> = scored.iter().take(5).map(|(mv, &score)| {
+    let results: Vec<AnalysisResult> = scored.iter().take(5).map(|(mv, score)| {
         AnalysisResult {
             notation: mv.to_notation(),
             from_sq: mv.from,
