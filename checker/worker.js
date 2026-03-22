@@ -1,49 +1,54 @@
-// worker.js — Web Worker that loads WASM engine
+// worker.js — Classic Web Worker (ไม่ใช้ ES modules รองรับทุก browser รวม iOS Safari)
 
 let engine = null;
 let engineReady = false;
 
 async function loadEngine() {
 try {
-// ใช้ self.location เพื่อหา base path ของ worker ไม่ว่าจะอยู่ subfolder ไหน
 const base = self.location.href.replace(/worker.js.*$/, ‘’);
-const { default: init, analyze } = await import(base + ‘thai_checkers_engine.js’);
-await init(base + ‘thai_checkers_engine_bg.wasm’);
-engine = { analyze };
+
+```
+// โหลด glue JS ด้วย importScripts (ไม่ใช้ ES import)
+importScripts(base + 'thai_checkers_engine.js');
+
+// wasm_bindgen จะอยู่ใน global scope หลัง importScripts
+if(typeof wasm_bindgen === 'undefined') {
+  throw new Error('wasm_bindgen not found');
+}
+
+await wasm_bindgen(base + 'thai_checkers_engine_bg.wasm');
+
+engine = wasm_bindgen;
 engineReady = true;
-postMessage({ type: ‘ready’ });
+postMessage({ type: 'ready' });
+```
+
 } catch (e) {
-postMessage({ type: ‘error’, message: ’Failed to load engine: ’ + e.message });
+postMessage({ type: ‘error’, message: ’โหลดไม่สำเร็จ: ’ + e.message });
 }
 }
 
 loadEngine();
 
 onmessage = function(e) {
-const { type, id, data } = e.data;
-
-if (type === ‘ping’) {
-postMessage({ type: ‘pong’, ready: engineReady });
+const msg = e.data;
+if(msg.type === ‘ping’){
+postMessage({ type:‘pong’, ready:engineReady });
 return;
 }
-
-if (type === ‘analyze’) {
-if (!engineReady) {
-postMessage({ type: ‘result’, id, results: [], error: ‘Engine not ready’ });
+if(msg.type === ‘analyze’){
+if(!engineReady){
+postMessage({ type:‘result’, id:msg.id, results:[], error:‘Engine not ready’ });
 return;
 }
-try {
-const { white, black, isBlackTurn, maxDepth, timeLimitMs } = data;
+try{
+const {white, black, isBlackTurn, maxDepth, timeLimitMs} = msg.data;
 const start = Date.now();
-const results = engine.analyze(white, black, isBlackTurn, maxDepth, timeLimitMs);
-postMessage({
-type: ‘result’,
-id,
-results: Array.from(results),
-elapsed: Date.now() - start
-});
-} catch (e) {
-postMessage({ type: ‘result’, id, results: [], error: e.message });
+const raw = engine.analyze(white, black, isBlackTurn, maxDepth, timeLimitMs);
+const results = Array.isArray(raw) ? raw : Array.from(raw);
+postMessage({ type:‘result’, id:msg.id, results, elapsed:Date.now()-start });
+} catch(err){
+postMessage({ type:‘result’, id:msg.id, results:[], error:err.message });
 }
 }
 };
