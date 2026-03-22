@@ -1396,38 +1396,40 @@ function dragEnd(e){
    กดปุ่ม วิเคราะห์ เพื่อให้ WASM engine คำนวณ
 ══════════════════════════════════════ */
 
-let aiWorker = null;
+/* ══════════════════════════════════════
+   AI ENGINE — โหลด WASM ตรงบน main thread
+   ไม่ใช้ Worker เพื่อรองรับทุก browser
+══════════════════════════════════════ */
+
 let aiReady  = false;
-let aiJobId  = 0;
+let aiEngine = null;
 
-function initAI(){
+async function initAI(){
   try{
-    aiWorker = new Worker('./worker.js');
-    aiWorker.onmessage = onWorkerMsg;
-    aiWorker.onerror = ()=> setAIStatus('⚠️ โหลด engine ไม่สำเร็จ');
-  } catch(e){
-    setAIStatus('⚠️ Worker ไม่รองรับ');
-  }
-}
-
-function onWorkerMsg(e){
-  const {type, id, results, elapsed, error} = e.data;
-  if(type==='ready'){
-    aiReady=true;
+    setAIStatus('กำลังโหลด...');
+    // โหลด glue JS
+    await loadScript('./thai_checkers_engine.js');
+    // init WASM
+    await wasm_bindgen('./thai_checkers_engine_bg.wasm');
+    aiEngine = wasm_bindgen;
+    aiReady = true;
     setAIStatus('✓ Engine พร้อม');
     let btn=document.getElementById('aiAnalyzeBtn');
     if(btn) btn.disabled=false;
+  } catch(e){
+    setAIStatus('⚠️ โหลดไม่สำเร็จ: '+e.message);
+    console.error('AI init error:', e);
   }
-  if(type==='result' && id===aiJobId){
-    document.getElementById('aiLoading').style.display='none';
-    let btn=document.getElementById('aiAnalyzeBtn');
-    if(btn) btn.disabled=false;
-    if(error||!results||!results.length){
-      document.getElementById('aiResults').innerHTML="<div style='text-align:center;font-size:.78rem;color:var(--muted);padding:8px;'>ไม่มีผล</div>";
-      return;
-    }
-    renderAIResults(results, elapsed);
-  }
+}
+
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    let s=document.createElement('script');
+    s.src=src;
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('โหลด '+src+' ไม่สำเร็จ'));
+    document.head.appendChild(s);
+  });
 }
 
 function setAIStatus(msg){
@@ -1442,20 +1444,37 @@ function requestAnalysis(){
   document.getElementById('aiResults').innerHTML='';
   let btn=document.getElementById('aiAnalyzeBtn');
   if(btn) btn.disabled=true;
+
   let depthVal=parseInt(document.getElementById('aiDepth').value)||14;
   let timeMap={8:1500, 14:3000, 20:6000};
   let timeMs=timeMap[depthVal]||3000;
-  aiJobId++;
-  aiWorker.postMessage({
-    type:'analyze', id:aiJobId,
-    data:{
-      white: playWhite.map(p=>({square:p.square,king:p.king})),
-      black: playBlack.map(p=>({square:p.square,king:p.king})),
-      isBlackTurn: currentTurn==='black',
-      maxDepth: depthVal,
-      timeLimitMs: timeMs
+
+  // ใช้ setTimeout เพื่อให้ UI update ก่อนที่จะเริ่มคำนวณ
+  setTimeout(()=>{
+    try{
+      let start=Date.now();
+      let raw=aiEngine.analyze(
+        playWhite.map(p=>({square:p.square,king:p.king})),
+        playBlack.map(p=>({square:p.square,king:p.king})),
+        currentTurn==='black',
+        depthVal,
+        timeMs
+      );
+      let results=Array.isArray(raw)?raw:Array.from(raw);
+      document.getElementById('aiLoading').style.display='none';
+      if(btn) btn.disabled=false;
+      if(!results||!results.length){
+        document.getElementById('aiResults').innerHTML="<div style='text-align:center;font-size:.78rem;color:var(--muted);padding:8px;'>ไม่มีผล</div>";
+        return;
+      }
+      renderAIResults(results, Date.now()-start);
+    } catch(e){
+      document.getElementById('aiLoading').style.display='none';
+      if(btn) btn.disabled=false;
+      setAIStatus('⚠️ คำนวณไม่สำเร็จ: '+e.message);
+      console.error('analyze error:', e);
     }
-  });
+  }, 50);
 }
 
 function renderAIResults(results, elapsed){
@@ -1503,7 +1522,6 @@ function aiHighlight(from, to, captures){
   });
   setTimeout(()=>{ document.querySelectorAll('.square').forEach(sq=>sq.style.outline=''); }, 3000);
 }
-
 
 /* ══════════════════════════════════════
    INIT
