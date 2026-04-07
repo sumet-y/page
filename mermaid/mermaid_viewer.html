@@ -66,8 +66,8 @@
 <body>
 
 <div class="toolbar">
-  <button onclick="copyJPG()">📋 Copy JPG</button>
-  <button onclick="downloadJPG()">⬇️ Download JPG</button>
+  <button onclick="copyPNG()">📋 Copy PNG</button>
+  <button onclick="downloadPNG()">⬇️ Download PNG</button>
 </div>
 
 <div class="container">
@@ -101,68 +101,81 @@ textarea.addEventListener("input", renderMermaid);
 renderMermaid();
 
 
-// 🔄 SVG → JPG
-function svgToJpgBlob(svgText) {
-  return new Promise((resolve) => {
+// 🔄 SVG → PNG (แก้ CORS แล้ว)
+function svgToPngBlob(svgText) {
+  return new Promise((resolve, reject) => {
     const img = new Image();
-    const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
+
+    const svgBase64 = "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(svgText)));
 
     img.onload = function () {
+      const scale = 2; // เพิ่มความคม
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
+
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
 
       const ctx = canvas.getContext("2d");
+      ctx.scale(scale, scale);
 
-      // ✅ พื้นหลังขาว (JPG ไม่มี transparency)
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+      // PNG โปร่งใสได้ (ไม่ต้อง fill ขาว)
       ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
 
       canvas.toBlob((blob) => {
-        resolve(blob);
-      }, "image/jpeg", 0.95);
+        if (blob) resolve(blob);
+        else reject("PNG error");
+      }, "image/png");
     };
 
-    img.src = url;
+    img.onerror = reject;
+    img.src = svgBase64;
   });
 }
 
 
-// 📋 Copy JPG
-async function copyJPG() {
-  if (!currentSVG) return;
-
+// 📋 Copy PNG
+async function copyPNG() {
   try {
-    const blob = await svgToJpgBlob(currentSVG);
+    const blob = await svgToPngBlob(currentSVG);
+
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      alert("Browser ไม่รองรับ → Download แทน");
+      downloadPNG();
+      return;
+    }
 
     await navigator.clipboard.write([
-      new ClipboardItem({ "image/jpeg": blob })
+      new ClipboardItem({ "image/png": blob })
     ]);
 
-    alert("Copied as JPG!");
+    alert("Copied PNG!");
   } catch (err) {
-    alert("Copy JPG failed (browser อาจไม่รองรับ)");
+    alert("Copy ไม่ได้ → Download แทน");
+    downloadPNG();
   }
 }
 
 
-// ⬇️ Download JPG
-async function downloadJPG() {
-  if (!currentSVG) return;
+// ⬇️ Download PNG
+async function downloadPNG() {
+  try {
+    const blob = await svgToPngBlob(currentSVG);
 
-  const blob = await svgToJpgBlob(currentSVG);
-  const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "diagram.jpg";
-  a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "diagram.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-  URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert("Download failed: " + err);
+  }
 }
 </script>
 
