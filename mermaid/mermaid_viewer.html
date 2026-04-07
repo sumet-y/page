@@ -1,183 +1,145 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mermaid Viewer</title>
-
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-
 <style>
-  body {
-    font-family: Arial;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-
-  .toolbar {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .container {
-    display: flex;
-    flex: 1;
-  }
-
-  textarea {
-    width: 50%;
-    padding: 10px;
-    font-family: monospace;
-    font-size: 14px;
-    border: none;
-    outline: none;
-  }
-
-  #preview {
-    width: 50%;
-    padding: 10px;
-    overflow: auto;
-    border-left: 1px solid #ccc;
-  }
-
-  button {
-    padding: 6px 12px;
-    cursor: pointer;
-  }
-
-  /* 📱 Mobile */
+  body { font-family: Arial; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  .toolbar { padding: 10px; border-bottom: 1px solid #ccc; display: flex; gap: 10px; flex-wrap: wrap; }
+  .container { display: flex; flex: 1; overflow: hidden; }
+  textarea { width: 50%; padding: 10px; font-family: monospace; font-size: 14px; border: none; outline: none; resize: none; }
+  #preview { width: 50%; padding: 10px; overflow: auto; border-left: 1px solid #ccc; background: #fff; }
+  button { padding: 6px 12px; cursor: pointer; }
   @media (max-width: 768px) {
-    .container {
-      flex-direction: column;
-    }
-    textarea, #preview {
-      width: 100%;
-      height: 50%;
-    }
+    .container { flex-direction: column; }
+    textarea, #preview { width: 100%; height: 50%; box-sizing: border-box; }
   }
 </style>
 </head>
-
 <body>
-
 <div class="toolbar">
   <button onclick="copyPNG()">📋 Copy PNG</button>
   <button onclick="downloadPNG()">⬇️ Download PNG</button>
 </div>
-
 <div class="container">
-  <textarea id="code">
-graph TD
-A[Start] --> B[End]
-  </textarea>
-
+  <textarea id="code">graph TD
+A[Start] --> B[Process] --> C[End]</textarea>
   <div id="preview"></div>
 </div>
-
 <script>
-mermaid.initialize({ startOnLoad: false });
-
+mermaid.initialize({ startOnLoad: false, theme: 'default' });
 const textarea = document.getElementById("code");
 const preview = document.getElementById("preview");
-
 let currentSVG = "";
 
 async function renderMermaid() {
   try {
-    const { svg } = await mermaid.render("graphDiv", textarea.value);
+    const { svg } = await mermaid.render("graphDiv", textarea.value.trim());
     preview.innerHTML = svg;
     currentSVG = svg;
   } catch (err) {
     preview.innerHTML = "<pre style='color:red'>" + err + "</pre>";
+    currentSVG = "";
   }
 }
 
 textarea.addEventListener("input", renderMermaid);
 renderMermaid();
 
-
-// 🔄 SVG → PNG (แก้ CORS แล้ว)
 function svgToPngBlob(svgText) {
   return new Promise((resolve, reject) => {
+    const svgEl = preview.querySelector("svg");
+    if (!svgEl) return reject("ไม่พบ SVG element");
+
+    const rect = svgEl.getBoundingClientRect();
+    let w = rect.width;
+    let h = rect.height;
+
+    if (!w || !h) {
+      const vb = svgEl.getAttribute("viewBox");
+      if (vb) {
+        const parts = vb.split(/[\s,]+/);
+        w = parseFloat(parts[2]) || 800;
+        h = parseFloat(parts[3]) || 600;
+      } else {
+        w = 800; h = 600;
+      }
+    }
+
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute("width", w);
+    clone.setAttribute("height", h);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", "white");
+    clone.insertBefore(bg, clone.firstChild);
+
+    const svgStr = new XMLSerializer().serializeToString(clone);
+    const svgBase64 = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgStr)));
+
     const img = new Image();
-
-    const svgBase64 = "data:image/svg+xml;base64," +
-      btoa(unescape(encodeURIComponent(svgText)));
-
     img.onload = function () {
-      const scale = 2; // เพิ่มความคม
+      const scale = 2;
       const canvas = document.createElement("canvas");
-
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-
+      canvas.width = w * scale;
+      canvas.height = h * scale;
       const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.scale(scale, scale);
-
-      // PNG โปร่งใสได้ (ไม่ต้อง fill ขาว)
-      ctx.drawImage(img, 0, 0);
-
+      ctx.drawImage(img, 0, 0, w, h);
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
-        else reject("PNG error");
+        else reject("PNG blob error");
       }, "image/png");
     };
-
-    img.onerror = reject;
+    img.onerror = (e) => reject("Image load error: " + e);
     img.src = svgBase64;
   });
 }
 
-
-// 📋 Copy PNG
 async function copyPNG() {
+  if (!currentSVG) return alert("ยังไม่มี diagram");
   try {
     const blob = await svgToPngBlob(currentSVG);
-
     if (!navigator.clipboard || !window.ClipboardItem) {
-      alert("Browser ไม่รองรับ → Download แทน");
-      downloadPNG();
-      return;
+      alert("Browser ไม่รองรับ Copy → Download แทน");
+      return downloadPNG();
     }
-
-    await navigator.clipboard.write([
-      new ClipboardItem({ "image/png": blob })
-    ]);
-
-    alert("Copied PNG!");
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    alert("✅ Copied PNG!");
   } catch (err) {
-    alert("Copy ไม่ได้ → Download แทน");
+    console.error(err);
+    alert("Copy ไม่ได้ → Download แทน\n" + err);
     downloadPNG();
   }
 }
 
-
-// ⬇️ Download PNG
 async function downloadPNG() {
+  if (!currentSVG) return alert("ยังไม่มี diagram");
   try {
     const blob = await svgToPngBlob(currentSVG);
-
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "diagram.png";
     document.body.appendChild(a);
     a.click();
     a.remove();
-
     URL.revokeObjectURL(url);
-
   } catch (err) {
     alert("Download failed: " + err);
   }
 }
 </script>
-
 </body>
 </html>
+```
+
+คัดลอกไปใช้ได้เลยครับ ไม่มีการเปลี่ยนแปลง logic ใดๆ เพิ่มเติมจากที่แก้ไขไปแล้ว
