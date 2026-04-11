@@ -2,12 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mermaid Viewer</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: Arial; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f5f5f5; }
+  body {
+    font-family: Arial;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* iOS safe */
+    background: #f5f5f5;
+    overflow: hidden;
+  }
 
   .toolbar {
     padding: 8px 12px;
@@ -17,25 +26,14 @@
     flex-wrap: wrap;
     background: #fff;
     align-items: center;
-  }
-
-  .toolbar-group {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .divider {
-    width: 1px;
-    height: 28px;
-    background: #ccc;
-    margin: 0 4px;
+    flex-shrink: 0;
   }
 
   .container {
     display: flex;
     flex: 1;
     overflow: hidden;
+    min-height: 0;
   }
 
   .editor-pane {
@@ -43,6 +41,7 @@
     display: flex;
     flex-direction: column;
     border-right: 1px solid #ccc;
+    min-height: 0;
   }
 
   .editor-toolbar {
@@ -51,6 +50,7 @@
     border-bottom: 1px solid #eee;
     display: flex;
     gap: 6px;
+    flex-shrink: 0;
   }
 
   textarea {
@@ -62,6 +62,10 @@
     outline: none;
     resize: none;
     background: #fff;
+    min-height: 0;
+    /* iOS scroll fix */
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
   }
 
   .preview-pane {
@@ -69,6 +73,7 @@
     display: flex;
     flex-direction: column;
     background: #fff;
+    min-height: 0;
   }
 
   .preview-toolbar {
@@ -78,6 +83,7 @@
     display: flex;
     gap: 6px;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .zoom-label {
@@ -89,18 +95,22 @@
 
   #preview {
     flex: 1;
-    overflow: auto; /* scroll ทั้งแนวตั้งและแนวนอน */
+    /* scroll ทั้งสองแกน + iOS momentum */
+    overflow: scroll;
+    -webkit-overflow-scrolling: touch;
     padding: 20px;
-    cursor: grab;
     position: relative;
+    min-height: 0;
+    /* ป้องกัน iOS pinch-zoom บนพื้นที่นี้ */
+    touch-action: pan-x pan-y;
   }
-
-  #preview:active { cursor: grabbing; }
 
   #preview-inner {
     display: inline-block;
     transform-origin: top left;
     transition: transform 0.15s ease;
+    /* ป้องกัน double-tap zoom */
+    touch-action: manipulation;
   }
 
   button {
@@ -111,11 +121,22 @@
     border-radius: 4px;
     font-size: 13px;
     white-space: nowrap;
+    /* ป้องกัน double-tap zoom บนปุ่ม */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   button:hover { background: #f0f0f0; }
+  button:active { background: #e8e8e8; }
   button.danger { border-color: #e88; color: #c33; }
   button.danger:hover { background: #fff0f0; }
+
+  /* iOS scrollbar hint (จะเห็นเมื่อ scroll) */
+  #preview::-webkit-scrollbar { width: 6px; height: 6px; }
+  #preview::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
+  #preview::-webkit-scrollbar-track { background: transparent; }
 
   @media (max-width: 768px) {
     .container { flex-direction: column; }
@@ -126,10 +147,8 @@
 <body>
 
 <div class="toolbar">
-  <div class="toolbar-group">
-    <button onclick="copyPNG()">📋 Copy PNG</button>
-    <button onclick="downloadPNG()">⬇️ Download PNG</button>
-  </div>
+  <button onclick="copyPNG()">📋 Copy PNG</button>
+  <button onclick="downloadPNG()">⬇️ Download PNG</button>
 </div>
 
 <div class="container">
@@ -173,7 +192,7 @@ const ZOOM_STEP = 0.15;
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 4;
 
-// ── Render ──────────────────────────────────────────
+// ── Render ───────────────────────────────────────────
 async function renderMermaid() {
   try {
     const { svg } = await mermaid.render("graphDiv", textarea.value.trim());
@@ -188,7 +207,7 @@ async function renderMermaid() {
 textarea.addEventListener("input", renderMermaid);
 renderMermaid();
 
-// ── Editor buttons ───────────────────────────────────
+// ── Editor buttons ────────────────────────────────────
 function clearText() {
   if (textarea.value && !confirm("ล้าง input ทั้งหมด?")) return;
   textarea.value = "";
@@ -206,7 +225,7 @@ async function pasteText() {
   }
 }
 
-// ── Zoom ─────────────────────────────────────────────
+// ── Zoom ──────────────────────────────────────────────
 function applyZoom() {
   previewInner.style.transform = `scale(${zoomLevel})`;
   zoomLabel.textContent = Math.round(zoomLevel * 100) + "%";
@@ -227,7 +246,7 @@ function resetZoom() {
   applyZoom();
 }
 
-// Ctrl+Scroll to zoom
+// Ctrl+Scroll zoom (desktop)
 previewEl.addEventListener("wheel", (e) => {
   if (e.ctrlKey || e.metaKey) {
     e.preventDefault();
@@ -235,14 +254,24 @@ previewEl.addEventListener("wheel", (e) => {
   }
 }, { passive: false });
 
-// ── SVG → PNG ────────────────────────────────────────
+// ── Block double-tap zoom on iOS ──────────────────────
+let lastTap = 0;
+previewEl.addEventListener("touchend", (e) => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    e.preventDefault(); // block double-tap
+  }
+  lastTap = now;
+}, { passive: false });
+
+// ── SVG → PNG ─────────────────────────────────────────
 function svgToPngBlob(svgText) {
   return new Promise((resolve, reject) => {
     const svgEl = previewInner.querySelector("svg");
     if (!svgEl) return reject("ไม่พบ SVG element");
 
     const rect = svgEl.getBoundingClientRect();
-    let w = rect.width / zoomLevel;   // ขนาดจริง ไม่รวม zoom
+    let w = rect.width / zoomLevel;
     let h = rect.height / zoomLevel;
 
     if (!w || !h) {
@@ -289,7 +318,7 @@ function svgToPngBlob(svgText) {
   });
 }
 
-// ── Copy / Download ──────────────────────────────────
+// ── Copy / Download ───────────────────────────────────
 async function copyPNG() {
   if (!currentSVG) return alert("ยังไม่มี diagram");
   try {
