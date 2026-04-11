@@ -6,41 +6,181 @@
 <title>Mermaid Viewer</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-  body { font-family: Arial; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-  .toolbar { padding: 10px; border-bottom: 1px solid #ccc; display: flex; gap: 10px; flex-wrap: wrap; }
-  .container { display: flex; flex: 1; overflow: hidden; }
-  textarea { width: 50%; padding: 10px; font-family: monospace; font-size: 14px; border: none; outline: none; resize: none; }
-  #preview { width: 50%; padding: 10px; overflow: auto; border-left: 1px solid #ccc; background: #fff; }
-  button { padding: 6px 12px; cursor: pointer; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f5f5f5; }
+
+  .toolbar {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: #fff;
+    align-items: center;
+  }
+
+  .toolbar-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .divider {
+    width: 1px;
+    height: 28px;
+    background: #ccc;
+    margin: 0 4px;
+  }
+
+  .container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .editor-pane {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ccc;
+  }
+
+  .editor-toolbar {
+    padding: 6px 10px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 6px;
+  }
+
+  textarea {
+    flex: 1;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    resize: none;
+    background: #fff;
+  }
+
+  .preview-pane {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .preview-toolbar {
+    padding: 6px 10px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .zoom-label {
+    font-size: 13px;
+    color: #555;
+    min-width: 42px;
+    text-align: center;
+  }
+
+  #preview {
+    flex: 1;
+    overflow: auto; /* scroll ทั้งแนวตั้งและแนวนอน */
+    padding: 20px;
+    cursor: grab;
+    position: relative;
+  }
+
+  #preview:active { cursor: grabbing; }
+
+  #preview-inner {
+    display: inline-block;
+    transform-origin: top left;
+    transition: transform 0.15s ease;
+  }
+
+  button {
+    padding: 5px 11px;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    background: #fff;
+    border-radius: 4px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  button:hover { background: #f0f0f0; }
+  button.danger { border-color: #e88; color: #c33; }
+  button.danger:hover { background: #fff0f0; }
+
   @media (max-width: 768px) {
     .container { flex-direction: column; }
-    textarea, #preview { width: 100%; height: 50%; box-sizing: border-box; }
+    .editor-pane, .preview-pane { width: 100%; height: 50%; }
   }
 </style>
 </head>
 <body>
+
 <div class="toolbar">
-  <button onclick="copyPNG()">📋 Copy PNG</button>
-  <button onclick="downloadPNG()">⬇️ Download PNG</button>
+  <div class="toolbar-group">
+    <button onclick="copyPNG()">📋 Copy PNG</button>
+    <button onclick="downloadPNG()">⬇️ Download PNG</button>
+  </div>
 </div>
+
 <div class="container">
-  <textarea id="code">graph TD
+
+  <!-- Editor -->
+  <div class="editor-pane">
+    <div class="editor-toolbar">
+      <button onclick="pasteText()">📥 Paste</button>
+      <button class="danger" onclick="clearText()">🗑️ ล้าง</button>
+    </div>
+    <textarea id="code">graph TD
 A[Start] --> B[Process] --> C[End]</textarea>
-  <div id="preview"></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-pane">
+    <div class="preview-toolbar">
+      <button onclick="zoomIn()">🔍＋</button>
+      <button onclick="zoomOut()">🔍－</button>
+      <button onclick="resetZoom()">↺ Reset</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+    </div>
+    <div id="preview">
+      <div id="preview-inner"></div>
+    </div>
+  </div>
+
 </div>
+
 <script>
 mermaid.initialize({ startOnLoad: false, theme: 'default' });
-const textarea = document.getElementById("code");
-const preview = document.getElementById("preview");
-let currentSVG = "";
 
+const textarea = document.getElementById("code");
+const previewInner = document.getElementById("preview-inner");
+const previewEl = document.getElementById("preview");
+const zoomLabel = document.getElementById("zoomLabel");
+
+let currentSVG = "";
+let zoomLevel = 1;
+const ZOOM_STEP = 0.15;
+const ZOOM_MIN = 0.2;
+const ZOOM_MAX = 4;
+
+// ── Render ──────────────────────────────────────────
 async function renderMermaid() {
   try {
     const { svg } = await mermaid.render("graphDiv", textarea.value.trim());
-    preview.innerHTML = svg;
+    previewInner.innerHTML = svg;
     currentSVG = svg;
   } catch (err) {
-    preview.innerHTML = "<pre style='color:red'>" + err + "</pre>";
+    previewInner.innerHTML = "<pre style='color:red'>" + err + "</pre>";
     currentSVG = "";
   }
 }
@@ -48,14 +188,62 @@ async function renderMermaid() {
 textarea.addEventListener("input", renderMermaid);
 renderMermaid();
 
+// ── Editor buttons ───────────────────────────────────
+function clearText() {
+  if (textarea.value && !confirm("ล้าง input ทั้งหมด?")) return;
+  textarea.value = "";
+  previewInner.innerHTML = "";
+  currentSVG = "";
+}
+
+async function pasteText() {
+  try {
+    const text = await navigator.clipboard.readText();
+    textarea.value = text;
+    renderMermaid();
+  } catch (err) {
+    alert("ไม่สามารถ Paste ได้: " + err);
+  }
+}
+
+// ── Zoom ─────────────────────────────────────────────
+function applyZoom() {
+  previewInner.style.transform = `scale(${zoomLevel})`;
+  zoomLabel.textContent = Math.round(zoomLevel * 100) + "%";
+}
+
+function zoomIn() {
+  zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
+  applyZoom();
+}
+
+function zoomOut() {
+  zoomLevel = Math.max(ZOOM_MIN, +(zoomLevel - ZOOM_STEP).toFixed(2));
+  applyZoom();
+}
+
+function resetZoom() {
+  zoomLevel = 1;
+  applyZoom();
+}
+
+// Ctrl+Scroll to zoom
+previewEl.addEventListener("wheel", (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    e.deltaY < 0 ? zoomIn() : zoomOut();
+  }
+}, { passive: false });
+
+// ── SVG → PNG ────────────────────────────────────────
 function svgToPngBlob(svgText) {
   return new Promise((resolve, reject) => {
-    const svgEl = preview.querySelector("svg");
+    const svgEl = previewInner.querySelector("svg");
     if (!svgEl) return reject("ไม่พบ SVG element");
 
     const rect = svgEl.getBoundingClientRect();
-    let w = rect.width;
-    let h = rect.height;
+    let w = rect.width / zoomLevel;   // ขนาดจริง ไม่รวม zoom
+    let h = rect.height / zoomLevel;
 
     if (!w || !h) {
       const vb = svgEl.getAttribute("viewBox");
@@ -63,9 +251,7 @@ function svgToPngBlob(svgText) {
         const parts = vb.split(/[\s,]+/);
         w = parseFloat(parts[2]) || 800;
         h = parseFloat(parts[3]) || 600;
-      } else {
-        w = 800; h = 600;
-      }
+      } else { w = 800; h = 600; }
     }
 
     const clone = svgEl.cloneNode(true);
@@ -103,6 +289,7 @@ function svgToPngBlob(svgText) {
   });
 }
 
+// ── Copy / Download ──────────────────────────────────
 async function copyPNG() {
   if (!currentSVG) return alert("ยังไม่มี diagram");
   try {
@@ -114,7 +301,6 @@ async function copyPNG() {
     await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
     alert("✅ Copied PNG!");
   } catch (err) {
-    console.error(err);
     alert("Copy ไม่ได้ → Download แทน\n" + err);
     downloadPNG();
   }
