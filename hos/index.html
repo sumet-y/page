@@ -175,7 +175,6 @@ body.dark #timeline{color:#5db85d;}
 .turn-dot{display:inline-block;width:10px;height:10px;border-radius:50%;
   margin-right:5px;vertical-align:middle;}
 
-/* toast notification */
 #copyToast{
   position:fixed;top:30px;left:50%;transform:translateX(-50%);
   background:#27ae60;color:#fff;
@@ -185,6 +184,32 @@ body.dark #timeline{color:#5db85d;}
   opacity:0;pointer-events:none;
   transition:opacity .2s;z-index:9999;
 }
+
+/* PREVIEW ARROWS */
+.btn-preview{background:#e8e0d0;color:#7a5010;border:1px solid #c8a860;font-weight:700;}
+.btn-preview.active{background:#c87010;color:#fff;border-color:#c87010;}
+body.dark .btn-preview{background:#2e2010;color:#d4a030;border-color:#6a5020;}
+body.dark .btn-preview.active{background:#906010;color:#fff;border-color:#906010;}
+/* preview slider */
+.preview-slider-wrap{display:flex;align-items:center;gap:6px;}
+.preview-slider-wrap input[type=range]{width:64px;accent-color:#c87010;}
+.preview-slider-wrap span{font-size:.75rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);min-width:20px;text-align:center;}
+
+/* SPEED CONTROL */
+.speed-wrap{display:flex;align-items:center;gap:6px;padding:4px 12px 2px;justify-content:center;}
+.speed-wrap label{font-size:.75rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.speed-wrap input[type=range]{width:80px;accent-color:var(--accent);}
+.speed-val{font-size:.75rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:36px;}
+body.dark .speed-wrap label{color:#7a7470;}
+
+/* HIGHLIGHT NEXT MOVE */
+.sq-next-from{outline:3px solid #f5c842;outline-offset:-3px;animation:pulseNext 1s ease-in-out infinite;}
+@keyframes pulseNext{0%,100%{outline-color:#f5c842;}50%{outline-color:#ff8c00;}}
+/* yellow arrow button */
+.btn-arrow-yellow{background:#e0d8cc;color:#7a6800;border:1px solid #c8b830;font-weight:700;}
+.btn-arrow-yellow.active{background:#c8a800;color:#fff;border-color:#c8a800;}
+body.dark .btn-arrow-yellow{background:#333;color:#d4b830;border-color:#5a4800;}
+body.dark .btn-arrow-yellow.active{background:#907000;color:#fff;}
 </style>
 </head>
 <body>
@@ -208,13 +233,20 @@ body.dark #timeline{color:#5db85d;}
     <label><input type="radio" name="orient" value="blackBottom" checked onchange="onOrientChange(this.value)"> ล่างเดินก่อน</label>
     <label><input type="radio" name="orient" value="blackTop" onchange="onOrientChange(this.value)"> บนเดินก่อน</label>
   </div>
-  <!-- ROW 3: start + darkmode button, turn badge row -->
+  <!-- ROW 3: start + speed(replay only) + darkmode -->
   <div class="divider"></div>
   <div style="display:flex;align-items:center;gap:8px;">
     <div id="startRow" style="flex:1;display:flex;align-items:center;gap:8px;">
       <button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>
     </div>
     <span id="turnBadge" style="font-size:.82rem;font-weight:700;color:var(--accent);flex:1;text-align:center;"></span>
+    <!-- Speed control เฉพาะโหมดเล่นสูตร -->
+    <div id="speedWrapInline" style="display:none;align-items:center;gap:4px;">
+      <span style="font-size:.75rem;">🐢</span>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)" style="width:60px;accent-color:var(--accent);">
+      <span style="font-size:.75rem;">🐇</span>
+      <span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:44px;">กลาง</span>
+    </div>
     <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 10px;font-size:.8rem;white-space:nowrap;">🌙 กลางคืน</button>
   </div>
 </div>
@@ -242,6 +274,19 @@ body.dark #timeline{color:#5db85d;}
               refX="5" refY="3" orient="auto">
         <path d="M0,0 L6,3 L0,6 Z" fill="#20c020" opacity="0.92"/>
       </marker>
+      <marker id="arrowhead-yellow" markerWidth="6" markerHeight="6"
+              refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#e6c000" opacity="0.92"/>
+      </marker>
+      <marker id="arrowhead-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#d47000" opacity="0.90"/>
+      </marker>
+      <marker id="arrowhead-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.70"/>
+      </marker>
+      <marker id="arrowhead-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.38"/>
+      </marker>
     </defs>
   </svg>
 </div>
@@ -249,8 +294,9 @@ body.dark #timeline{color:#5db85d;}
 <!-- GAME ACTION ROW: undo + arrow tools (shown when game started) -->
 <div class="ctrl-row" id="gameActionRow" style="display:none">
   <button class="btn btn-sec" onclick="undoMove()">↩ Undo</button>
-  <button class="btn btn-arrow" id="arrowToggleBtn" onclick="toggleArrowMode('red')">🔴 ลูกศร</button>
-  <button class="btn btn-arrow" id="arrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ลูกศร</button>
+  <button class="btn btn-arrow" id="arrowToggleBtn" onclick="toggleArrowMode('red')">🔴 แพ้</button>
+  <button class="btn btn-arrow-yellow" id="arrowYellowBtn" onclick="toggleArrowMode('yellow')" >🟡 เสมอ</button>
+  <button class="btn btn-arrow" id="arrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ชนะ</button>
   <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
 </div>
 
@@ -265,9 +311,17 @@ body.dark #timeline{color:#5db85d;}
 
 <!-- REPLAY ARROW ROW -->
 <div class="ctrl-row" id="replayArrowRow" style="display:none">
-  <button class="btn btn-arrow" id="replayArrowBtn" onclick="toggleArrowMode('red')">🔴 ลูกศร</button>
-  <button class="btn btn-arrow" id="replayArrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ลูกศร</button>
+  <button class="btn btn-arrow" id="replayArrowBtn" onclick="toggleArrowMode('red')">🔴 แพ้</button>
+  <button class="btn btn-arrow-yellow" id="replayArrowYellowBtn" onclick="toggleArrowMode('yellow')">🟡 เสมอ</button>
+  <button class="btn btn-arrow" id="replayArrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ชนะ</button>
   <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
+  <button class="btn btn-preview active" id="previewBtn" onclick="togglePreview()">👁 ตาเทพ</button>
+  <div class="preview-slider-wrap" id="previewSliderWrap">
+    <button class="btn btn-sec" onclick="changePreviewSteps(-1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">−</button>
+    <input type="range" id="previewSteps" min="1" max="8" value="3" oninput="setPreviewSteps(this.value)">
+    <button class="btn btn-sec" onclick="changePreviewSteps(1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">+</button>
+    <span id="previewStepsLabel">3</span>
+  </div>
 </div>
 
 <!-- SLIDER -->
@@ -285,6 +339,11 @@ body.dark #timeline{color:#5db85d;}
     <button class="btn btn-replay" id="continueBtn"     onclick="continueMoves()" disabled>+ Continue</button>
     <button class="btn btn-replay" id="clearTimelineBtn" onclick="clearMoves()"  disabled>Clear Timeline</button>
   </div>
+</div>
+
+  </div>
+  <div id="aiLoading" style="display:none;text-align:center;font-size:.8rem;color:var(--muted);padding:8px;">⏳ กำลังคำนวณ...</div>
+  <div id="aiResults"></div>
 </div>
 
 <!-- TIMELINE -->
@@ -347,6 +406,7 @@ function onModeChange(m){
   document.getElementById("replayArrowRow").style.display=isReplay?"flex":"none";
   document.getElementById("sliderWrap").style.display=isReplay?"flex":"none";
   document.getElementById("inputPanel").style.display=isReplay?"block":"none";
+  document.getElementById("speedWrapInline").style.display=isReplay?"flex":"none";
 
   if(isReplay){
     gameStarted=false;data.start.white=[];data.start.black=[];data.moves=[];step=0;
@@ -934,6 +994,41 @@ function stop(){
 function resetToStart(){stop();step=0;render();}
 function next(){if(step<data.moves.length){step++;render();}}
 function prev(){if(step>0){step--;render();}}
+
+/* ── SPEED CONTROL ── */
+const speedMap={1:1800,2:1100,3:700,4:380,5:160};
+const speedLabel={1:"ช้ามาก",2:"ช้า",3:"กลาง",4:"เร็ว",5:"เร็วมาก"};
+function setSpeed(v){
+  v=parseInt(v);
+  speed=speedMap[v]||700;
+  let lbl=document.getElementById("speedVal");
+  if(lbl) lbl.innerText=speedLabel[v]||"กลาง";
+  // ถ้ากำลัง play อยู่ให้ restart ด้วย speed ใหม่
+  if(timer){ stop(); play(); document.getElementById("rPlay").innerText="⏸ Pause"; }
+}
+
+/* ── PREVIEW +/- ── */
+function changePreviewSteps(delta){
+  let sl=document.getElementById("previewSteps");
+  if(!sl) return;
+  let v=Math.min(8,Math.max(1,(parseInt(sl.value)||3)+delta));
+  sl.value=v;
+  setPreviewSteps(v);
+}
+
+/* ── HIGHLIGHT NEXT MOVE (กระพริบช่องที่กำลังจะเดิน) ── */
+function highlightNextMove(){
+  document.querySelectorAll(".sq-next-from").forEach(e=>e.classList.remove("sq-next-from"));
+  if(mode!=="replay"||step>=data.moves.length) return;
+  let entry=data.moves[step];
+  if(!entry) return;
+  let moveStr=entry.move||entry;
+  let parts=moveStr.includes("x")?moveStr.split("x"):moveStr.split("-");
+  let fromSq=parseInt(parts[0]);
+  if(!fromSq) return;
+  let cell=document.querySelector(`[data-pos='${fromSq}']`);
+  if(cell) cell.classList.add("sq-next-from");
+}
 function clearMoves(){
   stop();data.moves=[];step=0;
   let mi=document.getElementById("movesInput");
@@ -1014,9 +1109,12 @@ function render(){
   let entry=data.moves[step-1];
   let ms=entry?((entry.color?entry.color+" ":"")+(entry.move||entry)):"";
   document.getElementById("moveInfo").innerText=step>0?ms:"Start Position";
+
   document.getElementById("slider").value=step;
   document.getElementById("stepLabel").innerText=step+" / "+data.moves.length;
   setStatus(step>0?"▶ "+ms:"⬤ Start Position");
+  highlightNextMove();
+  drawPreviewArrows();
 }
 
 /* ══════════════════════════════════════
@@ -1074,14 +1172,21 @@ function _updateArrowBtns(){
     let b=document.getElementById(id);
     if(!b)return;
     if(arrowMode&&arrowColor==="red"){b.classList.add("active");b.innerText="🔴 วาดอยู่";}
-    else{b.classList.remove("active");b.innerText="🔴 ลูกศร";}
+    else{b.classList.remove("active");b.innerText="🔴 แพ้";}
+  });
+  // yellow buttons
+  ["arrowYellowBtn","replayArrowYellowBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="yellow"){b.classList.add("active");b.innerText="🟡 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🟡 เสมอ";}
   });
   // green buttons
   ["arrowGreenBtn","replayArrowGreenBtn"].forEach(id=>{
     let b=document.getElementById(id);
     if(!b)return;
     if(arrowMode&&arrowColor==="green"){b.classList.add("active");b.innerText="🟢 วาดอยู่";}
-    else{b.classList.remove("active");b.innerText="🟢 ลูกศร";}
+    else{b.classList.remove("active");b.innerText="🟢 ชนะ";}
   });
 }
 
@@ -1206,6 +1311,7 @@ function renderArrows(ghostX,ghostY){
     let fc=sqCenter(arrowDrag.fromSq);
     if(fc) drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,arrowColor,true);
   }
+  drawPreviewArrows();
 }
 
 function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
@@ -1215,8 +1321,8 @@ function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
   let pad=len*0.18, padHead=len*0.12;
   let sx=x1+ux*pad, sy=y1+uy*pad;
   let ex=x2-ux*padHead, ey=y2-uy*padHead;
-  let clr=color==="green"?"#20c020":"#e02020";
-  let markerId=color==="green"?"arrowhead-green":"arrowhead-red";
+  let clr=color==="green"?"#20c020":color==="yellow"?"#e6c000":"#e02020";
+  let markerId=color==="green"?"arrowhead-green":color==="yellow"?"arrowhead-yellow":"arrowhead-red";
   let line=document.createElementNS("http://www.w3.org/2000/svg","line");
   line.setAttribute("x1",sx);line.setAttribute("y1",sy);
   line.setAttribute("x2",ex);line.setAttribute("y2",ey);
@@ -1334,6 +1440,126 @@ function dragEnd(e){
       // already selected via dragStart, just re-render
       renderPlay();
     }
+  }
+}
+
+
+
+/* ══════════════════════════════════════
+   PREVIEW — ตัวเลข+สามเหลี่ยม ที่ช่องต้นทาง
+   สามเหลี่ยมชี้ทิศจาก fromSq → toSq ของตานั้น
+══════════════════════════════════════ */
+let previewOn    = true;
+let previewSteps = 3; // default 3 ตา
+
+function togglePreview(){
+  previewOn = !previewOn;
+  let btn = document.getElementById("previewBtn");
+  let wrap = document.getElementById("previewSliderWrap");
+  if(btn){ btn.classList.toggle("active", previewOn); btn.innerText = previewOn ? "👁 ตาเทพ" : "👁 ซ่อน"; }
+  if(wrap){ wrap.style.display = previewOn ? "flex" : "none"; }
+  render();
+}
+
+function setPreviewSteps(v){
+  previewSteps = parseInt(v);
+  document.getElementById("previewStepsLabel").innerText = v;
+  render();
+}
+
+function drawPreviewArrows(){
+  let svg = document.getElementById("arrowSvg");
+  svg.querySelectorAll(".preview-arrow").forEach(e => e.remove());
+  if(!previewOn || mode !== "replay" || !data.moves.length) return;
+
+  let cellSize = getBoardSize() / 8;
+  let maxSteps = previewSteps || 3;
+  // opacity จางลงทีละขั้น
+  let opacities = [];
+  for(let i=0;i<maxSteps;i++) opacities.push(Math.max(0.12, 0.95 - i*(0.80/Math.max(maxSteps-1,1))));
+
+  for(let i=0;i<maxSteps;i++){
+    let idx = step + i;
+    if(idx >= data.moves.length) break;
+
+    let entry   = data.moves[idx];
+    let moveStr = entry.move || entry;
+    let isCapture = moveStr.includes("x");
+    let parts = isCapture ? moveStr.split("x") : moveStr.split("-");
+    if(parts.length < 2) continue;
+
+    let fromSq = parseInt(parts[0]);
+    // ทิศทาง: ใช้ก้าวแรกของการเดิน (parts[0]→parts[1]) ไม่ใช่ปลายทางสุดท้าย
+    let nextSq = parseInt(parts[1]);
+    let toSq   = parseInt(parts[parts.length-1]); // ปลายทางจริง (สำหรับ label)
+    if(!fromSq || !nextSq || fromSq===nextSq) continue;
+
+    let fc   = sqCenter(fromSq);
+    let nc   = sqCenter(nextSq);  // ช่องถัดไปจริงๆ (ก้าวแรก)
+    if(!fc || !nc) continue;
+
+    // ทิศทาง from→next (ก้าวแรกเท่านั้น)
+    let dx = nc[0]-fc[0], dy = nc[1]-fc[1];
+    let len = Math.sqrt(dx*dx+dy*dy);
+    if(len < 4) continue;
+    let ux = dx/len, uy = dy/len;
+
+    let op   = opacities[i];
+    let half = cellSize * 0.5;
+
+    // --- ตัวเลข 1/2/3... กลางช่องต้นทาง ---
+    let fsize = Math.round(cellSize * 0.38);
+    let txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x", fc[0]);
+    txt.setAttribute("y", fc[1]);
+    txt.setAttribute("text-anchor","middle");
+    txt.setAttribute("dominant-baseline","central");
+    txt.setAttribute("font-size", fsize);
+    txt.setAttribute("font-weight","700");
+    txt.setAttribute("font-family","'IBM Plex Mono',monospace");
+    txt.setAttribute("fill","#fff");
+    txt.setAttribute("stroke","#c0392b");
+    txt.setAttribute("stroke-width","3");
+    txt.setAttribute("paint-order","stroke");
+    txt.setAttribute("opacity", op);
+    txt.setAttribute("class","preview-arrow");
+    txt.setAttribute("pointer-events","none");
+    txt.textContent = String(i+1);
+    svg.appendChild(txt);
+
+    // --- สามเหลี่ยมที่มุมของช่องต้นทาง ชี้ไปทิศก้าวแรก ---
+    // ux>0,uy<0 = ขวาบน | ux>0,uy>0 = ขวาล่าง
+    // ux<0,uy<0 = ซ้ายบน | ux<0,uy>0 = ซ้ายล่าง
+    let triS   = cellSize * 0.22;
+    let margin = cellSize * 0.04;
+    let mx, my, b1x, b1y, b2x, b2y;
+
+    if(ux >= 0 && uy <= 0){        // ขวาบน
+      mx  = fc[0]+half-margin; my  = fc[1]-half+margin;
+      b1x = mx-triS; b1y = my;
+      b2x = mx;      b2y = my+triS;
+    } else if(ux >= 0 && uy > 0){ // ขวาล่าง
+      mx  = fc[0]+half-margin; my  = fc[1]+half-margin;
+      b1x = mx-triS; b1y = my;
+      b2x = mx;      b2y = my-triS;
+    } else if(ux < 0 && uy <= 0){ // ซ้ายบน
+      mx  = fc[0]-half+margin; my  = fc[1]-half+margin;
+      b1x = mx+triS; b1y = my;
+      b2x = mx;      b2y = my+triS;
+    } else {                       // ซ้ายล่าง
+      mx  = fc[0]-half+margin; my  = fc[1]+half-margin;
+      b1x = mx+triS; b1y = my;
+      b2x = mx;      b2y = my-triS;
+    }
+
+    let tri = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    tri.setAttribute("points", `${mx},${my} ${b1x},${b1y} ${b2x},${b2y}`);
+    tri.setAttribute("fill","#fff");
+    tri.setAttribute("stroke","#c0392b");
+    tri.setAttribute("stroke-width","1.5");
+    tri.setAttribute("opacity", op);
+    tri.setAttribute("class","preview-arrow");
+    svg.appendChild(tri);
   }
 }
 
