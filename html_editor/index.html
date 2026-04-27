@@ -1,224 +1,161 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Deep Breath - Sync Flow</title>
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@200;300;400&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#000; width:100vw; height:100vh; overflow:hidden; font-family:'Sarabun',sans-serif; color: white; }
-  #c { position:fixed; inset:0; width:100%; height:100%; }
-
-  .ctrl-panel {
-    position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);
-    padding: 15px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
-    z-index: 1000; display: flex; flex-direction: column; gap: 15px; align-items: center; width: 320px;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .app { display: flex; flex-direction: column; height: 100vh; min-height: 500px; }
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
   }
-  .mode-switch { display: flex; gap: 20px; font-size: 14px; }
-  .auto-controls { display: flex; gap: 15px; width: 100%; justify-content: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
-  .counter-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .counter-box label { font-size: 10px; opacity: 0.7; letter-spacing: 1px; }
-  .counter { display: flex; align-items: center; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; }
-  .btn-c { width: 30px; height: 30px; border: none; background: rgba(255,255,255,0.1); color: white; cursor: pointer; font-size: 18px; }
-  .btn-c:hover { background: rgba(255,255,255,0.2); }
-  .val-c { width: 30px; text-align: center; font-size: 16px; font-weight: bold; }
-
-  .sw { position:fixed; bottom:60px; display:flex; flex-direction:column; align-items:center; gap:10px; z-index:100; transition: opacity 0.3s; }
-  .sw.right { right:30px; } .sw.left  { left:30px; }
-  .sl { font-size:10px; font-weight:200; letter-spacing:.2em; color:rgba(255,255,255,0.7); pointer-events:none; }
-  .st { position:relative; width:44px; height:200px; background:rgba(255,255,255,0.05); border-radius:22px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; touch-action:none; }
-  .sf { position:absolute; bottom:6px; left:6px; right:6px; border-radius:10px; pointer-events:none; height:0; background: linear-gradient(to top, #55aadd, #55dd88); opacity: 0.2; }
-  .sh { position:absolute; width:34px; height:34px; border-radius:50%; left:5px; bottom:5px; pointer-events:none; background:radial-gradient(circle at 35% 35%, #ffffff, #55aadd); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+  .toolbar-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .btn {
+    font-size: 12px; padding: 5px 12px; border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary); background: transparent;
+    color: var(--color-text-primary); cursor: pointer; transition: background 0.15s;
+    font-family: var(--font-sans);
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-run {
+    background: var(--color-text-primary); color: var(--color-background-primary);
+    border-color: transparent; font-weight: 500;
+  }
+  .btn-run:hover { opacity: 0.85; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .editor-pane { display: flex; flex-direction: column; flex: 1; border-right: 0.5px solid var(--color-border-tertiary); }
+  .pane-label {
+    font-size: 11px; color: var(--color-text-secondary); padding: 6px 14px;
+    background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary);
+    letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500;
+  }
+  #code-input {
+    flex: 1; width: 100%; border: none; outline: none; resize: none;
+    padding: 14px; font-family: var(--font-mono); font-size: 13px; line-height: 1.65;
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    tab-size: 2;
+  }
+  .preview-pane { display: flex; flex-direction: column; flex: 1; }
+  #preview-frame { flex: 1; border: none; background: white; }
+  .status-bar {
+    font-size: 11px; color: var(--color-text-secondary); padding: 5px 14px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 99px;
+    background: var(--color-background-info); color: var(--color-text-info);
+    font-weight: 500;
+  }
 </style>
-</head>
-<body>
 
-<div class="ctrl-panel">
-  <div class="mode-switch">
-    <label><input type="radio" name="m" value="manual" checked> ควบคุมเอง</label>
-    <label><input type="radio" name="m" value="auto"> อัตโนมัติ</label>
+<div class="app">
+  <div class="toolbar">
+    <span class="toolbar-title">HTML Editor</span>
+    <button class="btn" onclick="clearCode()">ล้าง</button>
+    <button class="btn" onclick="copyCode()">คัดลอก</button>
+    <button class="btn btn-run" onclick="runCode()">▶ รัน</button>
   </div>
-  <div class="auto-controls" id="autoSet" style="display:none;">
-    <div class="counter-box">
-      <label>ช้า-เร็ว</label>
-      <div class="counter">
-        <button class="btn-c" onclick="adj('speed', -1)">-</button>
-        <div class="val-c" id="v-speed">2</div>
-        <button class="btn-c" onclick="adj('speed', 1)">+</button>
-      </div>
+  <div class="main">
+    <div class="editor-pane">
+      <div class="pane-label">Code</div>
+      <textarea id="code-input" spellcheck="false" placeholder="วาง HTML ของคุณที่นี่..."></textarea>
     </div>
-    <div class="counter-box">
-      <label>สั้น-ยาว</label>
-      <div class="counter">
-        <button class="btn-c" onclick="adj('len', -1)">-</button>
-        <div class="val-c" id="v-len">2</div>
-        <button class="btn-c" onclick="adj('len', 1)">+</button>
-      </div>
+    <div class="preview-pane">
+      <div class="pane-label">Preview</div>
+      <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
     </div>
+  </div>
+  <div class="status-bar">
+    <span id="char-count">0 ตัวอักษร</span>
+    <span class="badge" id="status-badge">พร้อมใช้งาน</span>
   </div>
 </div>
 
-<canvas id="c"></canvas>
-
-<div class="sw left" id="uiL"><div class="sl">เข้า</div><div class="st" id="stL"><div class="sf" id="sfL"></div><div class="sh" id="shL"></div></div><div class="sl">ออก</div></div>
-<div class="sw right" id="uiR"><div class="sl">เข้า</div><div class="st" id="stR"><div class="sf" id="sfR"></div><div class="sh" id="shR"></div></div><div class="sl">ออก</div></div>
-
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-let W, H, val = 0;
-let lastPos = 0;
-let isDragging = false;
+  const input = document.getElementById('code-input');
+  const frame = document.getElementById('preview-frame');
+  const charCount = document.getElementById('char-count');
+  const statusBadge = document.getElementById('status-badge');
 
-const bgImg = new Image();
-bgImg.src = 'https://sumet-y.github.io/wit/breath/abc3.png';
-let imgLoaded = false;
-bgImg.onload = () => imgLoaded = true;
-
-let config = { mode: 'manual', speed: 2, len: 2 };
-let autoPhase = 0;
-
-function adj(key, delta) {
-  config[key] = Math.max(1, Math.min(4, config[key] + delta));
-  document.getElementById(`v-${key}`).innerText = config[key];
-}
-
-document.querySelectorAll('input[name="m"]').forEach(r => {
-  r.onchange = (e) => {
-    config.mode = e.target.value;
-    document.getElementById('autoSet').style.display = (config.mode === 'auto') ? 'flex' : 'none';
-    const op = config.mode === 'auto' ? '0.3' : '1';
-    document.getElementById('uiL').style.opacity = op;
-    document.getElementById('uiR').style.opacity = op;
-    autoPhase = 0;
-  };
-});
-
-function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-window.onresize = resize; resize();
-
-const SL_H = 200, THUMB = 34, RANGE = SL_H - THUMB - 10;
-const sliders = [
-  {t:document.getElementById('shL'), f:document.getElementById('sfL'), el:document.getElementById('stL')},
-  {t:document.getElementById('shR'), f:document.getElementById('sfR'), el:document.getElementById('stR')}
-];
-
-// ฟังก์ชันอัปเดต UI สไลเดอร์ทั้งสองพร้อมกัน
-function updateSliderUI(pos) {
-  const bottomVal = (pos * RANGE + 5) + 'px';
-  const fillHeight = (pos * RANGE + 10) + 'px';
-  sliders.forEach(s => {
-    s.t.style.bottom = bottomVal;
-    s.f.style.height = fillHeight;
-  });
-}
-
-function handleInput(e) {
-  if (config.mode === 'auto') return;
-  const rect = sliders[0].el.getBoundingClientRect(); // อิงจากตำแหน่งตัวใดตัวหนึ่ง
-  const cy = (e.touches ? e.touches[0].clientY : e.clientY);
-  let pos = 1 - ((cy - rect.top - THUMB/2) / RANGE);
-  pos = Math.max(0, Math.min(1, pos));
-
-  let diff = pos - lastPos;
-  val = -diff * 12; // ลากขึ้นเป็นลบ (เข้า), ลากลงเป็นบวก (ออก)
-  val = Math.max(-1, Math.min(1, val));
-  
-  lastPos = pos;
-  updateSliderUI(pos);
-}
-
-window.onmousedown = window.ontouchstart = (e) => {
-  if (e.target.closest('.st')) {
-    isDragging = true;
-    const rect = e.target.closest('.st').getBoundingClientRect();
-    const cy = (e.touches ? e.touches[0].clientY : e.clientY);
-    lastPos = 1 - ((cy - rect.top - THUMB/2) / RANGE);
-  }
-};
-
-window.onmousemove = window.ontouchmove = (e) => { if(isDragging) handleInput(e); };
-window.onmouseup = window.ontouchend = () => { isDragging = false; val = 0; };
-
-function getMetrics() {
-  let r = Math.max(W/bgImg.width, H/bgImg.height);
-  let nw = bgImg.width*r, nh = bgImg.height*r;
-  return { nx: (W-nw)/2, ny: (H-nh)/2, nw, nh, fx: (W-nw)/2 + (nw*0.52), fy: (H-nh)/2 + (nh*0.45) };
-}
-
-const streams = [];
-function addStream(v, fx, fy) {
-  const isI = v < 0;
-  const s = Math.abs(v);
-  const xOffset = -30, yOffset = -5, ang = (82 * Math.PI) / 180;
-  const d = 400 * s;
-  const out = { x: fx + Math.cos(ang)*d, y: fy + Math.sin(ang)*d };
-  const ins = { x: fx - 25 - xOffset, y: fy - 15 - yOffset };
-  streams.push({ st: isI?out:ins, en: isI?ins:out, l: 0, ml: 20+(s*40), c: isI?'120,210,255':'150,255,190', w: 1+s*12 });
-}
-
-let glowEnergy = 0, glowRadius = 0, glowOpacity = 0;
-function updateGlow(dt) {
-  const abs = Math.abs(val);
-  glowEnergy = (abs > 0.05) ? Math.min(1, glowEnergy + abs*4*dt) : Math.max(0, glowEnergy - 3*dt);
-  glowRadius += ((8 + glowEnergy*60) - glowRadius) * 8 * dt;
-  glowOpacity += ((glowEnergy*0.6) - glowOpacity) * 8 * dt;
-}
-
-let lastT = 0;
-function anim(ts) {
-  const dt = Math.min((ts - lastT) / 1000, 0.05);
-  lastT = ts;
-  ctx.clearRect(0,0,W,H);
-  if (!imgLoaded) return requestAnimationFrame(anim);
-  const m = getMetrics();
-
-  if (config.mode === 'auto') {
-    // ปรับความสัมพันธ์โหมด Auto
-    const speedTable = [0.015, 0.03, 0.05, 0.08]; // ช้า-เร็ว
-    const lenTable = [0.3, 0.5, 0.7, 1.0];        // สั้น-ยาว
-    
-    autoPhase += speedTable[config.speed-1];
-    const wave = Math.sin(autoPhase);
-    const amplitude = lenTable[config.len-1];
-    
-    val = wave * amplitude * 0.8; // แรงลมตามความยาวที่ตั้งไว้
-    
-    // อัปเดต UI สไลเดอร์ตามคลื่น Sine
-    const autoPos = (wave + 1) / 2 * amplitude; 
-    updateSliderUI(autoPos);
-  }
-
-  ctx.drawImage(bgImg, m.nx, m.ny, m.nw, m.nh);
-  if (Math.abs(val) > 0.06 && Math.random() < 0.7) addStream(val, m.fx, m.fy);
-
-  for (let i = streams.length - 1; i >= 0; i--) {
-    let s = streams[i]; s.l++;
-    let t = s.l/s.ml, o = Math.sin(t*Math.PI);
-    ctx.beginPath(); ctx.lineWidth = s.w; ctx.lineCap = 'round';
-    ctx.strokeStyle = `rgba(${s.c}, ${o*0.5})`;
-    ctx.moveTo(s.st.x+(s.en.x-s.st.x)*t*0.8, s.st.y+(s.en.y-s.st.y)*t*0.8);
-    ctx.lineTo(s.st.x+(s.en.x-s.st.x)*t, s.st.y+(s.en.y-s.st.y)*t);
-    ctx.stroke();
-    if (s.l >= s.ml) streams.splice(i, 1);
-  }
-
-  updateGlow(dt);
-  if (glowOpacity > 0.01) {
-    const g = ctx.createRadialGradient(m.fx, m.fy, 0, m.fx, m.fy, glowRadius);
-    g.addColorStop(0, `rgba(255, 30, 0, ${glowOpacity})`);
-    g.addColorStop(1, `rgba(255, 0, 0, 0)`);
-    ctx.beginPath(); ctx.arc(m.fx, m.fy, glowRadius, 0, Math.PI*2);
-    ctx.fillStyle = g; ctx.fill();
-  }
-  ctx.beginPath(); ctx.arc(m.fx, m.fy, 3, 0, Math.PI*2);
-  ctx.fillStyle = '#b30000'; ctx.fill();
-
-  requestAnimationFrame(anim);
-}
-requestAnimationFrame(t => { lastT = t; anim(t); });
-</script>
+  const defaultCode = `<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>หน้าทดสอบ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>สวัสดี โลก!</h1>
 </body>
-</html>
+</html>`;
+
+  input.value = defaultCode;
+  updateCount();
+  runCode();
+
+  input.addEventListener('input', updateCount);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = input.selectionStart;
+      input.value = input.value.slice(0, s) + '  ' + input.value.slice(input.selectionEnd);
+      input.selectionStart = input.selectionEnd = s + 2;
+    }
+  });
+
+  function runCode() {
+    const code = input.value.trim();
+    if (!code) return;
+    try {
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      doc.open(); doc.write(code); doc.close();
+      statusBadge.textContent = 'แสดงผลสำเร็จ';
+      statusBadge.style.background = 'var(--color-background-success)';
+      statusBadge.style.color = 'var(--color-text-success)';
+    } catch(e) {
+      statusBadge.textContent = 'เกิดข้อผิดพลาด';
+      statusBadge.style.background = 'var(--color-background-danger)';
+      statusBadge.style.color = 'var(--color-text-danger)';
+    }
+  }
+
+  function clearCode() {
+    input.value = '';
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open(); doc.write(''); doc.close();
+    updateCount();
+    statusBadge.textContent = 'พร้อมใช้งาน';
+    statusBadge.style.background = '';
+    statusBadge.style.color = '';
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(input.value).then(() => {
+      statusBadge.textContent = 'คัดลอกแล้ว!';
+      statusBadge.style.background = 'var(--color-background-info)';
+      statusBadge.style.color = 'var(--color-text-info)';
+      setTimeout(() => {
+        statusBadge.textContent = 'พร้อมใช้งาน';
+        statusBadge.style.background = '';
+        statusBadge.style.color = '';
+      }, 2000);
+    });
+  }
+
+  function updateCount() {
+    charCount.textContent = input.value.length.toLocaleString() + ' ตัวอักษร';
+  }
+</script>
