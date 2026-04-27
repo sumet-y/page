@@ -3,147 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pro HTML Editor - Fixed Preview</title>
+<title>HTML Editor Pro - Fixed</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  
-  /* ให้ body เลื่อนได้อิสระตามความยาว Preview */
-  body { 
-    background: #1a1a1a; 
-    font-family: -apple-system, sans-serif; 
-    overflow-y: auto; 
-    min-height: 100vh;
-  }
+  html, body { height: 100%; background: #1a1a1a; }
+  .app { display: flex; flex-direction: column; min-height: 100vh; font-family: sans-serif; }
 
-  /* Toolbar & Search ติดหนึบด้านบน */
-  .header-sticky {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: #1a1a1a;
-  }
-
+  /* Toolbar & Search */
+  .header-sticky { position: sticky; top: 0; z-index: 100; background: #1a1a1a; }
   .toolbar {
-    display: flex; align-items: center; gap: 6px; padding: 10px;
+    display: flex; align-items: center; gap: 8px; padding: 10px;
     background: #111; border-bottom: 1px solid #333;
   }
   .btn {
-    padding: 8px 12px; border-radius: 6px; border: 1px solid #444;
-    background: #222; color: #eee; cursor: pointer; font-size: 12px;
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #444;
+    background: #222; color: #eee; cursor: pointer; font-size: 13px;
     -webkit-tap-highlight-color: transparent;
   }
   .btn-run { background: #f59e0b; color: #000; font-weight: bold; border: none; }
 
   .search-bar {
-    display: none; background: #222; padding: 8px; gap: 8px;
+    display: none; background: #222; padding: 8px 12px; gap: 8px;
     border-bottom: 1px solid #333; align-items: center;
   }
   .search-bar.open { display: flex; }
   .search-bar input {
     flex: 1; background: #111; border: 1px solid #444; color: #fff;
-    padding: 6px; border-radius: 4px; outline: none; font-size: 14px;
+    padding: 4px 8px; border-radius: 4px; outline: none;
   }
 
-  /* Editor Zone: ล็อกความสูง 50% ของหน้าจอ */
-  .editor-container {
-    height: 50vh;
-    display: flex; background: #161616;
-    position: relative; overflow: hidden;
-    border-bottom: 2px solid #f59e0b;
-  }
-
+  /* Editor Zone */
+  .editor-container { display: flex; flex-direction: column; background: #1a1a1a; }
+  .editor-wrap { display: flex; position: relative; border-bottom: 2px solid #333; }
+  
   .line-numbers {
-    width: 40px; background: #111; color: #444; padding: 10px 0;
-    text-align: right; font-family: monospace; font-size: 14px;
-    line-height: 1.5; border-right: 1px solid #222; overflow: hidden;
+    width: 45px; background: #161616; color: #444; padding: 10px 0;
+    text-align: right; font-family: monospace; font-size: 14px; line-height: 1.5;
+    user-select: none; border-right: 1px solid #222; overflow: hidden;
   }
-  .line-numbers span { display: block; padding-right: 5px; }
-  .line-numbers .match-line { color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
+  .line-numbers span { display: block; padding-right: 8px; }
+  .line-numbers span.match-line { color: #f59e0b; background: rgba(245, 158, 11, 0.2); font-weight: bold; }
 
-  .code-viewport { flex: 1; position: relative; overflow: auto; }
-
+  .code-area { flex: 1; position: relative; overflow: auto; height: 50vh; }
+  
   .backdrop, #code-input {
     width: fit-content; min-width: 100%;
-    height: 100%; min-height: 100%;
-    padding: 10px; font-family: monospace;
-    font-size: 14px; line-height: 1.5;
-    white-space: pre; word-wrap: normal;
-  }
-  .backdrop { position: absolute; top: 0; left: 0; color: transparent; z-index: 1; pointer-events: none; }
-  #code-input { background: transparent; color: #e8e8e8; border: none; outline: none; resize: none; position: relative; z-index: 2; }
-
-  mark { background: rgba(245, 158, 11, 0.4); color: transparent; }
-  mark.current { background: #f59e0b; color: #000; }
-
-  /* Preview Zone: ส่วนสำคัญที่แก้ไข */
-  .preview-section {
-    width: 100%;
-    background: #fff;
-    position: relative;
-  }
-  .preview-label { 
-    background: #333; color: #fff; padding: 6px 12px; 
-    font-size: 11px; font-weight: bold; letter-spacing: 1px;
-  }
-  
-  /* iframe ต้องไม่เลื่อนเอง แต่ให้ยืดตามเนื้อหา */
-  #preview-frame {
-    width: 100%;
-    border: none;
-    display: block;
-    overflow: hidden; /* ปิด scroll ของ iframe */
-    pointer-events: auto; /* ให้กดปุ่มข้างในได้ */
+    padding: 10px; font-family: monospace; font-size: 14px; line-height: 1.5;
+    white-space: pre; word-wrap: normal; /* เลื่อนซ้ายขวาได้ */
   }
 
-  .status { font-size: 10px; padding: 6px 10px; background: #111; color: #555; }
+  .backdrop {
+    position: absolute; top: 0; left: 0; color: transparent;
+    pointer-events: none; z-index: 1;
+  }
+  mark { background-color: rgba(245, 158, 11, 0.4); color: transparent; border-radius: 2px; }
+  mark.current { background-color: #f59e0b; color: #000; }
+
+  #code-input {
+    min-height: 100%; background: transparent; color: #e8e8e8;
+    border: none; outline: none; resize: none;
+    position: relative; z-index: 2; caret-color: #f59e0b;
+  }
+
+  /* Preview Zone */
+  .preview-label { background: #222; padding: 8px; font-size: 12px; color: #888; font-weight: bold; }
+  #preview-frame { 
+    width: 100%; border: none; background: #fff; 
+    display: block; overflow: hidden;
+  }
+
+  .status { padding: 5px 12px; font-size: 11px; color: #666; background: #111; }
 </style>
 </head>
 <body>
 
-<div class="header-sticky">
-  <div class="toolbar">
-    <button class="btn" onclick="clearCode()">ล้าง</button>
-    <button class="btn" onclick="pasteCode()">วาง</button>
-    <button class="btn" onclick="copyCode()">คัดลอก</button>
-    <button class="btn" onclick="toggleSearch()">⌕ ค้นหา</button>
-    <button class="btn btn-run" onclick="runCode()">▶ รันโค้ด</button>
+<div class="app">
+  <div class="header-sticky">
+    <div class="toolbar">
+      <button class="btn" onclick="clearCode()">ล้าง</button>
+      <button class="btn" onclick="pasteCode()">วาง</button>
+      <button class="btn" onclick="copyCode()">คัดลอก</button>
+      <button class="btn" onclick="toggleSearch()">⌕ ค้นหา</button>
+      <button class="btn btn-run" onclick="runCode()">▶ รันโค้ด</button>
+    </div>
+
+    <div class="search-bar" id="searchBar">
+      <input type="text" id="searchInput" placeholder="ค้นหา..." oninput="doSearch()">
+      <button class="btn" onclick="prevMatch()">↑</button>
+      <button class="btn" onclick="nextMatch()">↓</button>
+      <span id="searchCount" style="font-size:12px; color:#888;">0/0</span>
+    </div>
   </div>
 
-  <div class="search-bar" id="searchBar">
-    <input type="text" id="searchInput" placeholder="ค้นหา..." oninput="doSearch()">
-    <button class="btn" onclick="prevMatch()">↑</button>
-    <button class="btn" onclick="nextMatch()">↓</button>
-    <span id="searchCount" style="color:#888; font-size:12px;">0/0</span>
+  <div class="editor-container">
+    <div class="editor-wrap">
+      <div class="line-numbers" id="lineNumbers"></div>
+      <div class="code-area" id="codeArea" onscroll="syncScroll()">
+        <div class="backdrop" id="backdrop"></div>
+        <textarea id="code-input" spellcheck="false" oninput="onInput()" wrap="off"></textarea>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="editor-container">
-  <div class="line-numbers" id="lineNumbers"></div>
-  <div class="code-viewport" id="viewport" onscroll="syncScroll()">
-    <div class="backdrop" id="backdrop"></div>
-    <textarea id="code-input" spellcheck="false" oninput="onInput()" wrap="off"></textarea>
-  </div>
-</div>
-
-<div class="preview-section">
-  <div class="preview-label">LIVE PREVIEW</div>
+  <div class="preview-label">PREVIEW (ความยาวตามเนื้อหาจริง)</div>
   <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
-</div>
 
-<div class="status" id="statusBar">บรรทัด: 1</div>
+  <div class="status" id="statusBar">บรรทัด: 1 | ตัวอักษร: 0</div>
+</div>
 
 <script>
   const input = document.getElementById('code-input');
   const backdrop = document.getElementById('backdrop');
   const lineNumbers = document.getElementById('lineNumbers');
-  const viewport = document.getElementById('viewport');
+  const codeArea = document.getElementById('codeArea');
   const preview = document.getElementById('preview-frame');
+  const searchBar = document.getElementById('searchBar');
   const searchInput = document.getElementById('searchInput');
+  const searchCount = document.getElementById('searchCount');
 
   let matches = [];
   let currentMatchIdx = 0;
 
-  // --- ส่วนของ Editor ---
   function onInput() {
     updateLineNumbers();
     doSearch();
@@ -160,14 +140,14 @@
   }
 
   function syncScroll() {
-    lineNumbers.scrollTop = viewport.scrollTop;
+    backdrop.scrollTop = codeArea.scrollTop;
+    backdrop.scrollLeft = codeArea.scrollLeft;
+    lineNumbers.scrollTop = codeArea.scrollTop;
   }
 
-  // --- ส่วนของระบบค้นหา (Scroll into view) ---
   function toggleSearch() {
-    const bar = document.getElementById('searchBar');
-    bar.classList.toggle('open');
-    if(bar.classList.contains('open')) searchInput.focus();
+    searchBar.classList.toggle('open');
+    if(searchBar.classList.contains('open')) searchInput.focus();
     else { searchInput.value = ''; doSearch(); }
   }
 
@@ -177,89 +157,88 @@
     matches = [];
     if (!q) {
       backdrop.innerHTML = escapeHTML(text);
-      document.getElementById('searchCount').innerText = "0/0";
+      searchCount.innerText = "0/0";
       updateLineNumbers();
       return;
     }
+
     const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    backdrop.innerHTML = escapeHTML(text).replace(regex, (m, idx) => {
-      matches.push(idx);
-      return `<mark>${m}</mark>`;
+    backdrop.innerHTML = escapeHTML(text).replace(regex, (match, index) => {
+      matches.push(index);
+      return `<mark>${match}</mark>`;
     });
+    
     const allMarks = backdrop.querySelectorAll('mark');
     if (allMarks.length > 0) {
-      allMarks[currentMatchIdx]?.classList.add('current');
-      document.getElementById('searchCount').innerText = `${currentMatchIdx + 1}/${allMarks.length}`;
-      scrollToMark(allMarks[currentMatchIdx]);
+      if (currentMatchIdx >= allMarks.length) currentMatchIdx = 0;
+      allMarks[currentMatchIdx].classList.add('current');
+      searchCount.innerText = `${currentMatchIdx + 1}/${allMarks.length}`;
+      scrollToMatch(allMarks[currentMatchIdx]);
+    } else {
+      searchCount.innerText = "0/0";
     }
     updateLineNumbers();
   }
 
-  function scrollToMark(el) {
-    if (!el) return;
-    viewport.scrollTo({
-      top: el.offsetTop - (viewport.clientHeight / 2),
-      left: el.offsetLeft - (viewport.clientWidth / 2),
+  function scrollToMatch(el) {
+    codeArea.scrollTo({
+      top: el.offsetTop - (codeArea.clientHeight / 2),
+      left: el.offsetLeft - (codeArea.clientWidth / 2),
       behavior: 'smooth'
     });
   }
 
-  function nextMatch() { if(matches.length) { currentMatchIdx = (currentMatchIdx + 1) % matches.length; doSearch(); } }
-  function prevMatch() { if(matches.length) { currentMatchIdx = (currentMatchIdx - 1 + matches.length) % matches.length; doSearch(); } }
+  function nextMatch() { if (matches.length) { currentMatchIdx = (currentMatchIdx + 1) % matches.length; doSearch(); } }
+  function prevMatch() { if (matches.length) { currentMatchIdx = (currentMatchIdx - 1 + matches.length) % matches.length; doSearch(); } }
 
-  // --- ส่วนของ Preview (จุดที่แก้ไขหลัก) ---
   function runCode() {
     const doc = preview.contentDocument || preview.contentWindow.document;
     doc.open();
     doc.write(input.value);
     doc.close();
-
-    // รอให้เนื้อหาโหลดเสร็จแล้วคำนวณความสูง
-    preview.onload = resizePreview;
-    setTimeout(resizePreview, 100); 
+    
+    // ปรับความสูง iframe ให้เท่ากับเนื้อหาภายในจริง
+    setTimeout(() => {
+      const height = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+      preview.style.height = (height + 50) + 'px';
+    }, 200);
   }
 
-  function resizePreview() {
-    const doc = preview.contentDocument || preview.contentWindow.document;
-    if (doc && doc.body) {
-      // ทำให้ iframe สูงเท่าเนื้อหาจริงๆ
-      const height = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-      preview.style.height = (height + 20) + 'px'; 
+  function clearCode() {
+    if(confirm('ล้างโค้ดทั้งหมด?')) {
+      input.value = '';
+      onInput();
+      runCode();
     }
   }
 
-  // ใช้ MutationObserver เพื่อให้ iframe ยืดตามเนื้อหาอัตโนมัติแม้มีการรัน JS ภายใน
-  const observer = new MutationObserver(resizePreview);
-  preview.addEventListener('load', () => {
-    const doc = preview.contentDocument || preview.contentWindow.document;
-    observer.observe(doc.body, { attributes: true, childList: true, subtree: true });
-  });
-
-  // --- Helper Functions ---
-  function clearCode() { input.value = ''; onInput(); runCode(); }
-  function copyCode() { navigator.clipboard.writeText(input.value); alert("คัดลอกแล้ว"); }
   async function pasteCode() {
     try {
       const t = await navigator.clipboard.readText();
-      const s = input.selectionStart;
-      input.value = input.value.slice(0, s) + t + input.value.slice(input.selectionEnd);
+      const start = input.selectionStart;
+      input.value = input.value.substring(0, start) + t + input.value.substring(input.selectionEnd);
       onInput();
-    } catch(e) { alert("กรุณากดวางด้วยตัวเอง"); }
+    } catch (err) { alert('โปรดกดวางด้วยตัวเอง'); }
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(input.value);
+    alert('คัดลอกแล้ว');
   }
 
   function updateStatus() {
-    document.getElementById('statusBar').innerText = `บรรทัด: ${input.value.split('\n').length}`;
+    const lines = input.value.split('\n').length;
+    document.getElementById('statusBar').innerText = `บรรทัด: ${lines} | ตัวอักษร: ${input.value.length}`;
   }
 
-  function escapeHTML(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function escapeHTML(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // Initial
-  input.value = "<h1>สวัสดี</h1>\n<button onclick='alert(\"ทำงานได้!\")'>ลองกดปุ่มนี้</button>\n<p style='height:1000px; background:linear-gradient(to bottom, #eee, #333); color:#fff; padding:20px;'>\nเนื้อหาที่มีความยาวมากๆ เพื่อทดสอบการยืดของหน้าจอ\n</p>";
+  input.value = "<h1>สวัสดี</h1>\n<button onclick='alert(\"ปุ่มทำงาน!\")'>ทดสอบปุ่ม</button>";
   onInput();
   runCode();
 </script>
-
 </body>
 </html>
