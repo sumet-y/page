@@ -3,340 +3,259 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HTML Editor - Fixed</title>
+<title>HTML Editor Pro</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  .app {
-    display: flex; flex-direction: column;
-    height: 100dvh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #1a1a1a; color: #e8e8e8; overflow: hidden;
-  }
+  html, body { height: 100%; background: #1a1a1a; }
+  .app { display: flex; flex-direction: column; min-height: 100vh; font-family: sans-serif; }
 
   /* Toolbar */
   .toolbar {
-    display: flex; align-items: center; gap: 6px; padding: 10px 12px;
-    background: #111; border-bottom: 1px solid #2a2a2a; flex-shrink: 0;
-    padding-top: max(10px, env(safe-area-inset-top));
+    display: flex; align-items: center; gap: 8px; padding: 10px;
+    background: #111; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100;
   }
-  .toolbar-title {
-    font-size: 14px; font-weight: 700; color: #fff; flex: 1;
-    letter-spacing: -0.02em;
-  }
-  .toolbar-title span { color: #f59e0b; }
   .btn {
-    font-size: 12px; padding: 7px 12px; border-radius: 8px;
-    border: 1px solid #333; background: #222;
-    color: #ccc; cursor: pointer; white-space: nowrap;
-    font-family: inherit; -webkit-tap-highlight-color: transparent;
-    transition: background 0.15s;
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #444;
+    background: #222; color: #eee; cursor: pointer; font-size: 13px;
   }
-  .btn:active { background: #333; }
-  .btn-run {
-    background: #f59e0b; color: #111;
-    border-color: transparent; font-weight: 700; padding: 7px 14px;
-  }
-  .btn-run:active { background: #d97706; }
+  .btn-run { background: #f59e0b; color: #000; font-weight: bold; border: none; }
 
-  /* Pane Label & Search */
-  .pane-label {
-    font-size: 10px; color: #666; padding: 5px 12px;
-    background: #161616; border-bottom: 1px solid #222;
-    letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
-    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
-  }
-  .pane-dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
-  .pane-dot.green { background: #22c55e; }
-  .search-btn {
-    margin-left: auto; font-size: 11px; padding: 3px 9px; border-radius: 6px;
-    border: 1px solid #333; background: #1e1e1e; color: #888; cursor: pointer;
-  }
-
+  /* Search Bar */
   .search-bar {
-    display: none; align-items: center; gap: 6px; padding: 6px 10px;
-    border-bottom: 1px solid #222; background: #161616; flex-shrink: 0;
+    display: none; background: #222; padding: 8px 12px; gap: 8px;
+    border-bottom: 1px solid #333; align-items: center;
   }
   .search-bar.open { display: flex; }
   .search-bar input {
-    flex: 1; font-size: 13px; padding: 6px 10px; border-radius: 8px;
-    border: 1px solid #333; background: #1e1e1e; color: #e8e8e8;
-    outline: none;
-  }
-  .search-nav button {
-    font-size: 15px; padding: 4px 10px; border-radius: 6px;
-    border: 1px solid #333; background: #222; color: #aaa; cursor: pointer;
+    flex: 1; background: #111; border: 1px solid #444; color: #fff;
+    padding: 4px 8px; border-radius: 4px; outline: none;
   }
 
-  /* Editor Pane */
-  .editor-pane { display: flex; flex-direction: column; flex: 1.2; min-height: 0; overflow: hidden; }
-  .editor-wrap { display: flex; flex: 1; overflow: hidden; position: relative; }
+  /* Editor Zone */
+  .editor-container { display: flex; flex-direction: column; background: #1a1a1a; }
+  .editor-wrap { display: flex; position: relative; border-bottom: 2px solid #333; }
+  
   .line-numbers {
-    flex-shrink: 0; width: 40px; padding: 12px 0;
-    background: #161616; border-right: 1px solid #222;
-    overflow: hidden; user-select: none;
-    font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6;
-    color: #444; text-align: right;
+    width: 45px; background: #161616; color: #444; padding: 10px 0;
+    text-align: right; font-family: monospace; font-size: 14px; line-height: 1.5;
+    user-select: none; border-right: 1px solid #222;
   }
   .line-numbers span { display: block; padding-right: 8px; }
-  .line-numbers span.active { color: #f59e0b; font-weight: 700; }
-  
-  .code-scroll { flex: 1; overflow: auto; position: relative; }
-  .highlight-layer {
-    position: absolute; top: 0; left: 0; pointer-events: none;
-    font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;
-    padding: 12px; white-space: pre; color: transparent; min-width: 100%; z-index: 1;
-  }
-  #code-input {
-    position: relative; z-index: 2;
-    width: 100%; min-height: 100%; border: none; outline: none; resize: none;
-    padding: 12px; font-family: 'Courier New', monospace;
-    font-size: 13px; line-height: 1.6;
-    background: transparent; color: #e8e8e8;
-    tab-size: 2; white-space: pre; overflow-wrap: normal;
-    caret-color: #f59e0b;
-  }
-  mark.found { background: rgba(245,158,11,0.3); border-radius: 2px; }
-  mark.found.current { background: rgba(245,158,11,0.7); }
+  .line-numbers span.match-line { color: #f59e0b; background: rgba(245, 158, 11, 0.1); font-weight: bold; }
 
-  /* UI Elements */
-  .resize-handle { height: 6px; background: #222; cursor: row-resize; flex-shrink: 0; touch-action: none; position: relative; }
-  .resize-handle:hover { background: #f59e0b; }
-  #preview-frame { flex: 1; border: none; background: #fff; }
-  .status-bar { font-size: 10px; color: #555; padding: 6px 12px; border-top: 1px solid #222; background: #111; display: flex; justify-content: space-between; }
-  .badge { padding: 2px 8px; border-radius: 99px; background: #1e3a5f; color: #60a5fa; font-weight: 600; }
+  .code-area { flex: 1; position: relative; overflow: hidden; }
+  
+  /* ชั้นไฮไลท์ (อยู่ข้างล่าง textarea) */
+  .backdrop {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    padding: 10px; font-family: monospace; font-size: 14px; line-height: 1.5;
+    white-space: pre-wrap; word-wrap: break-word; color: transparent;
+    pointer-events: none; z-index: 1;
+  }
+  mark { background-color: rgba(245, 158, 11, 0.4); color: transparent; border-radius: 2px; }
+  mark.current { background-color: #f59e0b; color: #000; }
+
+  #code-input {
+    width: 100%; min-height: 300px; background: transparent; color: #e8e8e8;
+    border: none; outline: none; padding: 10px; font-family: monospace;
+    font-size: 14px; line-height: 1.5; resize: vertical;
+    white-space: pre-wrap; word-wrap: break-word;
+    position: relative; z-index: 2; caret-color: #f59e0b;
+  }
+
+  /* Preview Zone */
+  .preview-label { background: #222; padding: 8px; font-size: 12px; color: #888; font-weight: bold; }
+  #preview-frame { width: 100%; border: none; background: #fff; min-height: 500px; }
+
+  .status { padding: 5px 12px; font-size: 11px; color: #666; background: #111; }
 </style>
 </head>
 <body>
 
-<div class="app" id="app">
+<div class="app">
   <div class="toolbar">
-    <span class="toolbar-title">HTML<span>&lt;/&gt;</span></span>
-    <button class="btn" id="btn-clear">ล้าง</button>
-    <button class="btn" id="btn-paste">วาง</button>
-    <button class="btn" id="btn-copy">คัดลอก</button>
-    <button class="btn btn-run" id="btn-run">▶ รัน</button>
+    <button class="btn" onclick="clearCode()">ล้าง</button>
+    <button class="btn" onclick="pasteCode()">วาง</button>
+    <button class="btn" onclick="copyCode()">คัดลอก</button>
+    <button class="btn" onclick="toggleSearch()">⌕ ค้นหา</button>
+    <button class="btn btn-run" onclick="runCode()">▶ รันโค้ด</button>
   </div>
 
-  <div class="editor-pane" id="editor-pane">
-    <div class="pane-label">
-      <div class="pane-dot"></div> Code
-      <button class="search-btn" id="btn-search">⌕ ค้นหา</button>
-    </div>
-    
-    <div class="search-bar" id="search-bar">
-      <input type="text" id="search-input" placeholder="ค้นหา..." spellcheck="false">
-      <div class="search-nav">
-        <button id="btn-prev">↑</button>
-        <button id="btn-next">↓</button>
-      </div>
-      <span class="search-info" id="search-info"></span>
-      <span class="search-close" id="btn-close-search">✕</span>
-    </div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="พิมพ์คำที่ต้องการค้นหา..." oninput="doSearch()">
+    <button class="btn" onclick="prevMatch()">↑</button>
+    <button class="btn" onclick="nextMatch()">↓</button>
+    <span id="searchCount" style="font-size:12px; color:#888;">0/0</span>
+  </div>
 
+  <div class="editor-container">
     <div class="editor-wrap">
-      <div class="line-numbers" id="line-numbers"></div>
-      <div class="code-scroll" id="code-scroll">
-        <div class="highlight-layer" id="highlight-layer"></div>
-        <textarea id="code-input" spellcheck="false" placeholder="เขียนโค้ดที่นี่..."></textarea>
+      <div class="line-numbers" id="lineNumbers"></div>
+      <div class="code-area">
+        <div class="backdrop" id="backdrop"></div>
+        <textarea id="code-input" spellcheck="false" oninput="onInput()" onscroll="syncScroll()"></textarea>
       </div>
     </div>
   </div>
 
-  <div class="resize-handle" id="resize-handle"></div>
+  <div class="preview-label">PREVIEW (ผลลัพธ์)</div>
+  <iframe id="preview-frame"></iframe>
 
-  <div class="preview-pane" id="preview-pane" style="display:flex; flex-direction:column; flex:1;">
-    <div class="pane-label"><div class="pane-dot green"></div> Preview</div>
-    <iframe id="preview-frame"></iframe>
-  </div>
-
-  <div class="status-bar">
-    <span id="char-count">0 ตัวอักษร · บรรทัดที่ 1</span>
-    <span class="badge" id="status-badge">พร้อมใช้งาน</span>
-  </div>
+  <div class="status" id="statusBar">บรรทัด: 1 | ตัวอักษร: 0</div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
   const input = document.getElementById('code-input');
-  const frame = document.getElementById('preview-frame');
-  const lineNumbers = document.getElementById('line-numbers');
-  const charCount = document.getElementById('char-count');
-  const statusBadge = document.getElementById('status-badge');
-  const searchBar = document.getElementById('search-bar');
-  const searchInput = document.getElementById('search-input');
-  const searchInfo = document.getElementById('search-info');
-  const hlLayer = document.getElementById('highlight-layer');
-  const editorPane = document.getElementById('editor-pane');
-  const resizeHandle = document.getElementById('resize-handle');
+  const backdrop = document.getElementById('backdrop');
+  const lineNumbers = document.getElementById('lineNumbers');
+  const preview = document.getElementById('preview-frame');
+  const searchBar = document.getElementById('searchBar');
+  const searchInput = document.getElementById('searchInput');
+  const searchCount = document.getElementById('searchCount');
 
-  let matches = [], matchIndex = 0, activeLine = 1;
+  let matches = [];
+  let currentMatchIdx = 0;
 
-  // --- Functions ---
+  function onInput() {
+    updateLineNumbers();
+    doSearch();
+    syncScroll();
+    updateStatus();
+    // ปรับความสูง textarea ตามเนื้อหา (ขั้นต่ำ 300px)
+    input.style.height = 'auto';
+    input.style.height = (input.scrollHeight) + 'px';
+  }
 
   function updateLineNumbers() {
     const lines = input.value.split('\n');
+    const q = searchInput.value.toLowerCase();
     let html = '';
-    for (let i = 1; i <= lines.length; i++) {
-      html += `<span class="${i === activeLine ? 'active' : ''}">${i}</span>`;
-    }
+    
+    lines.forEach((line, i) => {
+      let className = "";
+      // ถ้าบรรทัดนี้มีคำค้นหา ให้ไฮไลท์เลขบรรทัด
+      if (q && line.toLowerCase().includes(q)) {
+        className = "match-line";
+      }
+      html += `<span class="${className}">${i + 1}</span>`;
+    });
     lineNumbers.innerHTML = html;
   }
 
-  function updateActiveLine() {
-    const textBeforeCaret = input.value.substring(0, input.selectionStart);
-    activeLine = textBeforeCaret.split('\n').length;
-    updateLineNumbers();
-    charCount.textContent = `${input.value.length.toLocaleString()} ตัวอักษร · บรรทัดที่ ${activeLine}`;
-  }
-
   function syncScroll() {
+    backdrop.scrollTop = input.scrollTop;
+    backdrop.scrollLeft = input.scrollLeft;
     lineNumbers.scrollTop = input.scrollTop;
-    hlLayer.scrollTop = input.scrollTop;
-    hlLayer.scrollLeft = input.scrollLeft;
   }
 
-  function runCode() {
-    const doc = frame.contentDocument || frame.contentWindow.document;
-    doc.open();
-    doc.write(input.value);
-    doc.close();
-    setStatus('แสดงผลสำเร็จ ✓', '#14532d', '#4ade80');
-  }
-
-  function clearCode() {
-    input.value = '';
-    onCodeChange();
-    runCode();
-    setStatus('ล้างแล้ว ✓', '#1e3a5f', '#60a5fa');
-  }
-
-  function copyCode() {
-    navigator.clipboard.writeText(input.value).then(() => {
-      setStatus('คัดลอกแล้ว ✓', '#1e3a5f', '#60a5fa');
-    });
-  }
-
-  async function pasteCode() {
-    try {
-      const text = await navigator.clipboard.readText();
-      const start = input.selectionStart;
-      const end = input.selectionEnd;
-      input.value = input.value.substring(0, start) + text + input.value.substring(end);
-      input.selectionStart = input.selectionEnd = start + text.length;
-      onCodeChange();
-      setStatus('วางแล้ว ✓', '#14532d', '#4ade80');
-    } catch (err) {
-      setStatus('โปรดอนุญาตการวาง', '#7f1d1d', '#f87171');
-    }
-  }
-
-  function setStatus(text, bg, color) {
-    statusBadge.textContent = text;
-    statusBadge.style.background = bg;
-    statusBadge.style.color = color;
-    setTimeout(() => {
-      statusBadge.textContent = 'พร้อมใช้งาน';
-      statusBadge.style.background = '#1e3a5f';
-      statusBadge.style.color = '#60a5fa';
-    }, 2000);
-  }
-
-  // --- Search System ---
+  // --- ระบบค้นหาและไฮไลท์ ---
   function toggleSearch() {
     searchBar.classList.toggle('open');
-    if (searchBar.classList.contains('open')) {
-      searchInput.focus();
+    if(searchBar.classList.contains('open')) searchInput.focus();
+    else {
+      searchInput.value = '';
       doSearch();
-    } else {
-      hlLayer.innerHTML = '';
     }
   }
 
   function doSearch() {
     const q = searchInput.value;
-    matches = [];
-    if (!q) { hlLayer.innerHTML = ''; searchInfo.textContent = ''; return; }
-    
     const text = input.value;
-    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    let m;
-    while ((m = regex.exec(text)) !== null) matches.push(m.index);
-    
-    matchIndex = 0;
-    renderSearchHighlight();
-  }
+    backdrop.innerHTML = '';
+    matches = [];
 
-  function renderSearchHighlight() {
-    const q = searchInput.value;
-    if (!q || matches.length === 0) {
-      searchInfo.textContent = 'ไม่พบ';
-      hlLayer.innerHTML = '';
+    if (!q) {
+      backdrop.innerHTML = escapeHTML(text);
+      searchCount.innerText = "0/0";
+      updateLineNumbers();
       return;
     }
-    searchInfo.textContent = `${matchIndex + 1}/${matches.length}`;
-    
-    const text = input.value;
-    let html = '';
-    let lastIdx = 0;
 
-    matches.forEach((pos, i) => {
-      html += escapeHTML(text.substring(lastIdx, pos));
-      html += `<mark class="found ${i === matchIndex ? 'current' : ''}">${escapeHTML(text.substring(pos, pos + q.length))}</mark>`;
-      lastIdx = pos + q.length;
+    // หาตำแหน่งทั้งหมด
+    let regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    let html = text.replace(regex, (match, index) => {
+      matches.push(index);
+      return `<mark>${match}</mark>`;
     });
-    html += escapeHTML(text.substring(lastIdx));
-    hlLayer.innerHTML = html;
+
+    backdrop.innerHTML = escapeHTML(html).replace(/&lt;mark&gt;/g, '<mark>').replace(/&lt;\/mark&gt;/g, '</mark>');
+    
+    // ไฮไลท์ตัวปัจจุบัน
+    const allMarks = backdrop.querySelectorAll('mark');
+    if (allMarks.length > 0) {
+      if (currentMatchIdx >= allMarks.length) currentMatchIdx = 0;
+      allMarks[currentMatchIdx].classList.add('current');
+      searchCount.innerText = `${currentMatchIdx + 1}/${allMarks.length}`;
+    } else {
+      searchCount.innerText = "0/0";
+    }
+    updateLineNumbers();
+  }
+
+  function nextMatch() {
+    if (matches.length > 0) {
+      currentMatchIdx = (currentMatchIdx + 1) % matches.length;
+      doSearch();
+    }
+  }
+
+  function prevMatch() {
+    if (matches.length > 0) {
+      currentMatchIdx = (currentMatchIdx - 1 + matches.length) % matches.length;
+      doSearch();
+    }
+  }
+
+  // --- ปุ่มคำสั่งต่างๆ ---
+  function runCode() {
+    const doc = preview.contentDocument || preview.contentWindow.document;
+    doc.open();
+    doc.write(input.value);
+    doc.close();
+    
+    // ปรับความสูง iframe ให้เท่ากับเนื้อหาภายใน
+    setTimeout(() => {
+      preview.style.height = doc.body.scrollHeight + 50 + 'px';
+    }, 100);
+  }
+
+  function clearCode() {
+    if(confirm('ล้างโค้ดทั้งหมด?')) {
+      input.value = '';
+      onInput();
+      runCode();
+    }
+  }
+
+  async function pasteCode() {
+    try {
+      const text = await navigator.clipboard.readText();
+      input.value += text;
+      onInput();
+    } catch (err) {
+      alert('โปรดกด Ctrl+V เพื่อวาง');
+    }
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(input.value);
+    alert('คัดลอกลง Clipboard แล้ว');
+  }
+
+  function updateStatus() {
+    const lines = input.value.split('\n').length;
+    document.getElementById('statusBar').innerText = `บรรทัด: ${lines} | ตัวอักษร: ${input.value.length}`;
   }
 
   function escapeHTML(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // --- Listeners ---
-  input.addEventListener('input', onCodeChange);
-  input.addEventListener('scroll', syncScroll);
-  input.addEventListener('click', updateActiveLine);
-  input.addEventListener('keyup', updateActiveLine);
-  
-  document.getElementById('btn-run').addEventListener('click', runCode);
-  document.getElementById('btn-clear').addEventListener('click', clearCode);
-  document.getElementById('btn-copy').addEventListener('click', copyCode);
-  document.getElementById('btn-paste').addEventListener('click', pasteCode);
-  document.getElementById('btn-search').addEventListener('click', toggleSearch);
-  document.getElementById('btn-close-search').addEventListener('click', () => searchBar.classList.remove('open'));
-  
-  searchInput.addEventListener('input', doSearch);
-  document.getElementById('btn-next').addEventListener('click', () => {
-    if (matches.length) { matchIndex = (matchIndex + 1) % matches.length; renderSearchHighlight(); }
-  });
-  document.getElementById('btn-prev').addEventListener('click', () => {
-    if (matches.length) { matchIndex = (matchIndex - 1 + matches.length) % matches.length; renderSearchHighlight(); }
-  });
-
-  function onCodeChange() {
-    updateLineNumbers();
-    updateActiveLine();
-    if (searchBar.classList.contains('open')) doSearch();
-  }
-
-  // Resize Logic
-  let isResizing = false;
-  resizeHandle.addEventListener('pointerdown', (e) => { isResizing = true; resizeHandle.setPointerCapture(e.pointerId); });
-  window.addEventListener('pointermove', (e) => {
-    if (!isResizing) return;
-    let newH = e.clientY - editorPane.offsetTop;
-    if (newH > 100 && newH < window.innerHeight - 100) {
-      editorPane.style.height = newH + 'px';
-      editorPane.style.flex = 'none';
-    }
-  });
-  window.addEventListener('pointerup', () => { isResizing = false; });
-
   // Initial
-  input.value = "<h1>สวัสดีชาวโลก!</h1>\n<p>ลองแก้ไขโค้ดที่นี่ดูสิ</p>";
-  onCodeChange();
+  input.value = "\n<h1>สวัสดีครับ</h1>\n<p>นี่คือตัวอย่างการไฮไลท์</p>";
+  onInput();
   runCode();
-});
+
 </script>
 </body>
 </html>
