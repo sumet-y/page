@@ -1,8 +1,7 @@
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font-sans); }
-  .app { display: flex; flex-direction: column; height: 100vh; min-height: 500px; }
+  .app { display: flex; flex-direction: column; height: 100vh; min-height: 520px; font-family: var(--font-sans); }
   .toolbar {
     display: flex; align-items: center; gap: 8px; padding: 10px 14px;
     border-bottom: 0.5px solid var(--color-border-tertiary);
@@ -23,19 +22,67 @@
   }
   .btn-run:hover { opacity: 0.85; }
   .main { display: flex; flex: 1; overflow: hidden; }
-  .editor-pane { display: flex; flex-direction: column; flex: 1; border-right: 0.5px solid var(--color-border-tertiary); }
+  .editor-pane { display: flex; flex-direction: column; flex: 1; border-right: 0.5px solid var(--color-border-tertiary); min-width: 0; }
   .pane-label {
     font-size: 11px; color: var(--color-text-secondary); padding: 6px 14px;
     background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary);
     letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
   }
+  .search-bar {
+    display: none; align-items: center; gap: 6px; padding: 6px 10px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+  }
+  .search-bar.open { display: flex; }
+  .search-bar input {
+    flex: 1; font-size: 12px; padding: 4px 8px; border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary);
+    color: var(--color-text-primary); font-family: var(--font-mono); outline: none;
+  }
+  .search-bar input:focus { border-color: var(--color-border-primary); }
+  .search-nav { display: flex; gap: 4px; align-items: center; }
+  .search-nav button {
+    font-size: 13px; padding: 2px 7px; border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary); background: transparent;
+    color: var(--color-text-secondary); cursor: pointer; line-height: 1.4;
+  }
+  .search-nav button:hover { background: var(--color-background-primary); }
+  .search-info { font-size: 11px; color: var(--color-text-secondary); min-width: 60px; text-align: right; }
+  .search-close { font-size: 14px; color: var(--color-text-secondary); cursor: pointer; padding: 0 4px; }
+  .search-close:hover { color: var(--color-text-primary); }
+
+  .editor-wrap { display: flex; flex: 1; overflow: hidden; position: relative; }
+  .line-numbers {
+    flex-shrink: 0; width: 44px; padding: 14px 0;
+    background: var(--color-background-secondary);
+    border-right: 0.5px solid var(--color-border-tertiary);
+    overflow: hidden; user-select: none;
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.65;
+    color: var(--color-text-secondary); text-align: right;
+  }
+  .line-numbers span { display: block; padding-right: 10px; padding-left: 6px; }
+  .line-numbers span.active { color: var(--color-text-primary); font-weight: 500; }
+  .line-numbers span.highlight { background: rgba(255,200,0,0.18); color: var(--color-text-primary); }
+
+  .code-scroll { flex: 1; overflow: auto; position: relative; }
   #code-input {
-    flex: 1; width: 100%; border: none; outline: none; resize: none;
-    padding: 14px; font-family: var(--font-mono); font-size: 13px; line-height: 1.65;
-    background: var(--color-background-primary); color: var(--color-text-primary);
-    tab-size: 2;
+    width: 100%; min-height: 100%; border: none; outline: none; resize: none;
+    padding: 14px 14px 14px 14px;
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.65;
+    background: transparent; color: var(--color-text-primary);
+    tab-size: 2; caret-color: var(--color-text-primary);
+    white-space: pre; overflow-wrap: normal; overflow-x: auto;
   }
-  .preview-pane { display: flex; flex-direction: column; flex: 1; }
+  .highlight-layer {
+    position: absolute; top: 0; left: 0; right: 0; pointer-events: none;
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.65;
+    padding: 14px; white-space: pre; overflow: hidden; color: transparent;
+  }
+  mark.found { background: rgba(255,200,0,0.35); border-radius: 2px; color: transparent; }
+  mark.found.current { background: rgba(255,140,0,0.55); color: transparent; }
+
+  .preview-pane { display: flex; flex-direction: column; flex: 1; min-width: 0; }
   #preview-frame { flex: 1; border: none; background: white; }
   .status-bar {
     font-size: 11px; color: var(--color-text-secondary); padding: 5px 14px;
@@ -46,8 +93,14 @@
   .badge {
     font-size: 10px; padding: 2px 7px; border-radius: 99px;
     background: var(--color-background-info); color: var(--color-text-info);
-    font-weight: 500;
+    font-weight: 500; transition: background 0.2s, color 0.2s;
   }
+  .search-btn {
+    font-size: 11px; padding: 3px 9px; border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary); background: transparent;
+    color: var(--color-text-secondary); cursor: pointer;
+  }
+  .search-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
 </style>
 
 <div class="app">
@@ -59,8 +112,28 @@
   </div>
   <div class="main">
     <div class="editor-pane">
-      <div class="pane-label">Code</div>
-      <textarea id="code-input" spellcheck="false" placeholder="วาง HTML ของคุณที่นี่..."></textarea>
+      <div class="pane-label">
+        <span style="flex:1">Code</span>
+        <button class="search-btn" onclick="toggleSearch()" title="Ctrl+F">⌕ ค้นหา</button>
+      </div>
+      <div class="search-bar" id="search-bar">
+        <input type="text" id="search-input" placeholder="ค้นหา..." oninput="doSearch()" onkeydown="searchKey(event)" />
+        <div class="search-nav">
+          <button onclick="prevMatch()">&#8593;</button>
+          <button onclick="nextMatch()">&#8595;</button>
+        </div>
+        <span class="search-info" id="search-info"></span>
+        <span class="search-close" onclick="closeSearch()">✕</span>
+      </div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="line-numbers"></div>
+        <div class="code-scroll" id="code-scroll">
+          <div class="highlight-layer" id="highlight-layer"></div>
+          <textarea id="code-input" spellcheck="false" placeholder="วาง HTML ของคุณที่นี่..."
+            oninput="onCodeChange()" onscroll="syncScroll()" onkeydown="handleTab(event)"
+            onclick="updateActiveLine()" onkeyup="updateActiveLine()"></textarea>
+        </div>
+      </div>
     </div>
     <div class="preview-pane">
       <div class="pane-label">Preview</div>
@@ -68,18 +141,26 @@
     </div>
   </div>
   <div class="status-bar">
-    <span id="char-count">0 ตัวอักษร</span>
+    <span id="char-count">0 ตัวอักษร · บรรทัดที่ 1</span>
     <span class="badge" id="status-badge">พร้อมใช้งาน</span>
   </div>
 </div>
 
 <script>
-  const input = document.getElementById('code-input');
-  const frame = document.getElementById('preview-frame');
-  const charCount = document.getElementById('char-count');
-  const statusBadge = document.getElementById('status-badge');
+const input = document.getElementById('code-input');
+const frame = document.getElementById('preview-frame');
+const lineNumbers = document.getElementById('line-numbers');
+const charCount = document.getElementById('char-count');
+const statusBadge = document.getElementById('status-badge');
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
+const searchInfo = document.getElementById('search-info');
+const hlLayer = document.getElementById('highlight-layer');
+const codeScroll = document.getElementById('code-scroll');
 
-  const defaultCode = `<!DOCTYPE html>
+let matches = [], matchIndex = 0, activeLine = 1;
+
+const defaultCode = `<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -102,60 +183,177 @@
 </body>
 </html>`;
 
-  input.value = defaultCode;
+input.value = defaultCode;
+onCodeChange();
+runCode();
+
+function onCodeChange() {
+  updateLineNumbers();
+  updateActiveLine();
   updateCount();
-  runCode();
+  if (searchInput.value) doSearch();
+}
 
-  input.addEventListener('input', updateCount);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const s = input.selectionStart;
-      input.value = input.value.slice(0, s) + '  ' + input.value.slice(input.selectionEnd);
-      input.selectionStart = input.selectionEnd = s + 2;
-    }
-  });
-
-  function runCode() {
-    const code = input.value.trim();
-    if (!code) return;
-    try {
-      const doc = frame.contentDocument || frame.contentWindow.document;
-      doc.open(); doc.write(code); doc.close();
-      statusBadge.textContent = 'แสดงผลสำเร็จ';
-      statusBadge.style.background = 'var(--color-background-success)';
-      statusBadge.style.color = 'var(--color-text-success)';
-    } catch(e) {
-      statusBadge.textContent = 'เกิดข้อผิดพลาด';
-      statusBadge.style.background = 'var(--color-background-danger)';
-      statusBadge.style.color = 'var(--color-text-danger)';
-    }
+function updateLineNumbers() {
+  const lines = input.value.split('\n');
+  const total = lines.length;
+  let html = '';
+  for (let i = 1; i <= total; i++) {
+    const cls = i === activeLine ? ' class="active"' : '';
+    html += `<span${cls}>${i}</span>`;
   }
+  lineNumbers.innerHTML = html;
+}
 
-  function clearCode() {
-    input.value = '';
+function updateActiveLine() {
+  const val = input.value.slice(0, input.selectionStart);
+  activeLine = (val.match(/\n/g) || []).length + 1;
+  updateLineNumbers();
+  updateCount();
+}
+
+function updateCount() {
+  charCount.textContent = `${input.value.length.toLocaleString()} ตัวอักษร · บรรทัดที่ ${activeLine}`;
+}
+
+function syncScroll() {
+  lineNumbers.scrollTop = input.scrollTop;
+  codeScroll.scrollTop = input.scrollTop;
+  hlLayer.style.top = -input.scrollTop + 'px';
+  hlLayer.style.left = -input.scrollLeft + 'px';
+}
+
+function handleTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = input.selectionStart;
+    input.value = input.value.slice(0, s) + '  ' + input.value.slice(input.selectionEnd);
+    input.selectionStart = input.selectionEnd = s + 2;
+    onCodeChange();
+  }
+  if (e.ctrlKey && e.key === 'f') { e.preventDefault(); toggleSearch(); }
+  if (e.key === 'Escape') closeSearch();
+}
+
+function runCode() {
+  const code = input.value.trim();
+  try {
     const doc = frame.contentDocument || frame.contentWindow.document;
-    doc.open(); doc.write(''); doc.close();
-    updateCount();
-    statusBadge.textContent = 'พร้อมใช้งาน';
-    statusBadge.style.background = '';
-    statusBadge.style.color = '';
+    doc.open(); doc.write(code || ''); doc.close();
+    setStatus('แสดงผลสำเร็จ', 'success');
+  } catch(e) {
+    setStatus('เกิดข้อผิดพลาด', 'danger');
   }
+}
 
-  function copyCode() {
-    navigator.clipboard.writeText(input.value).then(() => {
-      statusBadge.textContent = 'คัดลอกแล้ว!';
+function clearCode() {
+  input.value = '';
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open(); doc.write(''); doc.close();
+  hlLayer.innerHTML = '';
+  matches = [];
+  searchInfo.textContent = '';
+  onCodeChange();
+  setStatus('พร้อมใช้งาน', '');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(input.value).then(() => setStatus('คัดลอกแล้ว!', 'info'));
+}
+
+function setStatus(text, type) {
+  statusBadge.textContent = text;
+  statusBadge.style.background = type ? `var(--color-background-${type})` : 'var(--color-background-info)';
+  statusBadge.style.color = type ? `var(--color-text-${type})` : 'var(--color-text-info)';
+  if (type === 'success' || type === 'info') {
+    setTimeout(() => {
+      statusBadge.textContent = 'พร้อมใช้งาน';
       statusBadge.style.background = 'var(--color-background-info)';
       statusBadge.style.color = 'var(--color-text-info)';
-      setTimeout(() => {
-        statusBadge.textContent = 'พร้อมใช้งาน';
-        statusBadge.style.background = '';
-        statusBadge.style.color = '';
-      }, 2000);
-    });
+    }, 2000);
   }
+}
 
-  function updateCount() {
-    charCount.textContent = input.value.length.toLocaleString() + ' ตัวอักษร';
-  }
+function toggleSearch() {
+  const open = searchBar.classList.toggle('open');
+  if (open) { searchInput.focus(); doSearch(); }
+  else { clearHighlight(); }
+}
+
+function closeSearch() {
+  searchBar.classList.remove('open');
+  clearHighlight();
+}
+
+function doSearch() {
+  const q = searchInput.value;
+  matches = [];
+  if (!q) { clearHighlight(); searchInfo.textContent = ''; return; }
+  const text = input.value;
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  let m;
+  while ((m = re.exec(text)) !== null) matches.push(m.index);
+  matchIndex = 0;
+  renderHighlight(q);
+  updateSearchInfo();
+  if (matches.length) scrollToMatch(matches[0], q.length);
+}
+
+function renderHighlight(q) {
+  if (!q || !matches.length) { hlLayer.innerHTML = ''; return; }
+  const text = input.value;
+  let html = '', last = 0;
+  matches.forEach((pos, i) => {
+    html += escHtml(text.slice(last, pos));
+    html += `<mark class="found${i === matchIndex ? ' current' : ''}">${escHtml(text.slice(pos, pos + q.length))}</mark>`;
+    last = pos + q.length;
+  });
+  html += escHtml(text.slice(last));
+  hlLayer.innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearHighlight() { hlLayer.innerHTML = ''; matches = []; }
+
+function updateSearchInfo() {
+  searchInfo.textContent = matches.length ? `${matchIndex + 1} / ${matches.length}` : 'ไม่พบ';
+}
+
+function nextMatch() {
+  if (!matches.length) return;
+  matchIndex = (matchIndex + 1) % matches.length;
+  renderHighlight(searchInput.value);
+  updateSearchInfo();
+  scrollToMatch(matches[matchIndex], searchInput.value.length);
+}
+
+function prevMatch() {
+  if (!matches.length) return;
+  matchIndex = (matchIndex - 1 + matches.length) % matches.length;
+  renderHighlight(searchInput.value);
+  updateSearchInfo();
+  scrollToMatch(matches[matchIndex], searchInput.value.length);
+}
+
+function scrollToMatch(pos, len) {
+  input.focus();
+  input.setSelectionRange(pos, pos + len);
+  const linesBefore = input.value.slice(0, pos).split('\n').length - 1;
+  const lineH = parseFloat(getComputedStyle(input).lineHeight) || 21.45;
+  const scrollTo = linesBefore * lineH - input.clientHeight / 2;
+  input.scrollTop = Math.max(0, scrollTo);
+  syncScroll();
+}
+
+function searchKey(e) {
+  if (e.key === 'Enter') { e.shiftKey ? prevMatch() : nextMatch(); }
+  if (e.key === 'Escape') closeSearch();
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); toggleSearch(); }
+});
 </script>
