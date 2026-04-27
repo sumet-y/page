@@ -32,46 +32,34 @@
   }
 
   /* Editor Zone */
-  .editor-container { 
-    display: flex; flex-direction: column; background: #1a1a1a; 
-    overflow: hidden; /* ป้องกัน scroll ซ้อน */
-  }
-  .editor-wrap { 
-    display: flex; position: relative; border-bottom: 2px solid #333; 
-    height: 500px; /* กำหนดความสูงคงที่เพื่อให้ scroll ได้ */
-  }
+  .editor-container { display: flex; flex-direction: column; background: #1a1a1a; }
+  .editor-wrap { display: flex; position: relative; border-bottom: 2px solid #333; }
   
   .line-numbers {
     width: 45px; background: #161616; color: #444; padding: 10px 0;
     text-align: right; font-family: monospace; font-size: 14px; line-height: 1.5;
     user-select: none; border-right: 1px solid #222;
-    overflow: hidden; /* scroll ตาม textarea เท่านั้น */
   }
   .line-numbers span { display: block; padding-right: 8px; }
   .line-numbers span.match-line { color: #f59e0b; background: rgba(245, 158, 11, 0.1); font-weight: bold; }
 
-  .code-area { 
-    flex: 1; position: relative; overflow: hidden; 
-  }
+  .code-area { flex: 1; position: relative; overflow: hidden; }
   
-  /* ชั้นไฮไลท์ */
+  /* ชั้นไฮไลท์ (อยู่ข้างล่าง textarea) */
   .backdrop {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     padding: 10px; font-family: monospace; font-size: 14px; line-height: 1.5;
-    white-space: pre; /* แก้เป็น pre เพื่อให้ไม่ตัดบรรทัด */
-    color: transparent;
+    white-space: pre-wrap; word-wrap: break-word; color: transparent;
     pointer-events: none; z-index: 1;
-    overflow: hidden;
   }
   mark { background-color: rgba(245, 158, 11, 0.4); color: transparent; border-radius: 2px; }
   mark.current { background-color: #f59e0b; color: #000; }
 
   #code-input {
-    width: 100%; height: 100%; background: transparent; color: #e8e8e8;
+    width: 100%; min-height: 300px; background: transparent; color: #e8e8e8;
     border: none; outline: none; padding: 10px; font-family: monospace;
-    font-size: 14px; line-height: 1.5;
-    white-space: pre; /* แก้เป็น pre เพื่อให้เกิด scroll แนวนอน */
-    overflow: auto; /* เปิด scrollbar ทั้ง X และ Y */
+    font-size: 14px; line-height: 1.5; resize: vertical;
+    white-space: pre-wrap; word-wrap: break-word;
     position: relative; z-index: 2; caret-color: #f59e0b;
   }
 
@@ -94,7 +82,7 @@
   </div>
 
   <div class="search-bar" id="searchBar">
-    <input type="text" id="searchInput" placeholder="พิมพ์คำที่ต้องการค้นหา..." oninput="currentMatchIdx=0; doSearch()">
+    <input type="text" id="searchInput" placeholder="พิมพ์คำที่ต้องการค้นหา..." oninput="doSearch()">
     <button class="btn" onclick="prevMatch()">↑</button>
     <button class="btn" onclick="nextMatch()">↓</button>
     <span id="searchCount" style="font-size:12px; color:#888;">0/0</span>
@@ -133,6 +121,9 @@
     doSearch();
     syncScroll();
     updateStatus();
+    // ปรับความสูง textarea ตามเนื้อหา (ขั้นต่ำ 300px)
+    input.style.height = 'auto';
+    input.style.height = (input.scrollHeight) + 'px';
   }
 
   function updateLineNumbers() {
@@ -142,6 +133,7 @@
     
     lines.forEach((line, i) => {
       let className = "";
+      // ถ้าบรรทัดนี้มีคำค้นหา ให้ไฮไลท์เลขบรรทัด
       if (q && line.toLowerCase().includes(q)) {
         className = "match-line";
       }
@@ -159,9 +151,8 @@
   // --- ระบบค้นหาและไฮไลท์ ---
   function toggleSearch() {
     searchBar.classList.toggle('open');
-    if(searchBar.classList.contains('open')) {
-        searchInput.focus();
-    } else {
+    if(searchBar.classList.contains('open')) searchInput.focus();
+    else {
       searchInput.value = '';
       doSearch();
     }
@@ -180,6 +171,7 @@
       return;
     }
 
+    // หาตำแหน่งทั้งหมด
     let regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     let html = text.replace(regex, (match, index) => {
       matches.push(index);
@@ -188,34 +180,16 @@
 
     backdrop.innerHTML = escapeHTML(html).replace(/&lt;mark&gt;/g, '<mark>').replace(/&lt;\/mark&gt;/g, '</mark>');
     
+    // ไฮไลท์ตัวปัจจุบัน
     const allMarks = backdrop.querySelectorAll('mark');
     if (allMarks.length > 0) {
       if (currentMatchIdx >= allMarks.length) currentMatchIdx = 0;
-      if (currentMatchIdx < 0) currentMatchIdx = allMarks.length - 1;
-      
       allMarks[currentMatchIdx].classList.add('current');
       searchCount.innerText = `${currentMatchIdx + 1}/${allMarks.length}`;
-      
-      // เลื่อนหน้าจอไปยังตำแหน่งที่เจอ
-      scrollToMatch(allMarks[currentMatchIdx]);
     } else {
       searchCount.innerText = "0/0";
     }
     updateLineNumbers();
-  }
-
-  function scrollToMatch(markElement) {
-    // คำนวณตำแหน่งจาก backdrop เทียบกับ textarea
-    // เนื่องจาก white-space: pre และ font เดียวกัน ตำแหน่งจะตรงกัน
-    const top = markElement.offsetTop;
-    const left = markElement.offsetLeft;
-
-    // สั่งให้ textarea เลื่อนไปยังจุดนั้น
-    input.scrollTo({
-      top: top - 50, // ลบ 50 เพื่อให้มีระยะขอบด้านบนนิดหน่อย
-      left: left - 50,
-      behavior: 'smooth'
-    });
   }
 
   function nextMatch() {
@@ -238,12 +212,18 @@
     doc.open();
     doc.write(input.value);
     doc.close();
+    
+    // ปรับความสูง iframe ให้เท่ากับเนื้อหาภายใน
+    setTimeout(() => {
+      preview.style.height = doc.body.scrollHeight + 50 + 'px';
+    }, 100);
   }
 
   function clearCode() {
     if(confirm('ล้างโค้ดทั้งหมด?')) {
       input.value = '';
       onInput();
+      runCode();
     }
   }
 
@@ -272,7 +252,7 @@
   }
 
   // Initial
-  input.value = "\n<div style='width: 2000px; background: linear-gradient(to right, red, yellow); padding: 20px;'>\n  ยินดีต้อนรับ! เลื่อนไปทางขวาดูสิครับ --------------------------------------------> สุดทางแล้ว\n</div>\n\n<h1>สวัสดีครับ</h1>\n<p>นี่คือตัวอย่างการไฮไลท์</p>";
+  input.value = "\n<h1>สวัสดีครับ</h1>\n<p>นี่คือตัวอย่างการไฮไลท์</p>";
   onInput();
   runCode();
 
