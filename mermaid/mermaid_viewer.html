@@ -191,7 +191,7 @@ let currentSVG = "";
 let zoomLevel = 1;
 const ZOOM_STEP = 0.15;
 const ZOOM_MIN = 0.2;
-const ZOOM_MAX = 4;
+const ZOOM_MAX = 10;
 
 // ── Render ───────────────────────────────────────────
 async function renderMermaid() {
@@ -300,7 +300,7 @@ function svgToPngBlob(svgText) {
 
     const img = new Image();
     img.onload = function () {
-      const scale = 2;
+      const scale = 4;
       const canvas = document.createElement("canvas");
       canvas.width = w * scale;
       canvas.height = h * scale;
