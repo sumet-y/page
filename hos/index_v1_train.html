@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>หมากฮอสไทย</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg:#f5f0e8; --panel:#fff; --border:#c8b89a;
+  --accent:#c0392b; --gold:#b8860b;
+  --light-sq:#f0d9b5; --dark-sq:#b58863;
+  --text:#2c1810; --muted:#8a7060;
+  --green:#27ae60;
+}
+body.dark{
+  --bg:#1c1c1c; --panel:#272727; --border:#3a3a3a;
+  --accent:#cf4444; --gold:#c49a1a;
+  --light-sq:#3a3530; --dark-sq:#222018;
+  --text:#d4cec8; --muted:#7a7470;
+  --green:#3aaf63;
+  background:#1c1c1c;
+  color:#d4cec8;
+}
+body.dark #board{border-color:#4a4a4a;}
+body.dark .light{background:#3a3530;}
+body.dark .dark{background:#222018;}
+*{box-sizing:border-box;margin:0;padding:0;
+  -webkit-tap-highlight-color:transparent !important;
+  -webkit-touch-callout:none;
+  outline:none;}
+html{overscroll-behavior:none;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;padding-bottom:40px;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;}
+
+/* OPTIONS */
+.opt-section{background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;margin:6px 10px;padding:9px 14px;}
+.opt-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;}
+.opt-label{font-size:.7rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);
+  min-width:80px;letter-spacing:.5px;}
+.opt-row label{font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:4px;color:var(--text);}
+.opt-row input[type=radio]{accent-color:var(--accent);}
+.opt-row label.disabled{color:#bbb;pointer-events:none;}
+.divider{height:1px;background:var(--border);margin:7px 0;}
+.start-row{display:flex;justify-content:center;margin-top:6px;}
+
+/* BOARD CONTAINER */
+#boardWrap{display:flex;justify-content:center;padding:4px 12px;position:relative;}
+#board{display:grid;grid-template-columns:repeat(8,1fr);
+  border:3px solid #8b5e3c;border-radius:3px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);margin:0 auto;
+  box-sizing:content-box;}
+
+/* SVG arrow overlay */
+#arrowSvg{
+  position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:20;
+  overflow:visible;
+}
+#arrowSvg.drawing-mode{pointer-events:all;cursor:crosshair;}
+
+.square{position:relative;cursor:pointer;}
+.square.light{background:var(--light-sq);}
+.square.dark{background:var(--dark-sq);}
+.num{position:absolute;top:2px;right:3px;font-size:9px;
+  font-family:'IBM Plex Mono',monospace;pointer-events:none;font-weight:700;z-index:1;}
+.dark .num{color:rgba(0,0,0,.6);}
+.light .num{color:rgba(80,50,20,.6);}
+body.dark .dark .num{color:rgba(255,220,150,.75);}
+body.dark .light .num{color:rgba(200,180,130,.65);}
+
+/* PIECES */
+.piece{width:76%;height:76%;border-radius:50%;position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;}
+.white-p{
+  background:radial-gradient(circle at 38% 30%,#ffffff 0%,#f8f0d8 35%,#d4aa60 80%,#b88a30 100%);
+  border:3px solid #7a5c28;
+  box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 3px 6px rgba(255,255,255,1),inset 0 -2px 4px rgba(100,60,0,.3);}
+.black-p{
+  background:radial-gradient(circle at 35% 30%,#4a4a4a 0%,#1a1a1a 45%,#050505 100%);
+  border:3px solid #888888;
+  box-shadow:0 4px 10px rgba(0,0,0,.8),inset 0 2px 4px rgba(180,180,180,.2),inset 0 -2px 4px rgba(0,0,0,.7);}
+.king::after{content:"♛";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:130%;
+  color:#f5c842;text-shadow:0 0 6px rgba(0,0,0,1),0 1px 4px rgba(0,0,0,1);pointer-events:none;}
+
+/* HIGHLIGHTS */
+.sq-last{outline:3px solid #27ae60;outline-offset:-3px;}
+.sq-cap{outline:3px solid #c0392b;outline-offset:-3px;}
+.sq-sel{outline:3px solid #2980b9;outline-offset:-3px;}
+.sq-hint::before{content:'';position:absolute;inset:22%;border-radius:50%;
+  background:rgba(39,174,96,.55);border:2px solid #27ae60;pointer-events:none;z-index:1;}
+
+/* PLACE BAR */
+#placeBar{display:none;justify-content:center;align-items:center;gap:10px;
+  padding:6px 10px;flex-wrap:wrap;}
+#placeBar.visible{display:flex;}
+.place-label{font-size:.8rem;color:var(--muted);}
+.color-btn{padding:5px 14px;border-radius:20px;border:2px solid transparent;cursor:pointer;
+  font-family:'Sarabun',sans-serif;font-size:.8rem;font-weight:600;transition:all .15s;}
+.color-btn.white-btn{background:#f8f0e3;color:#3a2a1a;border-color:#c0b0a0;}
+.color-btn.black-btn{background:#2a1808;color:#f0d090;border-color:#6a4820;}
+.color-btn.active{box-shadow:0 0 0 3px var(--gold);}
+
+/* CTRL BUTTONS */
+.ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px 8px 4px;}
+.btn{font-family:'Sarabun',sans-serif;font-size:.82rem;font-weight:600;
+  padding:7px 14px;border:none;border-radius:8px;cursor:pointer;transition:background .15s;
+  outline:none;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;
+  box-shadow:none;}
+.btn:focus,.btn:active{outline:none;box-shadow:none;}
+.btn:disabled{opacity:.35;cursor:default;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{background:var(--accent);}
+.btn-sec{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
+.btn-sec:active{background:#d4ccbf;}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-arrow{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
+.btn-arrow.active{background:#c0392b;color:#fff;border-color:#c0392b;}
+.btn-start{background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;
+  font-size:.95rem;font-weight:700;padding:8px 28px;border:none;border-radius:9px;
+  cursor:pointer;letter-spacing:.3px;outline:none;-webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;box-shadow:none;}
+.btn-replay{background:#e0d8cc;color:#1a6090;border:1px solid #b0a898;font-weight:700;}
+.btn-replay:disabled{opacity:.35;cursor:default;}
+body.dark .btn-replay{background:#333333;color:#5aaedf;border-color:#484848;}
+.square{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.square:focus{outline:none;}
+body.dark .opt-section{background:#272727;border-color:#3a3a3a;}
+body.dark .panel{background:#272727;border-color:#3a3a3a;}
+body.dark .opt-row label{color:#d4cec8;}
+body.dark .opt-label{color:#7a7470;}
+body.dark .divider{background:#3a3a3a;}
+body.dark .btn-sec{background:#333;color:#d4cec8;border-color:#484848;}
+body.dark .btn-arrow{background:#333;color:#d4cec8;border-color:#484848;}
+body.dark textarea{background:#202020;color:#d4cec8;border-color:#3a3a3a;}
+body.dark #timeline{color:#6ecf6e;}
+body.dark .panel-title{color:#7a7470;}
+body.dark #stepLabel{color:#7a7470;}
+body.dark .place-label{color:#7a7470;}
+body.dark #board{border-color:#4a4a4a;}
+/* number color in dark mode handled by resizeBoard JS */
+.slider-wrap{display:flex;align-items:center;gap:10px;padding:6px 16px 2px;}
+#slider{flex:1;accent-color:var(--accent);}
+#stepLabel{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--muted);
+  min-width:55px;text-align:right;}
+
+/* PANELS */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  margin:8px 10px 0;padding:10px 12px;}
+.panel-title{font-size:.7rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);
+  letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase;}
+textarea{width:100%;background:#f8f4ee;border:1px solid var(--border);border-radius:7px;
+  color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+  padding:7px 9px;resize:vertical;min-height:68px;outline:none;transition:border-color .2s;}
+textarea:focus{border-color:var(--accent);}
+#timelineWrap{position:relative;}
+#timeline{color:#1a6e1a;min-height:85px;padding-bottom:42px;}
+body.dark #timeline{color:#5db85d;}
+.copy-btn{
+  position:absolute;bottom:8px;right:6px;
+  font-size:.85rem;padding:6px 18px;
+  border-radius:7px;
+  background:#2980b9;color:#fff;
+  border:none;cursor:pointer;
+  font-family:'Sarabun',sans-serif;font-weight:700;
+  outline:none;letter-spacing:.3px;
+}
+.turn-dot{display:inline-block;width:10px;height:10px;border-radius:50%;
+  margin-right:5px;vertical-align:middle;}
+
+#copyToast{
+  position:fixed;top:30px;left:50%;transform:translateX(-50%);
+  background:#27ae60;color:#fff;
+  font-family:'Sarabun',sans-serif;font-size:.9rem;font-weight:700;
+  padding:10px 24px;border-radius:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:9999;
+}
+
+/* PREVIEW ARROWS */
+.btn-preview{background:#e8e0d0;color:#7a5010;border:1px solid #c8a860;font-weight:700;}
+.btn-preview.active{background:#c87010;color:#fff;border-color:#c87010;}
+body.dark .btn-preview{background:#2e2010;color:#d4a030;border-color:#6a5020;}
+body.dark .btn-preview.active{background:#906010;color:#fff;border-color:#906010;}
+/* preview slider */
+.preview-slider-wrap{display:flex;align-items:center;gap:6px;}
+.preview-slider-wrap input[type=range]{width:64px;accent-color:#c87010;}
+.preview-slider-wrap span{font-size:.75rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);min-width:20px;text-align:center;}
+
+/* SPEED CONTROL */
+.speed-wrap{display:flex;align-items:center;gap:6px;padding:4px 12px 2px;justify-content:center;}
+.speed-wrap label{font-size:.75rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+.speed-wrap input[type=range]{width:80px;accent-color:var(--accent);}
+.speed-val{font-size:.75rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:36px;}
+body.dark .speed-wrap label{color:#7a7470;}
+
+/* HIGHLIGHT NEXT MOVE */
+.sq-next-from{outline:3px solid #f5c842;outline-offset:-3px;animation:pulseNext 1s ease-in-out infinite;}
+@keyframes pulseNext{0%,100%{outline-color:#f5c842;}50%{outline-color:#ff8c00;}}
+/* yellow arrow button */
+.btn-arrow-yellow{background:#e0d8cc;color:#7a6800;border:1px solid #c8b830;font-weight:700;}
+.btn-arrow-yellow.active{background:#c8a800;color:#fff;border-color:#c8a800;}
+body.dark .btn-arrow-yellow{background:#333;color:#d4b830;border-color:#5a4800;}
+body.dark .btn-arrow-yellow.active{background:#907000;color:#fff;}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="copyToast">✓ Copy สำเร็จ!</div>
+
+<!-- SETTINGS PANEL -->
+<div class="opt-section" id="settingsPanel">
+  <!-- ROW 1: MODE -->
+  <div class="opt-row">
+    <span class="opt-label">MODE</span>
+    <label><input type="radio" name="mode" value="play" checked onchange="onModeChange(this.value)"> เล่นปกติ</label>
+    <label><input type="radio" name="mode" value="replay" onchange="onModeChange(this.value)"> เล่นสูตร</label>
+    <label><input type="radio" name="mode" value="custom" onchange="onModeChange(this.value)"> วางหมากเอง</label>
+  </div>
+  <div class="divider"></div>
+  <!-- ROW 2: ORIENT -->
+  <div class="opt-row">
+    <span class="opt-label">หมุนกระดาน</span>
+    <label><input type="radio" name="orient" value="blackBottom" checked onchange="onOrientChange(this.value)"> ล่างเดินก่อน</label>
+    <label><input type="radio" name="orient" value="blackTop" onchange="onOrientChange(this.value)"> บนเดินก่อน</label>
+  </div>
+  <!-- ROW 3: start + speed(replay only) + darkmode -->
+  <div class="divider"></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div id="startRow" style="flex:1;display:flex;align-items:center;gap:8px;">
+      <button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>
+    </div>
+    <span id="turnBadge" style="font-size:.82rem;font-weight:700;color:var(--accent);flex:1;text-align:center;"></span>
+    <!-- Speed control เฉพาะโหมดเล่นสูตร -->
+    <div id="speedWrapInline" style="display:none;align-items:center;gap:4px;">
+      <span style="font-size:.75rem;">🐢</span>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)" style="width:60px;accent-color:var(--accent);">
+      <span style="font-size:.75rem;">🐇</span>
+      <span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:44px;">กลาง</span>
+    </div>
+    <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 10px;font-size:.8rem;white-space:nowrap;">🌙 กลางคืน</button>
+  </div>
+</div>
+
+<!-- PLACE BAR (custom mode) -->
+<div id="placeBar">
+  <span class="place-label">วาง:</span>
+  <button class="color-btn white-btn active" id="btnWhite" onclick="setPlaceColor('white')">⬤ ขาว</button>
+  <button class="color-btn black-btn" id="btnBlack" onclick="setPlaceColor('black')">⬤ ดำ</button>
+  <button class="btn btn-sec" style="padding:5px 10px;font-size:.78rem" onclick="clearBoard()">✕ Clear</button>
+  <button style="padding:6px 16px;font-size:.85rem;font-weight:700;background:#1a9c3e;color:#fff;border:none;border-radius:8px;cursor:pointer;" onclick="confirmCustom()">✓ ยืนยัน</button>
+</div>
+
+<!-- BOARD -->
+<div id="boardWrap">
+  <div id="board"></div>
+  <!-- SVG arrow overlay -->
+  <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowhead-red" markerWidth="6" markerHeight="6"
+              refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#e02020" opacity="0.92"/>
+      </marker>
+      <marker id="arrowhead-green" markerWidth="6" markerHeight="6"
+              refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#20c020" opacity="0.92"/>
+      </marker>
+      <marker id="arrowhead-yellow" markerWidth="6" markerHeight="6"
+              refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#e6c000" opacity="0.92"/>
+      </marker>
+      <marker id="arrowhead-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#d47000" opacity="0.90"/>
+      </marker>
+      <marker id="arrowhead-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.70"/>
+      </marker>
+      <marker id="arrowhead-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.38"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+<!-- GAME ACTION ROW: undo + arrow tools (shown when game started) -->
+<div class="ctrl-row" id="gameActionRow" style="display:none">
+  <button class="btn btn-sec" onclick="undoMove()">↩ Undo</button>
+  <button class="btn btn-arrow" id="arrowToggleBtn" onclick="toggleArrowMode('red')">🔴 แพ้</button>
+  <button class="btn btn-arrow-yellow" id="arrowYellowBtn" onclick="toggleArrowMode('yellow')" >🟡 เสมอ</button>
+  <button class="btn btn-arrow" id="arrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ชนะ</button>
+  <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
+</div>
+
+<!-- REPLAY CONTROLS -->
+<div class="ctrl-row" id="replayCtrl" style="display:none">
+  <button class="btn btn-replay" id="rPrev"  onclick="prev()"         disabled>◀ Prev</button>
+  <button class="btn btn-replay" id="rPlay"  onclick="togglePlay()"   disabled>▶ Play</button>
+  <button class="btn btn-replay" id="rNext"  onclick="next()"         disabled>Next ▶</button>
+  <button class="btn btn-replay" id="rStop"  onclick="stop()"         disabled>■ Stop</button>
+  <button class="btn btn-replay" id="rReset" onclick="resetToStart()" disabled>↺ Reset</button>
+</div>
+
+<!-- REPLAY ARROW ROW -->
+<div class="ctrl-row" id="replayArrowRow" style="display:none">
+  <button class="btn btn-arrow" id="replayArrowBtn" onclick="toggleArrowMode('red')">🔴 แพ้</button>
+  <button class="btn btn-arrow-yellow" id="replayArrowYellowBtn" onclick="toggleArrowMode('yellow')">🟡 เสมอ</button>
+  <button class="btn btn-arrow" id="replayArrowGreenBtn" onclick="toggleArrowMode('green')" style="color:#1a8c1a;">🟢 ชนะ</button>
+  <button class="btn btn-sec" onclick="clearArrows()">🗑️ ลบลูกศร</button>
+  <button class="btn btn-preview active" id="previewBtn" onclick="togglePreview()">👁 ตาเทพ</button>
+  <div class="preview-slider-wrap" id="previewSliderWrap">
+    <button class="btn btn-sec" onclick="changePreviewSteps(-1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">−</button>
+    <input type="range" id="previewSteps" min="1" max="8" value="3" oninput="setPreviewSteps(this.value)">
+    <button class="btn btn-sec" onclick="changePreviewSteps(1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">+</button>
+    <span id="previewStepsLabel">3</span>
+  </div>
+</div>
+
+<!-- SLIDER -->
+<div class="slider-wrap" id="sliderWrap" style="display:none">
+  <input id="slider" type="range" min="0" max="0" value="0" oninput="sliderMove(this.value)">
+  <span id="stepLabel">0 / 0</span>
+</div>
+
+<!-- MOVES INPUT (replay) -->
+<div class="panel" id="inputPanel" style="display:none">
+  <div class="panel-title">Moves Input</div>
+  <textarea id="movesInput" placeholder="วาง timeline ที่นี่แล้วกด Run&#10;เช่น&#10;@white:1,2,3,4,5,6,7,8&#10;@black:25,26,27,28,29,30,31,32&#10;@first:black&#10;black 25-22&#10;white 8-11" style="min-height:80px;" onclick="this.scrollTop=0"></textarea>
+  <div class="ctrl-row" style="padding:6px 0 0">
+    <button class="btn btn-replay" id="runBtn"          onclick="loadMoves()">▶ Run</button>
+    <button class="btn btn-replay" id="continueBtn"     onclick="continueMoves()" disabled>+ Continue</button>
+    <button class="btn btn-replay" id="clearTimelineBtn" onclick="clearMoves()"  disabled>Clear Timeline</button>
+  </div>
+</div>
+
+  </div>
+  <div id="aiLoading" style="display:none;text-align:center;font-size:.8rem;color:var(--muted);padding:8px;">⏳ กำลังคำนวณ...</div>
+  <div id="aiResults"></div>
+</div>
+
+<!-- TIMELINE -->
+<div class="panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <span class="panel-title" style="margin-bottom:0;">Timeline</span>
+    <span id="moveInfo" style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--gold);"></span>
+  </div>
+  <div id="timelineWrap">
+    <textarea id="timeline" readonly placeholder="timeline จะแสดงที่นี่..."></textarea>
+    <button class="copy-btn" onclick="copyTimeline()">Copy</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener("dblclick",e=>e.preventDefault());
+
+/* ══════════════════════════════════════
+   SQUARE GRID MAP  (ตำแหน่งคงที่ตลอด)
+   squares 1-8  = row 0 (top)
+   squares 25-32= row 6-7 (bottom)
+   black starts bottom (25-32), white starts top (1-8)
+══════════════════════════════════════ */
+const RC={
+  1:[0,1],2:[0,3],3:[0,5],4:[0,7],
+  5:[1,0],6:[1,2],7:[1,4],8:[1,6],
+  9:[2,1],10:[2,3],11:[2,5],12:[2,7],
+  13:[3,0],14:[3,2],15:[3,4],16:[3,6],
+  17:[4,1],18:[4,3],19:[4,5],20:[4,7],
+  21:[5,0],22:[5,2],23:[5,4],24:[5,6],
+  25:[6,1],26:[6,3],27:[6,5],28:[6,7],
+  29:[7,0],30:[7,2],31:[7,4],32:[7,6]
+};
+function sqAt(r,c){for(let k in RC)if(RC[k][0]===r&&RC[k][1]===c)return+k;return null;}
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let mode="play", blackBottom=true, gameStarted=false;
+let timer=null, step=0, speed=700, placeColor="white";
+let data={start:{white:[],black:[]},moves:[]};
+let playWhite=[],playBlack=[],currentTurn="black",selected=null,playHistory=[];
+let lastMoveSquares=[],capturedSquares=[];
+
+/* jump chain state */
+let chainPiece=null;
+
+/* ══════════════════════════════════════
+   OPTION HANDLERS
+══════════════════════════════════════ */
+function onModeChange(m){
+  mode=m; stop(); selected=null; chainPiece=null;
+  clearArrows(); setArrowModeOff();
+
+  let isPlay=m==="play", isReplay=m==="replay", isCustom=m==="custom";
+  document.getElementById("startRow").style.display=isPlay?"flex":"none";
+  document.getElementById("placeBar").classList.toggle("visible",isCustom);
+  document.getElementById("gameActionRow").style.display="none";
+  document.getElementById("replayCtrl").style.display=isReplay?"flex":"none";
+  document.getElementById("replayArrowRow").style.display=isReplay?"flex":"none";
+  document.getElementById("sliderWrap").style.display=isReplay?"flex":"none";
+  document.getElementById("inputPanel").style.display=isReplay?"block":"none";
+  document.getElementById("speedWrapInline").style.display=isReplay?"flex":"none";
+
+  if(isReplay){
+    gameStarted=false;data.start.white=[];data.start.black=[];data.moves=[];step=0;
+    document.getElementById("slider").max=0;
+    document.getElementById("stepLabel").innerText="0 / 0";
+    document.getElementById("moveInfo").innerText="";
+    document.getElementById("timeline").value="";
+    setReplayBtnsState(false); // all disabled except Run
+    drawBoard();clearHighlights();setStatus("");
+  }
+  if(isCustom){
+    gameStarted=false;data.start.white=[];data.start.black=[];
+    drawBoard();clearHighlights();setStatus("");
+  }
+  if(isPlay&&gameStarted){renderPlay();}
+  if(isPlay&&!gameStarted){drawBoard();clearHighlights();setStatus("");}
+}
+
+function setReplayBtnsState(enabled){
+  ["rPrev","rPlay","rNext","rStop","rReset","continueBtn","clearTimelineBtn"].forEach(id=>{
+    let el=document.getElementById(id);
+    if(el) el.disabled=!enabled;
+  });
+  let runBtn=document.getElementById("runBtn");
+  if(runBtn) runBtn.disabled=enabled; // Run disabled AFTER loading
+}
+
+function onOrientChange(v){
+  blackBottom=v==="blackBottom";
+  drawBoard();
+  if(mode==="play"&&gameStarted) renderPlay();
+  else if(mode==="replay") render();
+  else if(mode==="custom") render();
+}
+
+/* ══════════════════════════════════════
+   DRAW BOARD
+══════════════════════════════════════ */
+function drawBoard(){
+  const board=document.getElementById("board");
+  board.innerHTML="";
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom) nums.reverse();
+  let idx=0;
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      let sq=document.createElement("div");
+      let dark=(r+c)%2===1;
+      sq.className="square "+(dark?"dark":"light");
+      if(dark){
+        let pos=nums[idx++];
+        sq.dataset.pos=pos;
+        sq.onclick=onSquareClick;
+        let n=document.createElement("div");n.className="num";n.innerText=pos;
+        sq.appendChild(n);
+      }
+      board.appendChild(sq);
+    }
+  }
+  resizeBoard();
+}
+
+/* ══════════════════════════════════════
+   BOARD SIZING — JS controlled, no CSS min() or aspect-ratio
+══════════════════════════════════════ */
+function resizeBoard(){
+  // padding: 12px*2=24, border: 3px*2=6, safety: 10 → total 40px
+  let available = Math.min(window.innerWidth - 40, 480);
+  if(available < 80) available = 80;
+  let cell = Math.floor(available / 8);
+  let size = cell * 8;
+
+  let board = document.getElementById("board");
+  board.style.width  = size + "px";
+  board.style.height = size + "px";
+  board.style.gridTemplateColumns = "repeat(8," + cell + "px)";
+  board.style.gridTemplateRows    = "repeat(8," + cell + "px)";
+
+  // set color and size inline — no CSS variables, works in all browsers
+  let isDark = document.body.classList.contains("dark");
+  let lightColor  = isDark ? "#3d3730" : "#f0d9b5";
+  let darkColor   = isDark ? "#252018" : "#b58863";
+  let numDarkClr  = isDark ? "rgba(255,220,160,.85)" : "rgba(0,0,0,.55)";
+  let numLightClr = isDark ? "rgba(220,195,140,.7)"  : "rgba(139,90,43,.5)";
+
+  board.querySelectorAll(".square").forEach(sq => {
+    sq.style.width  = cell + "px";
+    sq.style.height = cell + "px";
+    sq.style.background = sq.classList.contains("light") ? lightColor : darkColor;
+    let num = sq.querySelector(".num");
+    if(num) num.style.color = sq.classList.contains("light") ? numLightClr : numDarkClr;
+  });
+
+  // SVG overlay matches board exactly
+  let svg = document.getElementById("arrowSvg");
+  svg.style.width  = size + "px";
+  svg.style.height = size + "px";
+  svg.setAttribute("width",  size);
+  svg.setAttribute("height", size);
+
+  renderArrows();
+}
+
+window.addEventListener("resize",resizeBoard);
+
+
+/* ══════════════════════════════════════
+   DEFAULT POSITION
+══════════════════════════════════════ */
+function defaultPosition(){
+  data.start.white=[];data.start.black=[];
+  for(let i=1;i<=8;i++)   data.start.white.push({square:i,king:false});
+  for(let i=25;i<=32;i++) data.start.black.push({square:i,king:false});
+}
+
+/* ══════════════════════════════════════
+   START GAME
+══════════════════════════════════════ */
+function startGame(){
+  gameStarted=true;
+  defaultPosition();
+  playWhite=data.start.white.map(p=>({...p}));
+  playBlack=data.start.black.map(p=>({...p}));
+  currentTurn="black";
+  selected=null;chainPiece=null;playHistory=[];data.moves=[];
+  saveInitPosition();
+  updateTimeline();
+  document.getElementById("startRow").innerHTML=
+    '<button class="btn btn-primary" onclick="newGame()" style="padding:7px 20px;font-size:.9rem;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;">↺ New Game</button>';
+  document.getElementById("gameActionRow").style.display="flex";
+  drawBoard();renderPlay();
+}
+
+function newGame(){
+  document.getElementById("startRow").innerHTML=
+    '<button class="btn-start" onclick="startGame()">▶ เริ่มเกม</button>';
+  gameStarted=false;selected=null;chainPiece=null;playHistory=[];data.moves=[];
+  setStatus("");
+  updateTimeline();
+  document.getElementById("gameActionRow").style.display="none";
+  clearArrows();setArrowModeOff();
+  drawBoard();clearHighlights();
+}
+
+/* ══════════════════════════════════════
+   LEGAL MOVES  (กฎหมากฮอสไทย)
+
+   เบี้ยธรรมดา:
+     • เดินหน้า 1 ช่อง
+     • กินหน้า 1 ช่อง (กินกลับหลังไม่ได้)
+     • กินต่อเนื่อง (chain) ได้หลายตัว แต่ทิศต้องเป็นทางหน้าเสมอ
+       ข้อยกเว้น: ระหว่าง chain ถ้าเข้าฮอสให้โปรโมทแล้วหยุด
+
+   ฮอส (king):
+     • เดินทแยงได้ไกลแค่ไหนก็ได้ (4 ทิศ)
+     • กินได้ทุกทิศ ระยะไกล ลงจอดหลังตัวที่กินได้หลายช่อง
+     • กินต่อเนื่องได้
+
+   mandatory capture: ถ้ากินได้ต้องกิน
+══════════════════════════════════════ */
+
+/* forward directions for each color (toward promotion row)
+   RC map is FIXED: black promotes at sq 1-4 (row 0, top of grid)
+                    white promotes at sq 29-32 (row 7, bottom of grid)
+   So movement direction in RC coordinates never changes regardless of display flip */
+function fwdDirs(color){
+  // black always moves toward row 0 (dr=-1), white toward row 7 (dr=+1)
+  return color==="black"?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];
+}
+
+/* get all capture moves from a single piece
+   piece: {square, color, king}
+   allSq: occupied squares (to avoid landing on any)
+   enemySq: squares with enemy pieces (to find victims)
+   excludeSq: squares already captured in this chain (can't re-capture)
+*/
+function getCapturesFromPiece(piece, allSq, enemy, excludeSq){
+  let moves=[];
+  let [r,c]=RC[piece.square];
+  let dirs=piece.king?[[-1,-1],[-1,1],[1,-1],[1,1]]:fwdDirs(piece.color);
+
+  if(piece.king){
+    // king slides diagonally to find enemy, then lands on ONE square immediately behind it only
+    for(let [dr,dc] of dirs){
+      let nr=r+dr, nc=c+dc;
+      let foundEnemy=null;
+      while(true){
+        let ns=sqAt(nr,nc);
+        if(!ns) break;
+        if(allSq.includes(ns)){
+          if(enemy.find(p=>p.square===ns) && !excludeSq.includes(ns) && !foundEnemy){
+            foundEnemy=ns;
+            // ONLY the single square directly behind the enemy is a valid landing
+            let lr=nr+dr, lc=nc+dc;
+            let ls=sqAt(lr,lc);
+            if(ls && !allSq.includes(ls)){
+              moves.push({capAt:foundEnemy, landOn:ls});
+            }
+            // do NOT continue looking further — stop here
+          }
+          break; // blocked by any piece
+        }
+        nr+=dr; nc+=dc;
+      }
+    }
+  } else {
+    // normal piece: only forward, 1 step to find enemy, 1 step landing
+    for(let [dr,dc] of dirs){
+      let er=r+dr, ec=c+dc;
+      let es=sqAt(er,ec);
+      if(!es) continue;
+      if(enemy.find(p=>p.square===es) && !excludeSq.includes(es)){
+        let lr=er+dr, lc=ec+dc;
+        let ls=sqAt(lr,lc);
+        if(ls && !allSq.includes(ls)){
+          moves.push({capAt:es, landOn:ls});
+        }
+      }
+    }
+  }
+  return moves;
+}
+
+/* build full legal move list for a color, handling chain captures */
+function getLegalMoves(white, black, color, forcePiece=null){
+  let arr   = color==="white"?white:black;
+  let enemy = color==="white"?black:white;
+  let allSq = [...white.map(p=>p.square),...black.map(p=>p.square)];
+  let moves=[];
+
+  let pieces = forcePiece ? arr.filter(p=>p.square===forcePiece) : arr;
+
+  for(let piece of pieces){
+    // captures
+    let caps=getCapturesFromPiece({...piece,color},allSq,enemy,[]);
+    for(let cap of caps){
+      moves.push({from:piece.square,to:cap.landOn,captures:[cap.capAt]});
+    }
+  }
+
+  if(moves.length>0){
+    // mandatory capture — only return captures
+    return moves;
+  }
+
+  // no captures → simple moves (only if no forcePiece chain)
+  if(forcePiece) return []; // chain piece must capture or stop
+
+  for(let piece of arr){
+    let [r,c]=RC[piece.square];
+    let dirs=piece.king?[[-1,-1],[-1,1],[1,-1],[1,1]]:fwdDirs(color);
+    if(piece.king){
+      for(let [dr,dc] of dirs){
+        let nr=r+dr, nc=c+dc;
+        while(true){
+          let ns=sqAt(nr,nc);
+          if(!ns||allSq.includes(ns)) break;
+          moves.push({from:piece.square,to:ns,captures:[]});
+          nr+=dr; nc+=dc;
+        }
+      }
+    } else {
+      for(let [dr,dc] of dirs){
+        let nr=r+dr, nc=c+dc;
+        let ns=sqAt(nr,nc);
+        if(ns && !allSq.includes(ns)) moves.push({from:piece.square,to:ns,captures:[]});
+      }
+    }
+  }
+  return moves;
+}
+
+/* apply a single step move (capture or simple) */
+function applyMoveStep(white, black, move){
+  let wNew=white.map(p=>({...p}));
+  let bNew=black.map(p=>({...p}));
+  let isWhitePiece = !!wNew.find(p=>p.square===move.from);
+  let arr   = isWhitePiece?wNew:bNew;
+  let enemy = isWhitePiece?bNew:wNew;
+  let piece = arr.find(p=>p.square===move.from);
+  piece.square=move.to;
+  for(let cap of move.captures){
+    let idx=enemy.findIndex(p=>p.square===cap);
+    if(idx>-1) enemy.splice(idx,1);
+  }
+  // promote — black (bNew) reaches sq 1-4, white (wNew) reaches sq 29-32
+  let promoted=false;
+  if(!isWhitePiece && move.to<=4  && !piece.king){piece.king=true;promoted=true;}
+  if( isWhitePiece && move.to>=29 && !piece.king){piece.king=true;promoted=true;}
+  return {white:wNew, black:bNew, promoted};
+}
+
+/* ══════════════════════════════════════
+   PLAY MODE CLICK
+══════════════════════════════════════ */
+function onSquareClick(e){
+  if(arrowMode){handleArrowClick(e);return;}
+  let pos=parseInt(e.currentTarget.dataset.pos);
+  if(mode==="custom"){tapCustom(pos);return;}
+  if(mode==="replay"){return;}
+  if(mode==="play"&&!gameStarted){return;}
+  playTap(pos);
+}
+
+function playTap(pos){
+  let legalMoves=getLegalMoves(playWhite,playBlack,currentTurn,chainPiece);
+  let allPieces=[...playWhite.map(p=>({...p,color:"white"})),...playBlack.map(p=>({...p,color:"black"}))];
+  let clicked=allPieces.find(p=>p.square===pos);
+
+  if(selected){
+    let move=legalMoves.find(m=>m.from===selected.square&&m.to===pos);
+    if(move){
+      // save history (only before first step in a turn)
+      if(!chainPiece){
+        playHistory.push({
+          white:playWhite.map(p=>({...p})),
+          black:playBlack.map(p=>({...p})),
+          turn:currentTurn,
+          movesLen:data.moves.length
+        });
+      }
+      let result=applyMoveStep(playWhite,playBlack,move);
+      playWhite=result.white; playBlack=result.black;
+
+      // build notation — append to last move if chain
+      let seg=(move.captures.length>0?move.from+"x"+move.to:move.from+"-"+move.to);
+      if(chainPiece && data.moves.length>0){
+        // extend last move notation: "25x18" → "25x18x11"
+        let last=data.moves[data.moves.length-1];
+        last.move=last.move+"x"+move.to; // becomes multi-jump notation
+      } else {
+        data.moves.push({color:currentTurn,move:seg});
+      }
+
+      // check if this piece can continue capturing (chain)
+      let canChain=false;
+      if(move.captures.length>0 && !result.promoted){
+        // check if landing piece can still capture
+        let chainMoves=getLegalMoves(playWhite,playBlack,currentTurn,move.to);
+        canChain=chainMoves.length>0 && chainMoves[0].captures.length>0;
+      }
+
+      if(canChain){
+        chainPiece=move.to;
+        selected={square:move.to};
+      } else {
+        chainPiece=null;
+        currentTurn=currentTurn==="black"?"white":"black";
+        selected=null;
+        let nextMoves=getLegalMoves(playWhite,playBlack,currentTurn);
+        if(nextMoves.length===0){
+          let winner=currentTurn==="black"?"ขาว":"ดำ";
+          updateTimeline();
+          setTimeout(()=>setStatus("🏆 "+winner+" ชนะ!"),80);
+          renderPlay(true);return;
+        }
+      }
+      updateTimeline();
+      renderPlay();return;
+    }
+    // click elsewhere — deselect (unless in chain)
+    if(!chainPiece) selected=null;
+  }
+
+  // select piece (if it belongs to current turn and not in chain constraint)
+  if(!chainPiece || (chainPiece && pos===chainPiece)){
+    if(clicked&&clicked.color===currentTurn){
+      let movesFrom=legalMoves.filter(m=>m.from===pos);
+      if(movesFrom.length>0) selected={square:pos};
+    }
+  }
+  renderPlay();
+}
+
+function undoMove(){
+  if(playHistory.length===0) return;
+  let last=playHistory.pop();
+  playWhite=last.white.map(p=>({...p}));
+  playBlack=last.black.map(p=>({...p}));
+  currentTurn=last.turn;
+  data.moves=data.moves.slice(0,last.movesLen);
+  selected=null;chainPiece=null;
+  updateTimeline();renderPlay();
+}
+
+/* ══════════════════════════════════════
+   RENDER PLAY
+══════════════════════════════════════ */
+function renderPlay(gameOver=false){
+  clearHighlights();
+  drawPieces([...playWhite.map(p=>({...p,color:"white"})),...playBlack.map(p=>({...p,color:"black"}))]);
+  if(!gameOver){
+    let lm=getLegalMoves(playWhite,playBlack,currentTurn,chainPiece);
+    if(selected){
+      markSquare(selected.square,"sq-sel");
+      lm.filter(m=>m.from===selected.square).forEach(m=>markSquare(m.to,"sq-hint"));
+    }
+    let name=currentTurn==="black"?"ดำ":"ขาว";
+    let bg=currentTurn==="black"?"#2a1808":"#f8f0e3";
+    let bd=currentTurn==="black"?"border:1px solid #6a4820":"border:1px solid #9a8878";
+    setStatus(`<span class="turn-dot" style="background:${bg};${bd}"></span>ตาของ <b>${name}</b>`+(chainPiece?" (กินต่อเนื่อง!)":""));
+  }
+  let lastMove=data.moves[data.moves.length-1];
+  document.getElementById("moveInfo").innerText=lastMove?lastMove.color+": "+lastMove.move:"Start";
+}
+
+/* ══════════════════════════════════════
+   CUSTOM MODE
+══════════════════════════════════════ */
+function setPlaceColor(c){
+  placeColor=c;
+  document.getElementById("btnWhite").classList.toggle("active",c==="white");
+  document.getElementById("btnBlack").classList.toggle("active",c==="black");
+}
+function tapCustom(pos){
+  let arr=data.start[placeColor];
+  let other=data.start[placeColor==="white"?"black":"white"];
+  let oi=other.findIndex(p=>p.square===pos);
+  if(oi>-1) other.splice(oi,1);
+  let i=arr.findIndex(p=>p.square===pos);
+  if(i===-1) arr.push({square:pos,king:false});
+  else if(!arr[i].king) arr[i].king=true;
+  else arr.splice(i,1);
+  render();
+}
+function clearBoard(){data.start.white=[];data.start.black=[];render();}
+
+function confirmCustom(){
+  playWhite=data.start.white.map(p=>({...p}));
+  playBlack=data.start.black.map(p=>({...p}));
+  currentTurn="black";
+  gameStarted=true;selected=null;chainPiece=null;playHistory=[];data.moves=[];
+  saveInitPosition();
+  updateTimeline();
+  document.querySelector('input[name="mode"][value="play"]').checked=true;
+  mode="play";
+  document.getElementById("placeBar").classList.remove("visible");
+  document.getElementById("startRow").style.display="flex";
+  document.getElementById("startRow").innerHTML=
+    '<button class="btn btn-primary" onclick="newGame()" style="padding:7px 20px;font-size:.9rem;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;">↺ New Game</button>';
+  document.getElementById("gameActionRow").style.display="flex";
+  document.getElementById("replayCtrl").style.display="none";
+  document.getElementById("replayArrowRow").style.display="none";
+  document.getElementById("sliderWrap").style.display="none";
+  document.getElementById("inputPanel").style.display="none";
+  renderPlay();
+}
+
+/* ══════════════════════════════════════
+   TIMELINE
+══════════════════════════════════════ */
+// บันทึกตำแหน่งเริ่มต้น ณ ตอน startGame / confirmCustom
+let initWhiteEnc="", initBlackEnc="";
+
+function saveInitPosition(){
+  // snapshot ตำแหน่งเริ่มต้นจาก playWhite/playBlack ณ เวลาเริ่มเกม
+  let sw=[...playWhite].sort((a,b)=>a.square-b.square);
+  let sb=[...playBlack].sort((a,b)=>a.square-b.square);
+  initWhiteEnc=sw.map(p=>p.square+(p.king?"K":"")).join(",");
+  initBlackEnc=sb.map(p=>p.square+(p.king?"K":"")).join(",");
+}
+
+function updateTimeline(){
+  let lines=["@white:"+initWhiteEnc,"@black:"+initBlackEnc,"@first:black"];
+  data.moves.forEach(m=>lines.push(m.color+" "+m.move));
+  document.getElementById("timeline").value=lines.join("\n");
+}
+
+function showToast(msg){
+  let t=document.getElementById("copyToast");
+  t.innerText=msg;t.style.opacity="1";
+  setTimeout(()=>t.style.opacity="0",2000);
+}
+
+function copyTimeline(){
+  let txt=document.getElementById("timeline").value;
+  if(!txt.trim()){showToast("ไม่มีข้อมูล");return;}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt)
+      .then(()=>showToast("✓ Copy สำเร็จ!"))
+      .catch(()=>fallbackCopy(txt));
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  // ต้องใช้ textarea เพื่อรักษา newline (\n) — input element จะแปลง \n เป็น space
+  try{
+    let ta=document.createElement("textarea");
+    ta.setAttribute("readonly","");
+    ta.style.cssText="position:fixed;top:-9999px;left:-9999px;opacity:0;font-size:16px;";
+    ta.value=txt;
+    document.body.appendChild(ta);
+    ta.focus({preventScroll:true});
+    ta.select();
+    ta.setSelectionRange(0,99999);
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    window.getSelection&&window.getSelection().removeAllRanges();
+    showToast("✓ Copy สำเร็จ!");
+  }catch(e){showToast("Copy ไม่สำเร็จ");}
+}
+
+/* ══════════════════════════════════════
+   REPLAY
+══════════════════════════════════════ */
+function loadMoves(){
+  stop();
+  let txt=document.getElementById("movesInput").value.trim();
+  if(!txt){showToast("กรุณาใส่ข้อมูลใน Moves Input ก่อน");return;}
+  let lines=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
+  data.start.white=[];data.start.black=[];
+  let moves=[];let firstColor=null;
+  for(let line of lines){
+    if(line.startsWith("@white:")){
+      line.replace("@white:","").split(",").forEach(t=>{
+        t=t.trim();if(!t)return;
+        let king=t.endsWith("K");let sq=parseInt(king?t.slice(0,-1):t);
+        if(sq) data.start.white.push({square:sq,king});
+      });
+    } else if(line.startsWith("@black:")){
+      line.replace("@black:","").split(",").forEach(t=>{
+        t=t.trim();if(!t)return;
+        let king=t.endsWith("K");let sq=parseInt(king?t.slice(0,-1):t);
+        if(sq) data.start.black.push({square:sq,king});
+      });
+    } else if(line.startsWith("@first:")){
+      firstColor=line.replace("@first:","").trim();
+    } else {
+      let m=line.match(/^(white|black)\s+(.+)$/i);
+      if(m) moves.push({color:m[1].toLowerCase(),move:m[2].trim()});
+      else  moves.push({color:null,move:line});
+    }
+  }
+  if(!data.start.white.length&&!data.start.black.length) defaultPosition();
+  data.moves=moves;
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0; // clear and scroll to top
+  document.getElementById("slider").max=moves.length;
+  document.getElementById("stepLabel").innerText="0 / "+moves.length;
+  step=0;
+  // rebuild timeline
+  let encW=data.start.white.map(p=>p.square+(p.king?"K":"")).join(",");
+  let encB=data.start.black.map(p=>p.square+(p.king?"K":"")).join(",");
+  let tl=["@white:"+encW,"@black:"+encB];
+  if(firstColor) tl.push("@first:"+firstColor);
+  data.moves.forEach(m=>tl.push((m.color||"?")+" "+m.move));
+  document.getElementById("timeline").value=tl.join("\n");
+  setReplayBtnsState(true); // enable playback, disable run
+  render();
+}
+
+function continueMoves(){
+  stop();
+  let txt=document.getElementById("movesInput").value;
+  let more=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
+  if(!more.length) return;
+  let parsed=more.map(line=>{
+    let m=line.match(/^(white|black)\s+(.+)$/i);
+    return m?{color:m[1].toLowerCase(),move:m[2]}:{color:null,move:line};
+  });
+  data.moves=data.moves.slice(0,step).concat(parsed);
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0;
+  document.getElementById("slider").max=data.moves.length;
+  render();
+}
+
+function sliderMove(v){step=parseInt(v);render();}
+function togglePlay(){
+  let btn=document.getElementById("rPlay");
+  if(timer){stop();}
+  else{play();if(btn)btn.innerText="⏸ Pause";}
+}
+function play(){
+  if(timer)return;
+  timer=setInterval(()=>{
+    if(step<data.moves.length){step++;render();}
+    else{stop();}
+  },speed);
+}
+function stop(){
+  clearInterval(timer);timer=null;
+  let pb=document.getElementById("rPlay")||document.getElementById("playBtn");
+  if(pb&&!pb.disabled)pb.innerText="▶ Play";
+}
+function resetToStart(){stop();step=0;render();}
+function next(){if(step<data.moves.length){step++;render();}}
+function prev(){if(step>0){step--;render();}}
+
+/* ── SPEED CONTROL ── */
+const speedMap={1:1800,2:1100,3:700,4:380,5:160};
+const speedLabel={1:"ช้ามาก",2:"ช้า",3:"กลาง",4:"เร็ว",5:"เร็วมาก"};
+function setSpeed(v){
+  v=parseInt(v);
+  speed=speedMap[v]||700;
+  let lbl=document.getElementById("speedVal");
+  if(lbl) lbl.innerText=speedLabel[v]||"กลาง";
+  // ถ้ากำลัง play อยู่ให้ restart ด้วย speed ใหม่
+  if(timer){ stop(); play(); document.getElementById("rPlay").innerText="⏸ Pause"; }
+}
+
+/* ── PREVIEW +/- ── */
+function changePreviewSteps(delta){
+  let sl=document.getElementById("previewSteps");
+  if(!sl) return;
+  let v=Math.min(8,Math.max(1,(parseInt(sl.value)||3)+delta));
+  sl.value=v;
+  setPreviewSteps(v);
+}
+
+/* ── HIGHLIGHT NEXT MOVE (กระพริบช่องที่กำลังจะเดิน) ── */
+function highlightNextMove(){
+  document.querySelectorAll(".sq-next-from").forEach(e=>e.classList.remove("sq-next-from"));
+  if(mode!=="replay"||step>=data.moves.length) return;
+  let entry=data.moves[step];
+  if(!entry) return;
+  let moveStr=entry.move||entry;
+  let parts=moveStr.includes("x")?moveStr.split("x"):moveStr.split("-");
+  let fromSq=parseInt(parts[0]);
+  if(!fromSq) return;
+  let cell=document.querySelector(`[data-pos='${fromSq}']`);
+  if(cell) cell.classList.add("sq-next-from");
+}
+function clearMoves(){
+  stop();data.moves=[];step=0;
+  let mi=document.getElementById("movesInput");
+  mi.value="";mi.scrollTop=0;
+  document.getElementById("slider").max=0;
+  document.getElementById("stepLabel").innerText="0 / 0";
+  document.getElementById("timeline").value="";
+  document.getElementById("moveInfo").innerText="";
+  setReplayBtnsState(false);
+  clearHighlights();
+  drawBoard();
+}
+
+/* ══════════════════════════════════════
+   REPLAY BUILD POSITION
+   Supports multi-jump notation: "25x18x11"
+══════════════════════════════════════ */
+function squaresInPath(from,to){
+  let [r1,c1]=RC[from],[r2,c2]=RC[to];
+  let dr=Math.sign(r2-r1),dc=Math.sign(c2-c1);
+  let sqs=[],r=r1+dr,c=c1+dc;
+  while(r!==r2||c!==c2){let s=sqAt(r,c);if(s)sqs.push(s);r+=dr;c+=dc;}
+  return sqs;
+}
+
+function buildPosition(upTo){
+  let white=data.start.white.map(p=>({...p,color:"white"}));
+  let black=data.start.black.map(p=>({...p,color:"black"}));
+  lastMoveSquares=[];capturedSquares=[];
+
+  for(let i=0;i<upTo;i++){
+    let entry=data.moves[i];
+    let moveStr=entry.move||entry;
+    // multi-jump: "25x18x11" → steps [25→18, 18→11]
+    let isCapture=moveStr.includes("x");
+    let parts=isCapture?moveStr.split("x"):moveStr.split("-");
+    let squares=parts.map(Number);
+
+    let arr=white.find(p=>p.square===squares[0])?white:black;
+    let enemy=arr===white?black:white;
+    let piece=arr.find(p=>p.square===squares[0]);
+    if(!piece) continue;
+
+    if(i===upTo-1) lastMoveSquares=[squares[0],squares[squares.length-1]];
+
+    for(let s=0;s<squares.length-1;s++){
+      let from=squares[s],to=squares[s+1];
+      piece.square=to;
+      if(isCapture){
+        let path=squaresInPath(from,to);
+        path.forEach(ps=>{
+          let idx=enemy.findIndex(p=>p.square===ps);
+          if(idx>-1){if(i===upTo-1) capturedSquares.push(ps);enemy.splice(idx,1);}
+        });
+      }
+    }
+    // promote — black: reach sq 1-4, white: reach sq 29-32
+    if(piece.color==="black"&&piece.square<=4) piece.king=true;
+    if(piece.color==="white"&&piece.square>=29) piece.king=true;
+  }
+  return [...white,...black];
+}
+
+/* ══════════════════════════════════════
+   GENERIC RENDER
+══════════════════════════════════════ */
+function render(){
+  clearHighlights();
+  if(mode==="custom"){
+    drawPieces([...data.start.white.map(p=>({...p,color:"white"})),...data.start.black.map(p=>({...p,color:"black"}))]);
+    setStatus("คลิกช่องมืดเพื่อวางหมาก • คลิกซ้ำ = King • คลิกซ้ำอีก = ลบ");
+    return;
+  }
+  let pos=buildPosition(step);
+  lastMoveSquares.forEach(s=>markSquare(s,"sq-last"));
+  capturedSquares.forEach(s=>markSquare(s,"sq-cap"));
+  drawPieces(pos);
+  let entry=data.moves[step-1];
+  let ms=entry?((entry.color?entry.color+" ":"")+(entry.move||entry)):"";
+  document.getElementById("moveInfo").innerText=step>0?ms:"Start Position";
+
+  document.getElementById("slider").value=step;
+  document.getElementById("stepLabel").innerText=step+" / "+data.moves.length;
+  setStatus(step>0?"▶ "+ms:"⬤ Start Position");
+  highlightNextMove();
+  drawPreviewArrows();
+}
+
+/* ══════════════════════════════════════
+   DRAW HELPERS
+══════════════════════════════════════ */
+function drawPieces(pieces){
+  document.querySelectorAll(".piece").forEach(e=>e.remove());
+  pieces.forEach(p=>{
+    let cell=document.querySelector(`[data-pos='${p.square}']`);
+    if(!cell)return;
+    let div=document.createElement("div");
+    div.className="piece "+(p.color==="white"?"white-p":"black-p");
+    if(p.king)div.classList.add("king");
+    cell.appendChild(div);
+  });
+}
+function clearHighlights(){
+  document.querySelectorAll(".piece").forEach(e=>e.remove());
+  document.querySelectorAll(".square").forEach(e=>
+    e.classList.remove("sq-last","sq-cap","sq-sel","sq-hint"));
+}
+function markSquare(s,cls){
+  let cell=document.querySelector(`[data-pos='${s}']`);
+  if(cell)cell.classList.add(cls);
+}
+function setStatus(html){
+  let tb=document.getElementById("turnBadge");
+  if(tb) tb.innerHTML=html;
+}
+
+/* ══════════════════════════════════════
+   ARROW ANNOTATION SYSTEM  (2 สี: แดง/เขียว)
+══════════════════════════════════════ */
+let arrowMode=false;
+let arrowColor="red"; // "red" | "green"
+let arrowDrag={active:false,fromSq:null,toSq:null};
+let arrows=[]; // [{from, to, color}]
+
+function toggleArrowMode(color){
+  // ถ้ากดปุ่มสีเดิมที่ active อยู่ = ปิด mode
+  if(arrowMode && arrowColor===color){
+    setArrowModeOff(); return;
+  }
+  arrowColor=color||"red";
+  arrowMode=true;
+  // update button states
+  _updateArrowBtns();
+  document.getElementById("arrowSvg").classList.add("drawing-mode");
+  document.querySelectorAll(".square").forEach(sq=>sq.style.pointerEvents="none");
+}
+
+function _updateArrowBtns(){
+  // red buttons
+  ["arrowToggleBtn","replayArrowBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="red"){b.classList.add("active");b.innerText="🔴 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🔴 แพ้";}
+  });
+  // yellow buttons
+  ["arrowYellowBtn","replayArrowYellowBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="yellow"){b.classList.add("active");b.innerText="🟡 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🟡 เสมอ";}
+  });
+  // green buttons
+  ["arrowGreenBtn","replayArrowGreenBtn"].forEach(id=>{
+    let b=document.getElementById(id);
+    if(!b)return;
+    if(arrowMode&&arrowColor==="green"){b.classList.add("active");b.innerText="🟢 วาดอยู่";}
+    else{b.classList.remove("active");b.innerText="🟢 ชนะ";}
+  });
+}
+
+function setArrowModeOff(){
+  arrowMode=false;
+  _updateArrowBtns();
+  document.getElementById("arrowSvg").classList.remove("drawing-mode");
+  document.querySelectorAll(".square").forEach(sq=>sq.style.pointerEvents="");
+  arrowDrag={active:false,fromSq:null,toSq:null};
+  let ghost=document.getElementById("arrowGhost");
+  if(ghost)ghost.remove();
+}
+
+function clearArrows(){
+  arrows=[];
+  renderArrows();
+}
+
+/* get square number from a point (x,y) within the SVG element */
+function sqFromPoint(x,y){
+  let size=getBoardSize();
+  let cellSize=size/8;
+  let col=Math.floor(x/cellSize);
+  let row=Math.floor(y/cellSize);
+  if(col<0||col>7||row<0||row>7)return null;
+  // find which square number is at this visual cell
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  // only dark squares have numbers
+  if((row+col)%2!==1)return null;
+  let darkIdx=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if((r+c)%2===1){
+      if(r===row&&c===col)return nums[darkIdx];
+      darkIdx++;
+    }
+  }
+  return null;
+}
+
+function getBoardSize(){
+  let board=document.getElementById("board");
+  return parseInt(board.style.width)||Math.min(Math.floor(window.innerWidth*0.95),480);
+}
+
+/* center of a square in SVG coordinates */
+function sqCenter(sq){
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  let darkIdx=0,vr=-1,vc=-1;
+  for(let row=0;row<8;row++)for(let col=0;col<8;col++){
+    if((row+col)%2===1){
+      if(nums[darkIdx]===sq){vr=row;vc=col;}
+      darkIdx++;
+    }
+  }
+  if(vr===-1)return null;
+  let size=getBoardSize();
+  let cell=size/8;
+  return[(vc+0.5)*cell,(vr+0.5)*cell];
+}
+
+/* SVG pointer helpers */
+function getLocalXY(e){
+  let svg=document.getElementById("arrowSvg");
+  let rect=svg.getBoundingClientRect();
+  let src=e.touches?e.touches[0]:e;
+  return[src.clientX-rect.left, src.clientY-rect.top];
+}
+
+/* arrow SVG events */
+let svgEl=document.getElementById("arrowSvg");
+
+svgEl.addEventListener("mousedown",svgDown);
+svgEl.addEventListener("touchstart",svgDown,{passive:false});
+svgEl.addEventListener("mousemove",svgMove);
+svgEl.addEventListener("touchmove",svgMove,{passive:false});
+svgEl.addEventListener("mouseup",svgUp);
+svgEl.addEventListener("touchend",svgUp);
+
+function svgDown(e){
+  if(!arrowMode)return;
+  e.preventDefault();
+  let [x,y]=getLocalXY(e);
+  let sq=sqFromPoint(x,y);
+  if(!sq)return;
+  arrowDrag={active:true,fromSq:sq,toSq:sq};
+}
+
+function svgMove(e){
+  if(!arrowMode||!arrowDrag.active)return;
+  e.preventDefault();
+  let [x,y]=getLocalXY(e);
+  let sq=sqFromPoint(x,y);
+  arrowDrag.toSq=sq;
+  // draw ghost line
+  renderArrows(x,y);
+}
+
+function svgUp(e){
+  if(!arrowMode||!arrowDrag.active)return;
+  e.preventDefault();
+  let from=arrowDrag.fromSq, to=arrowDrag.toSq;
+  arrowDrag={active:false,fromSq:null,toSq:null};
+  if(!from||!to||from===to){renderArrows();return;}
+  // toggle: same arrow (same from/to/color) = remove; else add
+  let existing=arrows.findIndex(a=>a.from===from&&a.to===to&&a.color===arrowColor);
+  if(existing>-1) arrows.splice(existing,1);
+  else arrows.push({from,to,color:arrowColor});
+  renderArrows();
+}
+
+function renderArrows(ghostX,ghostY){
+  let svg=document.getElementById("arrowSvg");
+  svg.querySelectorAll(".arrow-line,#arrowGhost").forEach(e=>e.remove());
+  for(let arrow of arrows){
+    let fc=sqCenter(arrow.from), tc=sqCenter(arrow.to);
+    if(!fc||!tc)continue;
+    drawArrowLine(svg,fc[0],fc[1],tc[0],tc[1],arrow.color||"red",false);
+  }
+  if(arrowDrag.active&&arrowDrag.fromSq&&ghostX!==undefined){
+    let fc=sqCenter(arrowDrag.fromSq);
+    if(fc) drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,arrowColor,true);
+  }
+  drawPreviewArrows();
+}
+
+function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
+  let dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<5)return;
+  let ux=dx/len,uy=dy/len;
+  let pad=len*0.18, padHead=len*0.12;
+  let sx=x1+ux*pad, sy=y1+uy*pad;
+  let ex=x2-ux*padHead, ey=y2-uy*padHead;
+  let clr=color==="green"?"#20c020":color==="yellow"?"#e6c000":"#e02020";
+  let markerId=color==="green"?"arrowhead-green":color==="yellow"?"arrowhead-yellow":"arrowhead-red";
+  let line=document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1",sx);line.setAttribute("y1",sy);
+  line.setAttribute("x2",ex);line.setAttribute("y2",ey);
+  line.setAttribute("stroke",clr);
+  line.setAttribute("stroke-width","4.5");
+  line.setAttribute("stroke-linecap","round");
+  line.setAttribute("opacity",isGhost?"0.45":"0.85");
+  line.setAttribute("marker-end","url(#"+markerId+")");
+  line.setAttribute("class",isGhost?"":"arrow-line");
+  if(isGhost)line.id="arrowGhost";
+  svg.appendChild(line);
+}
+
+
+/* ══════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════ */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  let isDark=document.body.classList.contains("dark");
+  let btn=document.getElementById("darkBtn");
+  if(btn) btn.innerText=isDark?"☀️ กลางวัน":"🌙 กลางคืน";
+  resizeBoard();
+}
+
+/* ══════════════════════════════════════
+   DRAG TO MOVE
+   - mousedown/touchstart on a piece square → start drag
+   - mousemove/touchmove → show ghost highlight on target square
+   - mouseup/touchend → complete move if valid target
+══════════════════════════════════════ */
+let dragState={active:false,fromSq:null,overSq:null};
+
+function getBoardEl(){ return document.getElementById("board"); }
+
+function sqFromClientXY(clientX,clientY){
+  let board=getBoardEl();
+  let rect=board.getBoundingClientRect();
+  let x=clientX-rect.left, y=clientY-rect.top;
+  let size=rect.width;
+  let cell=size/8;
+  // find visual square
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  let col=Math.floor(x/cell), row=Math.floor(y/cell);
+  if(col<0||col>7||row<0||row>7)return null;
+  if((row+col)%2!==1)return null;
+  let darkIdx=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if((r+c)%2===1){
+      if(r===row&&c===col)return nums[darkIdx];
+      darkIdx++;
+    }
+  }
+  return null;
+}
+
+// Attach drag listeners once on document (survive drawBoard rebuilds)
+function attachDragListeners(){
+  // boardWrap never gets rebuilt, safe to attach once
+  let wrap=document.getElementById("boardWrap");
+  wrap.addEventListener("mousedown",dragStart);
+  wrap.addEventListener("touchstart",dragStart,{passive:false});
+  document.addEventListener("mousemove",dragMove);
+  document.addEventListener("touchmove",dragMove,{passive:false});
+  document.addEventListener("mouseup",dragEnd);
+  document.addEventListener("touchend",dragEnd);
+}
+
+function dragStart(e){
+  if(arrowMode) return;
+  if(mode!=="play"||!gameStarted) return;
+
+  let src=e.touches?e.touches[0]:e;
+  let sq=sqFromClientXY(src.clientX,src.clientY);
+  if(!sq) return;
+
+  // only start drag on a piece of current turn
+  let allPieces=[...playWhite.map(p=>({...p,color:"white"})),...playBlack.map(p=>({...p,color:"black"}))];
+  let piece=allPieces.find(p=>p.square===sq);
+  if(!piece||piece.color!==currentTurn) return;
+
+  let legalMoves=getLegalMoves(playWhite,playBlack,currentTurn,chainPiece);
+  let movesFrom=legalMoves.filter(m=>m.from===sq);
+  if(!movesFrom.length) return;
+
+  // start drag — also set selected so hints show
+  dragState={active:true,fromSq:sq,overSq:null};
+  selected={square:sq};
+  e.preventDefault();
+  renderPlay();
+}
+
+function dragMove(e){
+  if(!dragState.active) return;
+  e.preventDefault();
+  let src=e.touches?e.touches[0]:e;
+  let sq=sqFromClientXY(src.clientX,src.clientY);
+  dragState.overSq=sq;
+}
+
+function dragEnd(e){
+  if(!dragState.active) return;
+  let from=dragState.fromSq;
+  let to=dragState.overSq;
+  dragState={active:false,fromSq:null,overSq:null};
+
+  if(to && from && to!==from){
+    // attempt move
+    playTap(from); // ensure selected
+    playTap(to);   // attempt to land
+  } else {
+    // short tap/click on same square — keep selected, let normal click handle
+    if(!to || to===from){
+      // already selected via dragStart, just re-render
+      renderPlay();
+    }
+  }
+}
+
+
+
+/* ══════════════════════════════════════
+   PREVIEW — ตัวเลข+สามเหลี่ยม ที่ช่องต้นทาง
+   สามเหลี่ยมชี้ทิศจาก fromSq → toSq ของตานั้น
+══════════════════════════════════════ */
+let previewOn    = true;
+let previewSteps = 3; // default 3 ตา
+
+function togglePreview(){
+  previewOn = !previewOn;
+  let btn = document.getElementById("previewBtn");
+  let wrap = document.getElementById("previewSliderWrap");
+  if(btn){ btn.classList.toggle("active", previewOn); btn.innerText = previewOn ? "👁 ตาเทพ" : "👁 ซ่อน"; }
+  if(wrap){ wrap.style.display = previewOn ? "flex" : "none"; }
+  render();
+}
+
+function setPreviewSteps(v){
+  previewSteps = parseInt(v);
+  document.getElementById("previewStepsLabel").innerText = v;
+  render();
+}
+
+function drawPreviewArrows(){
+  let svg = document.getElementById("arrowSvg");
+  svg.querySelectorAll(".preview-arrow").forEach(e => e.remove());
+  if(!previewOn || mode !== "replay" || !data.moves.length) return;
+
+  let cellSize = getBoardSize() / 8;
+  let maxSteps = previewSteps || 3;
+  // opacity จางลงทีละขั้น
+  let opacities = [];
+  for(let i=0;i<maxSteps;i++) opacities.push(Math.max(0.12, 0.95 - i*(0.80/Math.max(maxSteps-1,1))));
+
+  for(let i=0;i<maxSteps;i++){
+    let idx = step + i;
+    if(idx >= data.moves.length) break;
+
+    let entry   = data.moves[idx];
+    let moveStr = entry.move || entry;
+    let isCapture = moveStr.includes("x");
+    let parts = isCapture ? moveStr.split("x") : moveStr.split("-");
+    if(parts.length < 2) continue;
+
+    let fromSq = parseInt(parts[0]);
+    // ทิศทาง: ใช้ก้าวแรกของการเดิน (parts[0]→parts[1]) ไม่ใช่ปลายทางสุดท้าย
+    let nextSq = parseInt(parts[1]);
+    let toSq   = parseInt(parts[parts.length-1]); // ปลายทางจริง (สำหรับ label)
+    if(!fromSq || !nextSq || fromSq===nextSq) continue;
+
+    let fc   = sqCenter(fromSq);
+    let nc   = sqCenter(nextSq);  // ช่องถัดไปจริงๆ (ก้าวแรก)
+    if(!fc || !nc) continue;
+
+    // ทิศทาง from→next (ก้าวแรกเท่านั้น)
+    let dx = nc[0]-fc[0], dy = nc[1]-fc[1];
+    let len = Math.sqrt(dx*dx+dy*dy);
+    if(len < 4) continue;
+    let ux = dx/len, uy = dy/len;
+
+    let op   = opacities[i];
+    let half = cellSize * 0.5;
+
+    // --- ตัวเลข 1/2/3... กลางช่องต้นทาง ---
+    let fsize = Math.round(cellSize * 0.38);
+    let txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x", fc[0]);
+    txt.setAttribute("y", fc[1]);
+    txt.setAttribute("text-anchor","middle");
+    txt.setAttribute("dominant-baseline","central");
+    txt.setAttribute("font-size", fsize);
+    txt.setAttribute("font-weight","700");
+    txt.setAttribute("font-family","'IBM Plex Mono',monospace");
+    txt.setAttribute("fill","#fff");
+    txt.setAttribute("stroke","#c0392b");
+    txt.setAttribute("stroke-width","3");
+    txt.setAttribute("paint-order","stroke");
+    txt.setAttribute("opacity", op);
+    txt.setAttribute("class","preview-arrow");
+    txt.setAttribute("pointer-events","none");
+    txt.textContent = String(i+1);
+    svg.appendChild(txt);
+
+    // --- สามเหลี่ยมที่มุมของช่องต้นทาง ชี้ไปทิศก้าวแรก ---
+    // ux>0,uy<0 = ขวาบน | ux>0,uy>0 = ขวาล่าง
+    // ux<0,uy<0 = ซ้ายบน | ux<0,uy>0 = ซ้ายล่าง
+    let triS   = cellSize * 0.22;
+    let margin = cellSize * 0.04;
+    let mx, my, b1x, b1y, b2x, b2y;
+
+    if(ux >= 0 && uy <= 0){        // ขวาบน
+      mx  = fc[0]+half-margin; my  = fc[1]-half+margin;
+      b1x = mx-triS; b1y = my;
+      b2x = mx;      b2y = my+triS;
+    } else if(ux >= 0 && uy > 0){ // ขวาล่าง
+      mx  = fc[0]+half-margin; my  = fc[1]+half-margin;
+      b1x = mx-triS; b1y = my;
+      b2x = mx;      b2y = my-triS;
+    } else if(ux < 0 && uy <= 0){ // ซ้ายบน
+      mx  = fc[0]-half+margin; my  = fc[1]-half+margin;
+      b1x = mx+triS; b1y = my;
+      b2x = mx;      b2y = my+triS;
+    } else {                       // ซ้ายล่าง
+      mx  = fc[0]-half+margin; my  = fc[1]+half-margin;
+      b1x = mx+triS; b1y = my;
+      b2x = mx;      b2y = my-triS;
+    }
+
+    let tri = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    tri.setAttribute("points", `${mx},${my} ${b1x},${b1y} ${b2x},${b2y}`);
+    tri.setAttribute("fill","#fff");
+    tri.setAttribute("stroke","#c0392b");
+    tri.setAttribute("stroke-width","1.5");
+    tri.setAttribute("opacity", op);
+    tri.setAttribute("class","preview-arrow");
+    svg.appendChild(tri);
+  }
+}
+
+
+/* ══════════════════════════════════════
+   V1 — 🧠 ฝึกจำสูตร
+   เพิ่มเป็น MODE ใหม่ โดยไม่แก้ logic เดิม
+══════════════════════════════════════ */
+
+(function(){
+  const TRAIN_KEY = "thaiCheckersTrainingV1";
+
+  const sampleFormula = {
+    id:"demo_standard_three",
+    name:"ตัวอย่าง: หมากมาตรฐาน VS สามตัวเรียง",
+    start:{
+      white:[1,2,3,4,5,6,7,8],
+      black:[25,26,27,28,29,30,31,32]
+    },
+    root:{
+      moves:[
+        {color:"black",move:"25-22"},
+        {color:"white",move:"8-11"}
+      ],
+      branches:[
+        {id:"b1", label:"ขาว 12-16", opponentMove:"12-16", myAnswer:"ดำ 22-18", next:null},
+        {id:"b2", label:"ขาว 9-13",  opponentMove:"9-13",  myAnswer:"ดำ 22-19", next:null},
+        {id:"b3", label:"ขาว 13-17", opponentMove:"13-17", myAnswer:"ดำ 22-18", next:null}
+      ]
+    },
+    nodes:{}
+  };
+
+  let formulas = loadFormulas();
+
+  const train = {
+    formula:null,
+    nodeId:"root",
+    phase:"idle", // idle | choose | reveal | done
+    currentBranch:null,
+    score:0,
+    attempts:0,
+    total:0
+  };
+
+  function loadFormulas(){
+    try{
+      const raw=localStorage.getItem(TRAIN_KEY);
+      if(raw){
+        const arr=JSON.parse(raw);
+        if(Array.isArray(arr) && arr.length) return arr;
+      }
+    }catch(e){}
+    const arr=[sampleFormula];
+    localStorage.setItem(TRAIN_KEY,JSON.stringify(arr));
+    return arr;
+  }
+
+  function saveFormulas(){
+    localStorage.setItem(TRAIN_KEY,JSON.stringify(formulas));
+  }
+
+  function esc(v){
+    return String(v ?? "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function injectCSS(){
+    const style=document.createElement("style");
+    style.id="trainV1CSS";
+    style.textContent=`
+      #trainPanel{
+        display:none;background:var(--panel);border:1px solid var(--border);
+        border-radius:10px;margin:8px 10px 0;padding:10px 12px;
+      }
+      #trainPanel.visible{display:block}
+      .train-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+      .train-select{
+        flex:1;min-width:190px;padding:7px 9px;border:1px solid var(--border);
+        border-radius:7px;background:var(--panel);color:var(--text);
+        font-family:'Sarabun',sans-serif;font-size:.85rem;
+      }
+      .train-meta{
+        display:flex;justify-content:space-between;gap:10px;margin-top:7px;
+        font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted)
+      }
+      .train-status{
+        margin-top:8px;padding:9px 10px;border-radius:8px;
+        background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.25);
+        font-size:.84rem;line-height:1.5
+      }
+      .train-status.done{
+        background:rgba(184,134,11,.10);border-color:rgba(184,134,11,.35)
+      }
+      #trainChoices{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+      .train-choice{
+        width:100%;padding:9px 11px;text-align:left;border-radius:8px;
+        border:1px solid var(--border);background:#f5f0e8;color:var(--text);
+        font-family:'Sarabun',sans-serif;font-size:.86rem;font-weight:600;
+        cursor:pointer
+      }
+      body.dark .train-choice{background:#333;color:#d4cec8;border-color:#484848}
+      .train-choice.selected{
+        border-color:#2980b9;box-shadow:0 0 0 2px rgba(41,128,185,.18)
+      }
+      .train-choice:disabled{opacity:1}
+      .train-actions{
+        display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:9px
+      }
+      #trainHint{margin-top:7px;color:var(--muted);font-size:.76rem}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function injectPanel(){
+    const settings=document.getElementById("settingsPanel");
+    const modeRow=settings?.querySelector(".opt-row");
+    if(!modeRow) return;
+
+    if(!modeRow.querySelector('input[value="train"]')){
+      const label=document.createElement("label");
+      label.innerHTML='<input type="radio" name="mode" value="train"> 🧠 ฝึกสูตร';
+      label.querySelector("input").addEventListener("change",e=>onModeChange(e.target.value));
+      modeRow.appendChild(label);
+    }
+
+    if(document.getElementById("trainPanel")) return;
+
+    const panel=document.createElement("div");
+    panel.id="trainPanel";
+    panel.innerHTML=`
+      <div class="panel-title">🧠 TRAIN FORMULA V1</div>
+
+      <div class="train-head">
+        <span class="train-label">สูตร</span>
+        <select id="trainFormulaSelect" class="train-select"></select>
+        <button class="btn btn-green" id="trainStartBtn">▶ เริ่มฝึก</button>
+      </div>
+
+      <div class="train-meta">
+        <span id="trainProgress">ทางแยก 0 / 0</span>
+        <span id="trainScore">0%</span>
+      </div>
+
+      <div id="trainStatus" class="train-status">
+        เลือกสูตรแล้วกด <b>เริ่มฝึก</b>
+      </div>
+
+      <div id="trainChoices"></div>
+
+      <div class="train-actions">
+        <button class="btn btn-replay" id="trainNextBtn" style="display:none">Next ▶</button>
+        <button class="btn btn-sec" id="trainRestartBtn" style="display:none">↺ เริ่มใหม่</button>
+      </div>
+
+      <div id="trainHint">
+        เป้าหมาย: เห็นตำแหน่ง → จำทางแยก → เลือก → Next → ดูเฉลยตาของเรา
+      </div>
+    `;
+
+    settings.parentNode.insertBefore(panel,document.getElementById("placeBar"));
+
+    document.getElementById("trainStartBtn").onclick=trainStart;
+    document.getElementById("trainNextBtn").onclick=trainNext;
+    document.getElementById("trainRestartBtn").onclick=trainStart;
+    document.getElementById("trainFormulaSelect").onchange=trainReset;
+  }
+
+  function fillFormulaSelect(){
+    const sel=document.getElementById("trainFormulaSelect");
+    if(!sel) return;
+    const old=sel.value;
+    sel.innerHTML="";
+    formulas=loadFormulas();
+
+    formulas.forEach(f=>{
+      const o=document.createElement("option");
+      o.value=f.id;
+      o.textContent=f.name || f.id;
+      sel.appendChild(o);
+    });
+    if(formulas.some(f=>f.id===old)) sel.value=old;
+  }
+
+  function selectedFormula(){
+    const sel=document.getElementById("trainFormulaSelect");
+    return formulas.find(f=>f.id===sel?.value) || formulas[0] || null;
+  }
+
+  function getNode(id){
+    if(!train.formula) return null;
+    return id==="root"
+      ? train.formula.root
+      : (train.formula.nodes || {})[id];
+  }
+
+  function countBranches(formula){
+    let count=0;
+    function walk(node){
+      if(!node) return;
+      const bs=node.branches || [];
+      count += bs.length;
+      bs.forEach(b=>{
+        if(b.next) walk((formula.nodes||{})[b.next]);
+      });
+    }
+    walk(formula.root);
+    return count;
+  }
+
+  function setStatus(html,done=false){
+    const el=document.getElementById("trainStatus");
+    if(!el) return;
+    el.className="train-status"+(done?" done":"");
+    el.innerHTML=html;
+  }
+
+  function updateMeta(){
+    const p=document.getElementById("trainProgress");
+    const s=document.getElementById("trainScore");
+    if(p) p.textContent=`ทางแยก ${train.attempts} / ${train.total}`;
+    if(s){
+      const pct=train.attempts ? Math.round(train.score/train.attempts*100) : 0;
+      s.textContent=pct+"%";
+    }
+  }
+
+  function resetPosition(){
+    const f=train.formula;
+    data.start.white=(f.start?.white||[]).map(p=>typeof p==="number"
+      ? {square:p,king:false} : {...p});
+    data.start.black=(f.start?.black||[]).map(p=>typeof p==="number"
+      ? {square:p,king:false} : {...p});
+
+    playWhite=data.start.white.map(p=>({...p}));
+    playBlack=data.start.black.map(p=>({...p}));
+    currentTurn="black";
+    selected=null;
+    chainPiece=null;
+    playHistory=[];
+    data.moves=[];
+    gameStarted=true;
+    saveInitPosition();
+    updateTimeline();
+  }
+
+  function applyFormulaMove(move){
+    if(!move) return;
+
+    const moveStr=typeof move==="string" ? move : move.move;
+    if(!moveStr) return;
+
+    const capture=moveStr.includes("x");
+    const parts=(capture ? moveStr.split("x") : moveStr.split("-")).map(Number);
+    if(parts.length<2) return;
+
+    let from=parts[0];
+
+    for(let i=0;i<parts.length-1;i++){
+      const to=parts[i+1];
+      const arr=playWhite.find(p=>p.square===from) ? playWhite : playBlack;
+      const enemy=arr===playWhite ? playBlack : playWhite;
+      const piece=arr.find(p=>p.square===from);
+      if(!piece) return;
+
+      if(capture){
+        squaresInPath(from,to).forEach(sq=>{
+          const idx=enemy.findIndex(p=>p.square===sq);
+          if(idx>-1) enemy.splice(idx,1);
+        });
+      }
+
+      piece.square=to;
+      if(arr===playBlack && to<=4) piece.king=true;
+      if(arr===playWhite && to>=29) piece.king=true;
+      from=to;
+    }
+
+    data.moves.push({
+      color:(typeof move==="object" && move.color) ? move.color : null,
+      move:moveStr
+    });
+  }
+
+  function showChoices(branches){
+    const box=document.getElementById("trainChoices");
+    box.innerHTML="";
+
+    branches.forEach((b,i)=>{
+      const btn=document.createElement("button");
+      btn.className="train-choice";
+      btn.innerHTML="○ "+esc(b.label || b.opponentMove || ("ทาง "+(i+1)));
+      btn.onclick=()=>chooseBranch(i);
+      box.appendChild(btn);
+    });
+  }
+
+  function chooseBranch(index){
+    if(train.phase!=="choose") return;
+
+    const node=getNode(train.nodeId);
+    const branches=node?.branches || [];
+    const branch=branches[index];
+    if(!branch) return;
+
+    train.attempts++;
+    train.score++; // V1 ทุก branch เป็นทางเลือกที่ถูกต้องตามสูตร
+    train.currentBranch=branch;
+    train.phase="reveal";
+
+    document.querySelectorAll(".train-choice").forEach((btn,i)=>{
+      btn.disabled=true;
+      if(i===index) btn.classList.add("selected");
+    });
+
+    /* คู่ต่อสู้เดินเข้าทางแยกที่ผู้ใช้เลือก */
+    applyFormulaMove(branch.opponentMove);
+    renderPlay();
+
+    setStatus(
+      "✓ เลือกทาง: <b>"+esc(branch.opponentMove || branch.label)+"</b><br>"+
+      "คู่ต่อสู้เดินแล้ว — ตอนนี้กด <b>Next</b> เพื่อดูตาของเรา"
+    );
+
+    const next=document.getElementById("trainNextBtn");
+    next.style.display="";
+    next.textContent="เฉลย ▶";
+    updateMeta();
+  }
+
+  function trainNext(){
+    if(train.phase!=="reveal") return;
+
+    const b=train.currentBranch;
+    if(!b) return;
+
+    /* แสดงตาของเรา */
+    applyFormulaMove(b.myAnswer);
+    renderPlay();
+
+    setStatus(
+      "📖 <b>เฉลย</b><br>"+
+      "คู่ต่อสู้: <b>"+esc(b.opponentMove || b.label)+"</b><br>"+
+      "ตาของเรา: <b>"+esc(b.myAnswer || "—")+"</b>"
+    );
+
+    train.phase="afterAnswer";
+    document.getElementById("trainNextBtn").textContent="Next ▶";
+  }
+
+  function continueAfterAnswer(){
+    const b=train.currentBranch;
+    if(b?.next){
+      playNode(b.next);
+    }else{
+      finish();
+    }
+  }
+
+  function playNode(nodeId){
+    const node=getNode(nodeId);
+    if(!node){
+      finish();
+      return;
+    }
+
+    train.nodeId=nodeId;
+    train.currentBranch=null;
+
+    (node.moves||[]).forEach(applyFormulaMove);
+
+    const branches=node.branches || [];
+    if(!branches.length){
+      finish();
+      return;
+    }
+
+    train.phase="choose";
+    renderPlay();
+
+    setStatus(
+      "🧠 <b>ถึงทางแยกแล้ว</b><br>"+
+      "ดูตำแหน่งบนกระดาน แล้วเลือกว่าคู่ต่อสู้เดินทางไหน"
+    );
+
+    showChoices(branches);
+    updateMeta();
+  }
+
+  function finish(){
+    train.phase="done";
+    train.currentBranch=null;
+
+    setStatus(
+      "🎉 <b>จบสูตรแล้ว!</b><br>"+
+      "ผ่านทางแยก "+train.attempts+" จุด — ลองเริ่มใหม่เพื่อทบทวนอีกครั้ง",
+      true
+    );
+
+    document.getElementById("trainChoices").innerHTML="";
+    document.getElementById("trainNextBtn").style.display="none";
+    document.getElementById("trainRestartBtn").style.display="";
+    updateMeta();
+  }
+
+  function trainStart(){
+    stop();
+    train.formula=selectedFormula();
+    if(!train.formula){
+      setStatus("ไม่พบสูตร",true);
+      return;
+    }
+
+    train.nodeId="root";
+    train.phase="idle";
+    train.currentBranch=null;
+    train.score=0;
+    train.attempts=0;
+    train.total=countBranches(train.formula);
+
+    resetPosition();
+
+    document.getElementById("trainStartBtn").style.display="none";
+    document.getElementById("trainRestartBtn").style.display="";
+    document.getElementById("trainNextBtn").style.display="none";
+
+    playNode("root");
+  }
+
+  function trainReset(){
+    if(mode!=="train") return;
+    train.formula=selectedFormula();
+    train.phase="idle";
+    train.currentBranch=null;
+    train.score=0;
+    train.attempts=0;
+    train.total=countBranches(train.formula);
+    document.getElementById("trainStartBtn").style.display="";
+    document.getElementById("trainRestartBtn").style.display="none";
+    document.getElementById("trainNextBtn").style.display="none";
+    document.getElementById("trainChoices").innerHTML="";
+    setStatus("เลือกสูตรแล้วกด <b>เริ่มฝึก</b>");
+    updateMeta();
+    drawBoard();
+    clearHighlights();
+  }
+
+  /* Hook กับ MODE เดิม */
+  const originalOnModeChange=onModeChange;
+  window.onModeChange=function(m){
+    originalOnModeChange(m);
+
+    const panel=document.getElementById("trainPanel");
+    if(panel) panel.classList.toggle("visible",m==="train");
+
+    if(m==="train"){
+      stop();
+      clearArrows();
+      setArrowModeOff();
+
+      document.getElementById("gameActionRow").style.display="none";
+      document.getElementById("replayCtrl").style.display="none";
+      document.getElementById("replayArrowRow").style.display="none";
+      document.getElementById("sliderWrap").style.display="none";
+      document.getElementById("inputPanel").style.display="none";
+      document.getElementById("placeBar").classList.remove("visible");
+      document.getElementById("startRow").style.display="none";
+      document.getElementById("speedWrapInline").style.display="none";
+
+      fillFormulaSelect();
+      trainReset();
+    }
+  };
+
+  injectCSS();
+  injectPanel();
+  fillFormulaSelect();
+
+  /* V1 API: เปิดไว้สำหรับ V2 สร้างสูตร */
+  window.TrainingV1={
+    getFormulas:()=>loadFormulas(),
+    saveFormula:(formula)=>{
+      if(!formula || !formula.id) throw new Error("formula.id required");
+      const idx=formulas.findIndex(f=>f.id===formula.id);
+      if(idx>=0) formulas[idx]=formula;
+      else formulas.push(formula);
+      saveFormulas();
+      fillFormulaSelect();
+    },
+    deleteFormula:(id)=>{
+      formulas=formulas.filter(f=>f.id!==id);
+      if(!formulas.length) formulas=[sampleFormula];
+      saveFormulas();
+      fillFormulaSelect();
+    }
+  };
+
+  /* แก้ Next ให้รองรับ 2 ขั้น: เฉลย → node ถัดไป */
+  const originalNext=document.getElementById("trainNextBtn");
+  if(originalNext){
+    originalNext.onclick=function(){
+      if(train.phase==="reveal") trainNext();
+      else if(train.phase==="afterAnswer") continueAfterAnswer();
+    };
+  }
+
+  /* เริ่มต้น */
+  fillFormulaSelect();
+})();
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+drawBoard();
+resizeBoard();
+attachDragListeners();
+onModeChange("play");
+</script>
+</body>
+</html>
