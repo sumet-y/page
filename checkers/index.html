@@ -254,13 +254,13 @@ let FORMULA_INDEX = [];
 /* V2 JSON DATA LOADER */
 async function loadFormulaIndex(){
   try{
-    const r = await fetch("formulas/index.json", {cache:"no-store"});
+    const r = await fetch("./formulas/index.json", {cache:"no-store"});
     if(!r.ok) throw new Error("HTTP "+r.status);
     const index = await r.json();
     FORMULA_INDEX = index;
     FORMULAS = {};
     for(const item of index){
-      const fr = await fetch(item.file, {cache:"no-store"});
+      const fr = await fetch("./" + item.file, {cache:"no-store"});
       if(!fr.ok) throw new Error(item.file+" HTTP "+fr.status);
       FORMULAS[item.name] = await fr.json();
     }
