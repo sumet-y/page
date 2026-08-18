@@ -101,45 +101,6 @@ body.dark .btn-preview.active{background:#906010;color:#fff;}
   transition:opacity .2s;z-index:9999;}
 
 
-/* V2 JSON DATA LOADER */
-async function loadFormulaIndex(){
-  try{
-    const r = await fetch("formulas/index.json", {cache:"no-store"});
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const index = await r.json();
-    FORMULA_INDEX = index;
-    FORMULAS = {};
-    for(const item of index){
-      const fr = await fetch(item.file, {cache:"no-store"});
-      if(!fr.ok) throw new Error(item.file+" HTTP "+fr.status);
-      FORMULAS[item.name] = await fr.json();
-    }
-    renderFormulaTreeFromJSON();
-  }catch(err){
-    console.error(err);
-    document.getElementById("formulaView").innerHTML =
-      '<div class="formula-header"><div class="formula-header-title">โหลดสูตรไม่สำเร็จ</div>' +
-      '<div class="formula-header-sub">ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ เช่น localhost หรือเว็บโฮสติ้ง เพื่อให้ fetch JSON ได้</div></div>' +
-      '<div class="v1-empty">ตัวอย่าง: VS Code → Live Server</div>';
-  }
-}
-function renderFormulaTreeFromJSON(){
-  const root=document.getElementById("formulaView");
-  const header=`<div class="formula-header"><div class="formula-header-title">สูตรหมากฮอส</div><div class="formula-header-sub">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div></div>`;
-  const sections=FORMULA_INDEX.map((item,si)=>{
-    const games=FORMULAS[item.name]||{};
-    const gameNames=Object.keys(games);
-    const open=si===1;
-    const body=gameNames.map(g=>{
-      const rec=games[g];
-      const firstMove=(rec.moves?.[0]||"").split(" ").pop()||"";
-      return `<div class="formula-game"><button class="game-main" onclick="loadFormula(${JSON.stringify(item.name)},${JSON.stringify(g)})"><span class="ga">▶</span><span class="gn">${g}</span><span class="gm">${firstMove?`(${firstMove})`:""}</span></button></div>`;
-    }).join("");
-    return `<section class="formula-section"><button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">${open?"▼":"▶"}</span><span class="fn">${item.name}</span><span class="fc">${gameNames.length} เกม</span></button><div class="formula-body ${open?"open":""}">${body}</div></section>`;
-  }).join("");
-  root.innerHTML=header+sections+'<div class="v1-empty">สูตรถูกโหลดจาก JSON — เพิ่มสูตรโดยแก้ไฟล์ข้อมูล ไม่ต้องแก้ JavaScript</div>';
-}
-
 /* V1 FORMULA TREE */
 #formulaView{display:block;padding:8px 10px 26px}
 .formula-header{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px}
@@ -290,6 +251,46 @@ let FORMULA_INDEX = [];
   </div>
 </div>
 <script>
+/* V2 JSON DATA LOADER */
+async function loadFormulaIndex(){
+  try{
+    const r = await fetch("formulas/index.json", {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const index = await r.json();
+    FORMULA_INDEX = index;
+    FORMULAS = {};
+    for(const item of index){
+      const fr = await fetch(item.file, {cache:"no-store"});
+      if(!fr.ok) throw new Error(item.file+" HTTP "+fr.status);
+      FORMULAS[item.name] = await fr.json();
+    }
+    renderFormulaTreeFromJSON();
+  }catch(err){
+    console.error(err);
+    document.getElementById("formulaView").innerHTML =
+      '<div class="formula-header"><div class="formula-header-title">โหลดสูตรไม่สำเร็จ</div>' +
+      '<div class="formula-header-sub">ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ เช่น localhost หรือเว็บโฮสติ้ง เพื่อให้ fetch JSON ได้</div></div>' +
+      '<div class="v1-empty">ตัวอย่าง: VS Code → Live Server</div>';
+  }
+}
+function renderFormulaTreeFromJSON(){
+  const root=document.getElementById("formulaView");
+  const header=`<div class="formula-header"><div class="formula-header-title">สูตรหมากฮอส</div><div class="formula-header-sub">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div></div>`;
+  const sections=FORMULA_INDEX.map((item,si)=>{
+    const games=FORMULAS[item.name]||{};
+    const gameNames=Object.keys(games);
+    const open=si===1;
+    const body=gameNames.map(g=>{
+      const rec=games[g];
+      const firstMove=(rec.moves?.[0]||"").split(" ").pop()||"";
+      return `<div class="formula-game"><button class="game-main" onclick="loadFormula(${JSON.stringify(item.name)},${JSON.stringify(g)})"><span class="ga">▶</span><span class="gn">${g}</span><span class="gm">${firstMove?`(${firstMove})`:""}</span></button></div>`;
+    }).join("");
+    return `<section class="formula-section"><button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">${open?"▼":"▶"}</span><span class="fn">${item.name}</span><span class="fc">${gameNames.length} เกม</span></button><div class="formula-body ${open?"open":""}">${body}</div></section>`;
+  }).join("");
+  root.innerHTML=header+sections+'<div class="v1-empty">สูตรถูกโหลดจาก JSON — เพิ่มสูตรโดยแก้ไฟล์ข้อมูล ไม่ต้องแก้ JavaScript</div>';
+}
+
+
 document.addEventListener("dblclick",e=>e.preventDefault());
 
 /* ══ SQUARE MAP ══ */
