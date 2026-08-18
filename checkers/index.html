@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>หมากฮอสไทย — เล่นสูตร</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#f5f0e8;--panel:#fff;--border:#c8b89a;
+  --accent:#c0392b;--gold:#b8860b;
+  --light-sq:#f0d9b5;--dark-sq:#b58863;
+  --text:#2c1810;--muted:#8a7060;--green:#27ae60;
+}
+body.dark{
+  --bg:#1c1c1c;--panel:#272727;--border:#3a3a3a;
+  --accent:#cf4444;--gold:#c49a1a;
+  --text:#d4cec8;--muted:#7a7470;--green:#3aaf63;
+  background:#1c1c1c;color:#d4cec8;
+}
+*{box-sizing:border-box;margin:0;padding:0;
+  -webkit-tap-highlight-color:transparent !important;
+  -webkit-touch-callout:none;outline:none;}
+html{overscroll-behavior:none;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;padding-bottom:40px;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;}
+
+/* TOP BAR */
+.topbar{background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;margin:6px 10px;padding:9px 14px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rep-title{font-size:.95rem;font-weight:700;color:var(--text);flex:1;}
+.rep-step{font-size:.78rem;font-family:'IBM Plex Mono',monospace;
+  color:var(--muted);min-width:55px;text-align:right;}
+
+/* BOARD */
+#boardWrap{display:flex;justify-content:center;padding:4px 12px;position:relative;}
+#board{display:grid;grid-template-columns:repeat(8,1fr);
+  border:3px solid #8b5e3c;border-radius:3px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);margin:0 auto;box-sizing:content-box;}
+#arrowSvg{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  pointer-events:none;z-index:20;overflow:visible;}
+#arrowSvg.drawing-mode{pointer-events:all;cursor:crosshair;}
+.square{position:relative;cursor:default;}
+.num{position:absolute;top:2px;right:3px;font-size:9px;
+  font-family:'IBM Plex Mono',monospace;pointer-events:none;font-weight:700;z-index:1;}
+.piece{width:76%;height:76%;border-radius:50%;position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;}
+.white-p{
+  background:radial-gradient(circle at 38% 30%,#ffffff,#f8f0d8 35%,#d4aa60 80%,#b88a30);
+  border:3px solid #7a5c28;
+  box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 3px 6px rgba(255,255,255,1);}
+.black-p{
+  background:radial-gradient(circle at 35% 30%,#4a4a4a,#1a1a1a 45%,#050505);
+  border:3px solid #888;
+  box-shadow:0 4px 10px rgba(0,0,0,.8),inset 0 2px 4px rgba(180,180,180,.2);}
+.king::after{content:"♛";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:130%;
+  color:#f5c842;text-shadow:0 0 6px #000,0 1px 4px #000;pointer-events:none;}
+.sq-last{outline:3px solid #27ae60;outline-offset:-3px;}
+.sq-cap{outline:3px solid #c0392b;outline-offset:-3px;}
+.sq-next-from{outline:3px solid #f5c842;outline-offset:-3px;
+  animation:pulseNext 1s ease-in-out infinite;}
+@keyframes pulseNext{0%,100%{outline-color:#f5c842;}50%{outline-color:#ff8c00;}}
+
+/* CONTROLS */
+.ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:6px 8px;}
+.btn{font-family:'Sarabun',sans-serif;font-size:.82rem;font-weight:600;
+  padding:7px 14px;border:none;border-radius:8px;cursor:pointer;outline:none;
+  -webkit-tap-highlight-color:transparent;-webkit-appearance:none;}
+.btn:disabled{opacity:.35;cursor:default;}
+.btn-rep{background:#e0d8cc;color:#1a6090;border:1px solid #b0a898;font-weight:700;}
+.btn-rep:disabled{opacity:.35;}
+body.dark .btn-rep{background:#333;color:#5aaedf;border-color:#484848;}
+.btn-sec{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
+body.dark .btn-sec{background:#333;color:#d4cec8;border-color:#484848;}
+.btn-arrow{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
+.btn-arrow.active{background:#c0392b;color:#fff;border-color:#c0392b;}
+body.dark .btn-arrow{background:#333;color:#d4cec8;border-color:#484848;}
+
+/* PREVIEW (ตาเทพ) */
+.btn-preview{background:#e8e0d0;color:#7a5010;border:1px solid #c8a860;font-weight:700;}
+.btn-preview.active{background:#c87010;color:#fff;border-color:#c87010;}
+body.dark .btn-preview{background:#2e2010;color:#d4a030;border-color:#6a5020;}
+body.dark .btn-preview.active{background:#906010;color:#fff;}
+.prev-step-wrap{display:flex;align-items:center;gap:4px;}
+.prev-step-wrap input[type=range]{width:56px;accent-color:#c87010;}
+.prev-step-wrap span{font-size:.75rem;font-family:'IBM Plex Mono',monospace;
+  color:var(--muted);min-width:16px;text-align:center;}
+
+/* STATUS */
+.status-bar{text-align:center;font-size:.82rem;font-weight:600;
+  color:var(--gold);padding:3px 12px 0;min-height:22px;}
+
+/* TOAST */
+#toast{position:fixed;top:28px;left:50%;transform:translateX(-50%);
+  background:#27ae60;color:#fff;font-family:'Sarabun',sans-serif;
+  font-size:.9rem;font-weight:700;padding:10px 24px;border-radius:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:9999;}
+
+
+/* V2 JSON DATA LOADER */
+async function loadFormulaIndex(){
+  try{
+    const r = await fetch("formulas/index.json", {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const index = await r.json();
+    FORMULA_INDEX = index;
+    FORMULAS = {};
+    for(const item of index){
+      const fr = await fetch(item.file, {cache:"no-store"});
+      if(!fr.ok) throw new Error(item.file+" HTTP "+fr.status);
+      FORMULAS[item.name] = await fr.json();
+    }
+    renderFormulaTreeFromJSON();
+  }catch(err){
+    console.error(err);
+    document.getElementById("formulaView").innerHTML =
+      '<div class="formula-header"><div class="formula-header-title">โหลดสูตรไม่สำเร็จ</div>' +
+      '<div class="formula-header-sub">ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ เช่น localhost หรือเว็บโฮสติ้ง เพื่อให้ fetch JSON ได้</div></div>' +
+      '<div class="v1-empty">ตัวอย่าง: VS Code → Live Server</div>';
+  }
+}
+function renderFormulaTreeFromJSON(){
+  const root=document.getElementById("formulaView");
+  const header=`<div class="formula-header"><div class="formula-header-title">สูตรหมากฮอส</div><div class="formula-header-sub">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div></div>`;
+  const sections=FORMULA_INDEX.map((item,si)=>{
+    const games=FORMULAS[item.name]||{};
+    const gameNames=Object.keys(games);
+    const open=si===1;
+    const body=gameNames.map(g=>{
+      const rec=games[g];
+      const firstMove=(rec.moves?.[0]||"").split(" ").pop()||"";
+      return `<div class="formula-game"><button class="game-main" onclick="loadFormula(${JSON.stringify(item.name)},${JSON.stringify(g)})"><span class="ga">▶</span><span class="gn">${g}</span><span class="gm">${firstMove?`(${firstMove})`:""}</span></button></div>`;
+    }).join("");
+    return `<section class="formula-section"><button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">${open?"▼":"▶"}</span><span class="fn">${item.name}</span><span class="fc">${gameNames.length} เกม</span></button><div class="formula-body ${open?"open":""}">${body}</div></section>`;
+  }).join("");
+  root.innerHTML=header+sections+'<div class="v1-empty">สูตรถูกโหลดจาก JSON — เพิ่มสูตรโดยแก้ไฟล์ข้อมูล ไม่ต้องแก้ JavaScript</div>';
+}
+
+/* V1 FORMULA TREE */
+#formulaView{display:block;padding:8px 10px 26px}
+.formula-header{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px}
+.formula-header-title{font-size:1.05rem;font-weight:700}
+.formula-header-sub{font-size:.76rem;color:var(--muted);margin-top:2px}
+.formula-section{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:7px}
+.formula-head{width:100%;border:0;background:transparent;color:var(--text);display:flex;align-items:center;gap:8px;text-align:left;padding:12px;font-family:inherit;cursor:pointer}
+.formula-head .fa{width:20px;text-align:center}.formula-head .fn{flex:1;font-weight:700;font-size:.94rem}
+.formula-head .fc{font-size:.7rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:2px 7px}
+.formula-body{display:none;border-top:1px solid var(--border);padding:3px 8px 7px 30px}.formula-body.open{display:block}
+.formula-game{display:flex;align-items:center;border-bottom:1px solid var(--border)}
+.formula-game:last-child{border-bottom:0}
+.game-main{flex:1;min-width:0;border:0;background:transparent;color:var(--text);display:flex;align-items:center;gap:7px;text-align:left;padding:11px 5px;font-family:inherit;cursor:pointer}
+.game-main .ga{width:17px;color:var(--muted)}.game-main .gn{font-size:.88rem;font-weight:600;flex:1}.game-main .gm{font-size:.73rem;color:var(--muted)}
+.branch-toggle{border:0;background:transparent;color:var(--muted);font-size:17px;padding:8px;cursor:pointer}
+.branch-mini{display:none;border-left:2px solid var(--border);margin:0 8px 7px 22px;padding-left:7px}.branch-mini.open{display:block}
+.branch-mini button{display:block;width:100%;border:0;background:transparent;color:var(--text);text-align:left;padding:8px 6px;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer}
+.branch-code{font-weight:700;color:var(--gold);margin-right:7px}
+#trainerView{display:none}.formula-back{display:flex;align-items:center;gap:7px;margin:3px 10px 8px}
+.formula-back button{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 11px;font-family:inherit;font-weight:600;cursor:pointer}
+.formula-current{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.branch-choice-v1{display:none;margin:4px 12px 12px;border:2px solid var(--gold);background:var(--panel);border-radius:10px;padding:10px}
+.branch-choice-v1.show{display:block}.branch-choice-v1 .bt{font-weight:700;font-size:.9rem}.branch-choice-v1 .bs{font-size:.72rem;color:var(--muted);margin:2px 0 6px}
+.branch-choice-v1 button{display:block;width:100%;margin-top:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:9px;text-align:left;font-family:inherit;cursor:pointer}
+.v1-empty{padding:15px;text-align:center;color:var(--muted);font-size:.8rem}
+
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════
+     วางสูตรของคุณที่นี่
+     ════════════════════════════════════ -->
+<script>
+/* V2 DATA: loaded from /formulas/index.json */
+let FORMULAS = {};
+let FORMULA_INDEX = [];
+;
+</script>
+<!-- ════════════════════════════════════ -->
+
+<!-- V1 FORMULA TREE -->
+<div id="formulaView">
+  <div class="formula-header">
+    <div class="formula-header-title">สูตรหมากฮอส</div>
+    <div class="formula-header-sub">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div>
+  </div>
+
+  <section class="formula-section">
+    <button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">▶</span><span class="fn">สามตัวเรียง VS มาตรฐาน</span><span class="fc">2 เกม</span></button>
+    <div class="formula-body">
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS มาตรฐาน','เกม 1')"><span class="ga">▶</span><span class="gn">เกม 1</span><span class="gm">(24→20)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS มาตรฐาน','เกม 2')"><span class="ga">▶</span><span class="gn">เกม 2</span><span class="gm">(24→20)</span></button></div>
+    </div>
+  </section>
+
+  <section class="formula-section">
+    <button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">▼</span><span class="fn">สามตัวเรียง VS อีปุ่ม</span><span class="fc">3 เกม</span></button>
+    <div class="formula-body open">
+      <div class="formula-game">
+        <button class="game-main" onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 1')"><span class="ga">▶</span><span class="gn">เกม 1</span><span class="gm">(24→20)</span></button>
+        <button class="branch-toggle" onclick="toggleMiniBranch('mb1')">＋</button>
+      </div>
+      <div id="mb1" class="branch-mini">
+        <button onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 1 • ทาง A')"><span class="branch-code">A</span>ทาง A — มาตรฐาน</button>
+        <button onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 1 • ทาง B')"><span class="branch-code">B</span>ทาง B — แก้ทาง</button>
+        <button onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 1 • ทาง C')"><span class="branch-code">C</span>ทาง C — สำรอง</button>
+      </div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 2')"><span class="ga">▶</span><span class="gn">เกม 2</span><span class="gm">(24→20)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS อีปุ่ม','เกม 3')"><span class="ga">▶</span><span class="gn">เกม 3</span><span class="gm">(24→20)</span></button></div>
+    </div>
+  </section>
+
+  <section class="formula-section">
+    <button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">▶</span><span class="fn">สามตัวเรียง VS สองปุ่ม</span><span class="fc">4 เกม</span></button>
+    <div class="formula-body">
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS สองปุ่ม','เกม 1')"><span class="ga">▶</span><span class="gn">เกม 1</span><span class="gm">(22→18)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS สองปุ่ม','เกม 2')"><span class="ga">▶</span><span class="gn">เกม 2</span><span class="gm">(23→19)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS สองปุ่ม','เกม 3')"><span class="ga">▶</span><span class="gn">เกม 3</span><span class="gm">(24→20)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สามตัวเรียง VS สองปุ่ม','เกม 4')"><span class="ga">▶</span><span class="gn">เกม 4</span><span class="gm">(24→19)</span></button></div>
+    </div>
+  </section>
+
+  <section class="formula-section">
+    <button class="formula-head" onclick="toggleFormulaSection(this)"><span class="fa">▶</span><span class="fn">สองตัวเรียง VS มาตรฐาน</span><span class="fc">2 เกม</span></button>
+    <div class="formula-body">
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สองตัวเรียง VS มาตรฐาน','เกม 1')"><span class="ga">▶</span><span class="gn">เกม 1</span><span class="gm">(20→16)</span></button></div>
+      <div class="formula-game"><button class="game-main" onclick="loadFormula('สองตัวเรียง VS มาตรฐาน','เกม 2')"><span class="ga">▶</span><span class="gn">เกม 2</span><span class="gm">(21→17)</span></button></div>
+    </div>
+  </section>
+  <div class="v1-empty">ข้อมูลสูตรเป็นข้อมูลจำลอง — พร้อมเปลี่ยนเป็นข้อมูลจริง</div>
+</div>
+
+<!-- V1 REPLAY -->
+<div id="trainerView">
+  <div class="formula-back"><button onclick="showFormulaTree()">‹ สูตรทั้งหมด</button><span id="formulaCurrent" class="formula-current">สูตร › เกม</span></div>
+
+  <div class="topbar">
+    <span class="rep-title" id="repTitle">สูตร</span>
+    <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.72rem;">🐢</span><input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)" style="width:58px;accent-color:var(--accent);"><span style="font-size:.72rem;">🐇</span><span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:42px;">กลาง</span></div>
+    <span id="stepLabel" class="rep-step">0 / 0</span>
+    <button onclick="toggleOrient()" class="btn btn-sec" style="padding:5px 8px;font-size:.75rem;">↕ หมุน</button>
+    <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 8px;font-size:.8rem;">🌙</button>
+  </div>
+
+  <div id="boardWrap"><div id="board"></div><svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah-red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e02020" opacity=".92"/></marker>
+      <marker id="ah-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#20c020" opacity=".92"/></marker>
+      <marker id="ah-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f0c000" opacity=".92"/></marker>
+      <marker id="ah-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d47000" opacity=".9"/></marker>
+      <marker id="ah-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity=".7"/></marker>
+      <marker id="ah-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity=".38"/></marker>
+    </defs>
+  </svg></div>
+
+  <div class="status-bar" id="statusBar"></div>
+  <div style="display:flex;align-items:center;gap:10px;padding:4px 16px 2px;"><input id="slider" type="range" min="0" max="0" value="0" oninput="sliderMove(this.value)" style="flex:1;accent-color:var(--accent);"></div>
+
+  <div class="ctrl-row">
+    <button class="btn btn-rep" onclick="prev()">◀ Prev</button>
+    <button class="btn btn-rep" id="rPlay" onclick="togglePlay()">▶ Play</button>
+    <button class="btn btn-rep" onclick="next()">Next ▶</button>
+    <button class="btn btn-rep" onclick="stop()">■ Stop</button>
+    <button class="btn btn-rep" onclick="resetToStart()">↺ Reset</button>
+  </div>
+
+  <div class="ctrl-row">
+    <button class="btn btn-arrow" id="btnRed" onclick="toggleArrow('red')">🔴 แพ้</button>
+    <button class="btn btn-arrow" id="btnYellow" onclick="toggleArrow('yellow')" style="color:#8a6000;">🟡 เสมอ</button>
+    <button class="btn btn-arrow" id="btnGreen" onclick="toggleArrow('green')" style="color:#1a6e1a;">🟢 ชนะ</button>
+    <button class="btn btn-sec" onclick="clearArrows()">🗑 ลบลูกศร</button>
+  </div>
+
+  <div class="ctrl-row" style="padding:2px 8px 6px;">
+    <button class="btn btn-preview active" id="previewBtn" onclick="togglePreview()">👁 ตาเทพ</button>
+    <div class="prev-step-wrap"><button class="btn btn-sec" onclick="changeSteps(-1)" style="padding:3px 8px;min-width:28px;">−</button><input type="range" id="stepsSlider" min="1" max="8" value="3" oninput="setSteps(this.value)"><button class="btn btn-sec" onclick="changeSteps(1)" style="padding:3px 8px;min-width:28px;">+</button><span id="stepsLabel">3</span></div>
+  </div>
+
+  <div id="branchChoiceV1" class="branch-choice-v1">
+    <div class="bt">ถึงทางแยก</div>
+    <div class="bs">จุดนี้เป็นตัวอย่าง V1 — ภายหลังจะเชื่อมกับข้อมูลทางแยกจริงของคุณ</div>
+    <button onclick="chooseV1Branch('A')"><b>A</b> — ทางมาตรฐาน</button>
+    <button onclick="chooseV1Branch('B')"><b>B</b> — ทางแก้</button>
+    <button onclick="chooseV1Branch('C')"><b>C</b> — ทางสำรอง</button>
+  </div>
+</div>
+<script>
+document.addEventListener("dblclick",e=>e.preventDefault());
+
+/* ══ SQUARE MAP ══ */
+const RC={
+  1:[0,1],2:[0,3],3:[0,5],4:[0,7],
+  5:[1,0],6:[1,2],7:[1,4],8:[1,6],
+  9:[2,1],10:[2,3],11:[2,5],12:[2,7],
+  13:[3,0],14:[3,2],15:[3,4],16:[3,6],
+  17:[4,1],18:[4,3],19:[4,5],20:[4,7],
+  21:[5,0],22:[5,2],23:[5,4],24:[5,6],
+  25:[6,1],26:[6,3],27:[6,5],28:[6,7],
+  29:[7,0],30:[7,2],31:[7,4],32:[7,6]
+};
+function sqAt(r,c){for(let k in RC)if(RC[k][0]===r&&RC[k][1]===c)return+k;return null;}
+
+/* ══ STATE ══ */
+let blackBottom=true, step=0, speed=700, timer=null;
+let data={start:{white:[],black:[]},moves:[]};
+let lastMoveSqs=[],capSqs=[];
+let previewOn=true, previewSteps=3;
+
+/* ══ PARSE TIMELINE ══ */
+function parseTimeline(txt){
+  let lines=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
+  data.start.white=[]; data.start.black=[]; data.moves=[];
+  let firstName=null;
+  for(let line of lines){
+    if(line.startsWith("@name:")){
+      firstName=line.replace("@name:","").trim();
+    } else if(line.startsWith("@white:")){
+      line.replace("@white:","").split(",").forEach(t=>{
+        t=t.trim();if(!t)return;
+        let king=t.endsWith("K"),sq=parseInt(king?t.slice(0,-1):t);
+        if(sq) data.start.white.push({square:sq,king});
+      });
+    } else if(line.startsWith("@black:")){
+      line.replace("@black:","").split(",").forEach(t=>{
+        t=t.trim();if(!t)return;
+        let king=t.endsWith("K"),sq=parseInt(king?t.slice(0,-1):t);
+        if(sq) data.start.black.push({square:sq,king});
+      });
+    } else if(!line.startsWith("@")){
+      let m=line.match(/^(white|black)\s+(.+)$/i);
+      if(m) data.moves.push({color:m[1].toLowerCase(),move:m[2].trim()});
+    }
+  }
+  if(!data.start.white.length&&!data.start.black.length){
+    for(let i=1;i<=8;i++)  data.start.white.push({square:i,king:false});
+    for(let i=25;i<=32;i++) data.start.black.push({square:i,king:false});
+  }
+  if(firstName) document.getElementById("repTitle").innerText=firstName;
+  document.getElementById("slider").max=data.moves.length;
+  step=0;
+  render();
+}
+
+/* ══ BOARD DRAW ══ */
+function drawBoard(){
+  let board=document.getElementById("board");
+  board.innerHTML="";
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom) nums.reverse();
+  let idx=0;
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      let sq=document.createElement("div");
+      let dark=(r+c)%2===1;
+      sq.className="square "+(dark?"dark":"light");
+      if(dark){
+        let pos=nums[idx++];
+        sq.dataset.pos=pos;
+        let n=document.createElement("div");n.className="num";n.innerText=pos;
+        sq.appendChild(n);
+      }
+      board.appendChild(sq);
+    }
+  }
+  resizeBoard();
+}
+
+function resizeBoard(){
+  let avail=Math.min(window.innerWidth-40,480);
+  if(avail<80)avail=80;
+  let cell=Math.floor(avail/8), size=cell*8;
+  let board=document.getElementById("board");
+  board.style.width=size+"px";board.style.height=size+"px";
+  board.style.gridTemplateColumns="repeat(8,"+cell+"px)";
+  board.style.gridTemplateRows="repeat(8,"+cell+"px)";
+  let isDark=document.body.classList.contains("dark");
+  let lc=isDark?"#3d3730":"#f0d9b5", dc=isDark?"#252018":"#b58863";
+  let ndc=isDark?"rgba(255,220,160,.85)":"rgba(0,0,0,.55)";
+  let nlc=isDark?"rgba(220,195,140,.7)":"rgba(139,90,43,.5)";
+  board.querySelectorAll(".square").forEach(sq=>{
+    sq.style.width=cell+"px";sq.style.height=cell+"px";
+    sq.style.background=sq.classList.contains("light")?lc:dc;
+    let num=sq.querySelector(".num");
+    if(num) num.style.color=sq.classList.contains("light")?nlc:ndc;
+  });
+  let svg=document.getElementById("arrowSvg");
+  svg.style.width=size+"px";svg.style.height=size+"px";
+  svg.setAttribute("width",size);svg.setAttribute("height",size);
+  renderArrows();
+}
+window.addEventListener("resize",resizeBoard);
+
+/* ══ BUILD POSITION ══ */
+function squaresInPath(from,to){
+  let [r1,c1]=RC[from],[r2,c2]=RC[to];
+  let dr=Math.sign(r2-r1),dc=Math.sign(c2-c1);
+  let sqs=[],r=r1+dr,c=c1+dc;
+  while(r!==r2||c!==c2){let s=sqAt(r,c);if(s)sqs.push(s);r+=dr;c+=dc;}
+  return sqs;
+}
+
+function buildPosition(upTo){
+  let white=data.start.white.map(p=>({...p,color:"white"}));
+  let black=data.start.black.map(p=>({...p,color:"black"}));
+  lastMoveSqs=[]; capSqs=[];
+  for(let i=0;i<upTo;i++){
+    let entry=data.moves[i];
+    let moveStr=entry.move||entry;
+    let isCapture=moveStr.includes("x");
+    let parts=isCapture?moveStr.split("x"):moveStr.split("-");
+    let squares=parts.map(Number);
+    let arr=white.find(p=>p.square===squares[0])?white:black;
+    let enemy=arr===white?black:white;
+    let piece=arr.find(p=>p.square===squares[0]);
+    if(!piece) continue;
+    if(i===upTo-1) lastMoveSqs=[squares[0],squares[squares.length-1]];
+    for(let s=0;s<squares.length-1;s++){
+      let from=squares[s],to=squares[s+1];
+      piece.square=to;
+      if(isCapture){
+        squaresInPath(from,to).forEach(ps=>{
+          let idx=enemy.findIndex(p=>p.square===ps);
+          if(idx>-1){if(i===upTo-1)capSqs.push(ps);enemy.splice(idx,1);}
+        });
+      }
+    }
+    if(piece.color==="black"&&piece.square<=4) piece.king=true;
+    if(piece.color==="white"&&piece.square>=29) piece.king=true;
+  }
+  return[...white,...black];
+}
+
+/* ══ RENDER ══ */
+function render(){
+  clearHL();
+  let pos=buildPosition(step);
+  lastMoveSqs.forEach(s=>mark(s,"sq-last"));
+  capSqs.forEach(s=>mark(s,"sq-cap"));
+  drawPieces(pos);
+  let entry=data.moves[step-1];
+  let ms=entry?((entry.color?entry.color+" ":"")+(entry.move||entry)):"";
+  document.getElementById("statusBar").innerText=step>0?"▶ "+ms:"⬤ Start Position";
+  document.getElementById("slider").value=step;
+  document.getElementById("stepLabel").innerText=step+" / "+data.moves.length;
+  highlightNext();
+  drawPreviewArrows();
+}
+
+function drawPieces(pieces){
+  document.querySelectorAll(".piece").forEach(e=>e.remove());
+  pieces.forEach(p=>{
+    let cell=document.querySelector("[data-pos='"+p.square+"']");
+    if(!cell)return;
+    let div=document.createElement("div");
+    div.className="piece "+(p.color==="white"?"white-p":"black-p");
+    if(p.king)div.classList.add("king");
+    cell.appendChild(div);
+  });
+}
+function clearHL(){
+  document.querySelectorAll(".piece").forEach(e=>e.remove());
+  document.querySelectorAll(".square").forEach(e=>
+    e.classList.remove("sq-last","sq-cap","sq-next-from"));
+}
+function mark(s,cls){
+  let c=document.querySelector("[data-pos='"+s+"']");if(c)c.classList.add(cls);
+}
+
+function highlightNext(){
+  if(step>=data.moves.length) return;
+  let entry=data.moves[step];
+  let moveStr=entry.move||entry;
+  let parts=moveStr.includes("x")?moveStr.split("x"):moveStr.split("-");
+  let fromSq=parseInt(parts[0]);
+  if(fromSq) mark(fromSq,"sq-next-from");
+}
+
+/* ══ PLAYBACK ══ */
+const speedMap={1:1800,2:1100,3:700,4:380,5:160};
+const speedLbl={1:"ช้ามาก",2:"ช้า",3:"กลาง",4:"เร็ว",5:"เร็วมาก"};
+function setSpeed(v){
+  v=parseInt(v); speed=speedMap[v]||700;
+  document.getElementById("speedVal").innerText=speedLbl[v]||"กลาง";
+  if(timer){stop();play();document.getElementById("rPlay").innerText="⏸ Pause";}
+}
+function sliderMove(v){step=parseInt(v);render();showV1Branch();}
+function togglePlay(){
+  let btn=document.getElementById("rPlay");
+  if(timer){stop();}else{play();if(btn)btn.innerText="⏸ Pause";}
+}
+function play(){
+  if(timer)return;
+  timer=setInterval(()=>{
+    if(step<data.moves.length){step++;render();}else{stop();}
+  },speed);
+}
+function stop(){
+  clearInterval(timer);timer=null;
+  let pb=document.getElementById("rPlay");
+  if(pb&&!pb.disabled)pb.innerText="▶ Play";
+}
+function resetToStart(){stop();step=0;render();showV1Branch();}
+function next(){if(step<data.moves.length){step++;render();showV1Branch();}}
+function prev(){if(step>0){step--;render();showV1Branch();}}
+
+/* ══ ORIENT + DARK ══ */
+function toggleOrient(){
+  blackBottom=!blackBottom;
+  drawBoard();render();
+}
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  let isDark=document.body.classList.contains("dark");
+  document.getElementById("darkBtn").innerText=isDark?"☀️":"🌙";
+  resizeBoard();
+}
+
+/* ══ TOAST ══ */
+function showToast(msg){
+  let t=document.getElementById("toast");
+  t.innerText=msg;t.style.opacity="1";
+  setTimeout(()=>t.style.opacity="0",2000);
+}
+
+/* ══ PREVIEW (ตาเทพ) ══ */
+function togglePreview(){
+  previewOn=!previewOn;
+  let btn=document.getElementById("previewBtn");
+  btn.classList.toggle("active",previewOn);
+  btn.innerText=previewOn?"👁 ตาเทพ":"👁 ซ่อน";
+  render();
+}
+function setSteps(v){
+  previewSteps=parseInt(v);
+  document.getElementById("stepsLabel").innerText=v;
+  render();
+}
+function changeSteps(d){
+  let sl=document.getElementById("stepsSlider");
+  let v=Math.min(8,Math.max(1,(parseInt(sl.value)||3)+d));
+  sl.value=v; setSteps(v);
+}
+
+function getBoardSize(){
+  let b=document.getElementById("board");
+  return parseInt(b.style.width)||Math.min(Math.floor(window.innerWidth*0.95),480);
+}
+function sqCenter(sq){
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  let di=0,vr=-1,vc=-1;
+  for(let row=0;row<8;row++)for(let col=0;col<8;col++){
+    if((row+col)%2===1){if(nums[di]===sq){vr=row;vc=col;}di++;}
+  }
+  if(vr===-1)return null;
+  let size=getBoardSize(),cell=size/8;
+  return[(vc+0.5)*cell,(vr+0.5)*cell];
+}
+
+function drawPreviewArrows(){
+  let svg=document.getElementById("arrowSvg");
+  svg.querySelectorAll(".preview-arrow").forEach(e=>e.remove());
+  if(!previewOn||!data.moves.length)return;
+  let cellSize=getBoardSize()/8;
+  let opacities=[0.95,0.80,0.62,0.46,0.32,0.20,0.13,0.08];
+  for(let i=0;i<previewSteps;i++){
+    let idx=step+i;
+    if(idx>=data.moves.length)break;
+    let entry=data.moves[idx];
+    let moveStr=entry.move||entry;
+    let isCapture=moveStr.includes("x");
+    let parts=isCapture?moveStr.split("x"):moveStr.split("-");
+    if(parts.length<2)continue;
+    let fromSq=parseInt(parts[0]),nextSq=parseInt(parts[1]);
+    if(!fromSq||!nextSq||fromSq===nextSq)continue;
+    let fc=sqCenter(fromSq),nc=sqCenter(nextSq);
+    if(!fc||!nc)continue;
+    let dx=nc[0]-fc[0],dy=nc[1]-fc[1],len=Math.sqrt(dx*dx+dy*dy);
+    if(len<4)continue;
+    let ux=dx/len,uy=dy/len,op=opacities[i]||0.08,half=cellSize*0.5,margin=cellSize*0.04;
+    let triS=cellSize*0.22;
+    let fsize=Math.round(cellSize*0.38);
+    // ตัวเลข
+    let txt=document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x",fc[0]);txt.setAttribute("y",fc[1]);
+    txt.setAttribute("text-anchor","middle");txt.setAttribute("dominant-baseline","central");
+    txt.setAttribute("font-size",fsize);txt.setAttribute("font-weight","700");
+    txt.setAttribute("font-family","'IBM Plex Mono',monospace");
+    txt.setAttribute("fill","#fff");txt.setAttribute("stroke","#c0392b");
+    txt.setAttribute("stroke-width","3");txt.setAttribute("paint-order","stroke");
+    txt.setAttribute("opacity",op);txt.setAttribute("class","preview-arrow");
+    txt.setAttribute("pointer-events","none");txt.textContent=String(i+1);
+    svg.appendChild(txt);
+    // สามเหลี่ยม
+    let mx,my,b1x,b1y,b2x,b2y;
+    if(ux>=0&&uy<=0){mx=fc[0]+half-margin;my=fc[1]-half+margin;b1x=mx-triS;b1y=my;b2x=mx;b2y=my+triS;}
+    else if(ux>=0&&uy>0){mx=fc[0]+half-margin;my=fc[1]+half-margin;b1x=mx-triS;b1y=my;b2x=mx;b2y=my-triS;}
+    else if(ux<0&&uy<=0){mx=fc[0]-half+margin;my=fc[1]-half+margin;b1x=mx+triS;b1y=my;b2x=mx;b2y=my+triS;}
+    else{mx=fc[0]-half+margin;my=fc[1]+half-margin;b1x=mx+triS;b1y=my;b2x=mx;b2y=my-triS;}
+    let tri=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    tri.setAttribute("points",mx+","+my+" "+b1x+","+b1y+" "+b2x+","+b2y);
+    tri.setAttribute("fill","#fff");tri.setAttribute("stroke","#c0392b");
+    tri.setAttribute("stroke-width","1.5");tri.setAttribute("opacity",op);
+    tri.setAttribute("class","preview-arrow");svg.appendChild(tri);
+  }
+}
+
+/* ══ ARROW SYSTEM ══ */
+let arrowMode=false,arrowColor="red",arrowDrag={active:false,fromSq:null,toSq:null},arrows=[];
+
+function toggleArrow(color){
+  if(arrowMode&&arrowColor===color){arrowOff();return;}
+  arrowColor=color;arrowMode=true;
+  updateArrowBtns();
+  document.getElementById("arrowSvg").classList.add("drawing-mode");
+}
+function arrowOff(){
+  arrowMode=false;updateArrowBtns();
+  document.getElementById("arrowSvg").classList.remove("drawing-mode");
+  arrowDrag={active:false,fromSq:null,toSq:null};
+  let g=document.getElementById("arrowGhost");if(g)g.remove();
+}
+function updateArrowBtns(){
+  let map={red:"btnRed",yellow:"btnYellow",green:"btnGreen"};
+  let lbl={red:"🔴 แพ้",yellow:"🟡 เสมอ",green:"🟢 ชนะ"};
+  let act={red:"🔴 วาดอยู่",yellow:"🟡 วาดอยู่",green:"🟢 วาดอยู่"};
+  for(let c in map){
+    let b=document.getElementById(map[c]);if(!b)continue;
+    let on=arrowMode&&arrowColor===c;
+    b.classList.toggle("active",on);
+    b.innerText=on?act[c]:lbl[c];
+  }
+}
+function clearArrows(){arrows=[];renderArrows();}
+
+function sqFromPoint(x,y){
+  let size=getBoardSize(),cell=size/8;
+  let col=Math.floor(x/cell),row=Math.floor(y/cell);
+  if(col<0||col>7||row<0||row>7)return null;
+  let nums=[...Array(32).keys()].map(i=>i+1);
+  if(!blackBottom)nums.reverse();
+  if((row+col)%2!==1)return null;
+  let di=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if((r+c)%2===1){if(r===row&&c===col)return nums[di];di++;}
+  }
+  return null;
+}
+function getXY(e){
+  let svg=document.getElementById("arrowSvg"),rect=svg.getBoundingClientRect();
+  let src=e.touches?e.touches[0]:e;
+  return[src.clientX-rect.left,src.clientY-rect.top];
+}
+let svgEl=document.getElementById("arrowSvg");
+svgEl.addEventListener("mousedown",svgDown);
+svgEl.addEventListener("touchstart",svgDown,{passive:false});
+svgEl.addEventListener("mousemove",svgMove);
+svgEl.addEventListener("touchmove",svgMove,{passive:false});
+svgEl.addEventListener("mouseup",svgUp);
+svgEl.addEventListener("touchend",svgUp);
+function svgDown(e){
+  if(!arrowMode)return;e.preventDefault();
+  let [x,y]=getXY(e),sq=sqFromPoint(x,y);if(!sq)return;
+  arrowDrag={active:true,fromSq:sq,toSq:sq};
+}
+function svgMove(e){
+  if(!arrowMode||!arrowDrag.active)return;e.preventDefault();
+  let [x,y]=getXY(e);arrowDrag.toSq=sqFromPoint(x,y);renderArrows(x,y);
+}
+function svgUp(e){
+  if(!arrowMode||!arrowDrag.active)return;e.preventDefault();
+  let from=arrowDrag.fromSq,to=arrowDrag.toSq;
+  arrowDrag={active:false,fromSq:null,toSq:null};
+  if(!from||!to||from===to){renderArrows();return;}
+  let ex=arrows.findIndex(a=>a.from===from&&a.to===to&&a.color===arrowColor);
+  if(ex>-1)arrows.splice(ex,1);else arrows.push({from,to,color:arrowColor});
+  renderArrows();
+}
+function renderArrows(ghostX,ghostY){
+  let svg=document.getElementById("arrowSvg");
+  svg.querySelectorAll(".arrow-line,#arrowGhost").forEach(e=>e.remove());
+  for(let a of arrows){
+    let fc=sqCenter(a.from),tc=sqCenter(a.to);
+    if(fc&&tc)drawArrowLine(svg,fc[0],fc[1],tc[0],tc[1],a.color,false);
+  }
+  if(arrowDrag.active&&arrowDrag.fromSq&&ghostX!==undefined){
+    let fc=sqCenter(arrowDrag.fromSq);
+    if(fc)drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,arrowColor,true);
+  }
+  drawPreviewArrows();
+}
+function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
+  let dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<5)return;
+  let ux=dx/len,uy=dy/len;
+  let sx=x1+ux*len*0.18,sy=y1+uy*len*0.18;
+  let ex=x2-ux*len*0.12,ey=y2-uy*len*0.12;
+  let clr=color==="green"?"#20c020":color==="yellow"?"#e0b000":"#e02020";
+  let mid=color==="green"?"ah-green":color==="yellow"?"ah-yellow":"ah-red";
+  let line=document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1",sx);line.setAttribute("y1",sy);
+  line.setAttribute("x2",ex);line.setAttribute("y2",ey);
+  line.setAttribute("stroke",clr);line.setAttribute("stroke-width","4.5");
+  line.setAttribute("stroke-linecap","round");
+  line.setAttribute("opacity",isGhost?"0.45":"0.85");
+  line.setAttribute("marker-end","url(#"+mid+")");
+  line.setAttribute("class",isGhost?"":"arrow-line");
+  if(isGhost)line.id="arrowGhost";
+  svg.appendChild(line);
+}
+
+
+/* V1 FORMULA TREE */
+let currentFormulaName="", currentGameName="";
+function toggleFormulaSection(btn){
+  const body=btn.nextElementSibling, arrow=btn.querySelector(".fa");
+  const open=body.classList.toggle("open"); arrow.textContent=open?"▼":"▶";
+}
+function toggleMiniBranch(id){document.getElementById(id)?.classList.toggle("open");}
+function getTimeline(formula, game){
+  let baseGame=game.includes(" • ")?game.split(" • ")[0]:game;
+  const rec=FORMULAS[formula]?.[baseGame];
+  if(!rec) return null;
+  let moves=[...rec.moves];
+  if(game.includes(" • ")){
+    const branch=game.split(" • ")[1];
+    const branchFirst={ "ทาง A":"black 30-25", "ทาง B":"black 30-26", "ทาง C":"black 29-25" }[branch];
+    if(branchFirst && moves.length) moves[0]=branchFirst;
+  }
+  return [
+    "@name:"+formula+" — "+game,
+    "@white:"+rec.white.join(","),
+    "@black:"+rec.black.join(","),
+    "@first:"+(rec.first||"black"),
+    ...moves
+  ].join("\n");
+}
+function loadFormulafunction loadFormula(formula,game){
+  const timeline=getTimeline(formula,game);
+  if(!timeline){showToast("ไม่พบสูตร");return;}
+  stop(); currentFormulaName=formula; currentGameName=game;
+  document.getElementById("formulaView").style.display="none";
+  document.getElementById("trainerView").style.display="block";
+  document.getElementById("formulaCurrent").textContent=formula+" › "+game;
+  parseTimeline(timeline);
+  document.getElementById("branchChoiceV1").classList.remove("show");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function showFormulaTree(){
+  stop(); document.getElementById("trainerView").style.display="none";
+  document.getElementById("formulaView").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function showV1Branch(){
+  const p=document.getElementById("branchChoiceV1");
+  if([8,19].includes(step)) p.classList.add("show"); else p.classList.remove("show");
+}
+function chooseV1Branch(branch){
+  document.getElementById("branchChoiceV1").classList.remove("show");
+  showToast("เลือกทาง "+branch+" — ข้อมูลจำลอง V1");
+}
+
+/* ══ INIT ══ */
+document.getElementById("formulaView").style.display="block";
+document.getElementById("trainerView").style.display="none";
+drawBoard();
+resizeBoard();
+render();
+loadFormulaIndex();
+</script>
+</body>
+</html>
