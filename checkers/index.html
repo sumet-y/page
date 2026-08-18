@@ -740,7 +740,7 @@ function getTimeline(formula, game){
     ...moves
   ].join("\n");
 }
-function loadFormulafunction loadFormula(formula,game){
+function loadFormula(formula,game){
   const timeline=getTimeline(formula,game);
   if(!timeline){showToast("ไม่พบสูตร");return;}
   stop(); currentFormulaName=formula; currentGameName=game;
