@@ -2,21 +2,21 @@
   {
     "id": "vs",
     "name": "สามตัวเรียง VS มาตรฐาน",
-    "file": "formulas/samtua-standard.json"
+    "file": "samtua-standard.json"
   },
   {
     "id": "vs",
     "name": "สามตัวเรียง VS อีปุ่ม",
-    "file": "formulas/samtua-epum.json"
+    "file": "samtua-epum.json"
   },
   {
     "id": "vs",
     "name": "สามตัวเรียง VS สองปุ่ม",
-    "file": "formulas/samtua-songpum.json"
+    "file": "samtua-songpum.json"
   },
   {
     "id": "vs",
     "name": "สองตัวเรียง VS มาตรฐาน",
-    "file": "formulas/songtua-standard.json"
+    "file": "songtua-standard.json"
   }
 ]
