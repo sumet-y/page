@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Checkers Formula Trainer - Mobile</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #f4f0e8;
+    color: #292929;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  button {
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app {
+    width: 100%;
+    max-width: 560px;
+    min-height: 100vh;
+    margin: auto;
+    background: #faf8f3;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(250,248,243,.96);
+    border-bottom: 1px solid #ddd4c5;
+    padding: 12px 14px 10px;
+    backdrop-filter: blur(8px);
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .back {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 12px;
+    background: #e7dfd1;
+    font-size: 22px;
+  }
+  .title-wrap { flex: 1; min-width: 0; }
+  .title {
+    font-weight: 800;
+    font-size: 19px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .subtitle {
+    color: #8a7c6d;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  /* Formula tree */
+  .tree {
+    padding: 12px 12px 4px;
+  }
+  .section {
+    margin-bottom: 8px;
+    border: 1px solid #ded5c7;
+    border-radius: 14px;
+    overflow: hidden;
+    background: white;
+  }
+  .section-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 13px;
+    border: 0;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+  }
+  .arrow {
+    width: 22px;
+    flex: 0 0 22px;
+    font-size: 16px;
+    color: #5f554b;
+    text-align: center;
+  }
+  .section-name {
+    flex: 1;
+    font-weight: 750;
+    font-size: 16px;
+  }
+  .count {
+    font-size: 12px;
+    color: #8d8071;
+    background: #f0ebe2;
+    border-radius: 20px;
+    padding: 4px 8px;
+  }
+  .section-body {
+    border-top: 1px solid #eee7dc;
+    padding: 5px 8px 8px 34px;
+  }
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    border-bottom: 1px solid #f0ebe5;
+  }
+  .line:last-child { border-bottom: 0; }
+  .line-btn {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 10px 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .line-arrow {
+    width: 18px;
+    color: #777;
+  }
+  .line-name {
+    font-size: 15px;
+    font-weight: 650;
+    flex: 1;
+  }
+  .line-move {
+    color: #9b8c7c;
+    font-size: 13px;
+  }
+  .branch-list {
+    display: none;
+    margin: 0 0 7px 24px;
+    border-left: 2px solid #ddd2c3;
+    padding-left: 8px;
+  }
+  .branch-list.open { display: block; }
+  .branch {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    border-radius: 9px;
+    padding: 8px;
+    cursor: pointer;
+  }
+  .branch:hover, .branch:active { background: #f2eee7; }
+  .branch-code {
+    color: #b36d19;
+    font-weight: 800;
+    width: 24px;
+  }
+
+  /* Trainer */
+  #trainer {
+    display: none;
+    padding-bottom: 22px;
+  }
+  .trainer-head {
+    padding: 10px 14px 8px;
+  }
+  .breadcrumb {
+    color: #8b7e70;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .trainer-title {
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .board-wrap {
+    padding: 8px 14px 12px;
+  }
+  .board {
+    width: 100%;
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    border: 5px solid #795338;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 7px 18px rgba(70,45,20,.16);
+    background: #b88961;
+  }
+  .sq {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sq.light { background: #efd6ad; }
+  .sq.dark { background: #b88a64; }
+  .num {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 9px;
+    color: rgba(40,30,20,.55);
+  }
+  .piece {
+    width: 66%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,.35), 0 4px 7px rgba(0,0,0,.28);
+    border: 3px solid rgba(70,55,40,.5);
+  }
+  .black { background: radial-gradient(circle at 35% 30%, #666, #151515 55%, #050505); }
+  .white { background: radial-gradient(circle at 35% 30%, #fff, #eee9d7 60%, #bcae91); }
+
+  .progress {
+    padding: 0 16px 8px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 7px;
+    border-radius: 20px;
+    background: #ded8cf;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 39%;
+    background: #b64a37;
+    border-radius: inherit;
+  }
+  .progress-text { font-size: 12px; color: #76695d; white-space: nowrap; }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 7px;
+    padding: 5px 14px 12px;
+  }
+  .control {
+    min-height: 46px;
+    border: 1px solid #cfc3b2;
+    border-radius: 11px;
+    background: #eee9df;
+    color: #245c85;
+    font-weight: 750;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .control.primary {
+    background: #e4edf3;
+    border-color: #aebfca;
+  }
+  .control:active { transform: scale(.98); }
+
+  .status {
+    margin: 0 14px 10px;
+    padding: 12px 13px;
+    border-radius: 12px;
+    background: #f0ebe3;
+    color: #675c52;
+    font-size: 14px;
+  }
+  .status strong { color: #2f2a25; }
+
+  /* Branch choice */
+  .branch-choice {
+    margin: 0 14px;
+    border: 2px solid #d7a13b;
+    background: #fff9e9;
+    border-radius: 15px;
+    padding: 13px;
+    display: none;
+  }
+  .branch-choice.show { display: block; }
+  .choice-title {
+    font-weight: 800;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .choice-sub {
+    color: #887865;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .choice-btn {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 7px;
+    border: 1px solid #d8c7a5;
+    background: white;
+    border-radius: 10px;
+    text-align: left;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+  .choice-btn strong { color: #a96a16; }
+  .choice-btn small { color: #8a7c6d; }
+
+  .hint {
+    padding: 13px 14px;
+    color: #8a7d70;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (min-width: 561px) {
+    body { padding: 16px 0; }
+    .app { border-radius: 18px; box-shadow: 0 8px 30px rgba(50,35,20,.12); overflow: hidden; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header-row">
+      <button class="back" onclick="showTree()">‹</button>
+      <div class="title-wrap">
+        <div class="title" id="pageTitle">สูตรหมากฮอส</div>
+        <div class="subtitle" id="pageSubtitle">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- TREE / FORMULA SELECTOR -->
+  <main id="treeView" class="tree">
+
+    <section class="section">
+      <button class="section-head" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="section-name">สามตัวเรียง VS มาตรฐาน</span>
+        <span class="count">2 เกม</span>
+      </button>
+      <div class="section-body" style="display:none">
+        <div class="line">
+          <button class="line-btn" onclick="openGame('เกม 1', 'สามตัวเรียง VS มาตรฐาน', 32)">
+            <span class="line-arrow">▶</span><span class="line-name">เกม 1</span><span class="line-move">(24→20)</span>
+          </button>
+        </div>
+        <div class="line">
+          <button class="line-btn" onclick="openGame('เกม 2', 'สามตัวเรียง VS มาตรฐาน', 27)">
+            <span class="line-arrow">▶</span><span class="line-name">เกม 2</span><span class="line-move">(24→20)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <button class="section-head" onclick="toggleSection(this)">
+        <span class="arrow">▼</span>
+        <span class="section-name">สามตัวเรียง VS อีปุ่ม</span>
+        <span class="count">3 เกม</span>
+      </button>
+      <div class="section-body">
+        <div class="line">
+          <button class="line-btn" onclick="openGame('เกม 1', 'สามตัวเรียง VS อีปุ่ม', 48)">
+            <span class="line-arrow">▶</span><span class="line-name">เกม 1</span><span class="line-move">(24→20)</span>
+          </button>
+          <button class="line-btn" style="flex:0 0 auto;width:36px" onclick="toggleBranches('b1')">＋</button>
+        </div>
+        <div id="b1" class="branch-list">
+          <button class="branch" onclick="openGame('เกม 1 • ทาง A', 'สามตัวเรียง VS อีปุ่ม', 36)"><span class="branch-code">A</span><span>ทาง A</span></button>
+          <button class="branch" onclick="openGame('เกม 1 • ทาง B', 'สามตัวเรียง VS อีปุ่ม', 42)"><span class="branch-code">B</span><span>ทาง B</span></button>
+          <button class="branch" onclick="openGame('เกม 1 • ทาง C', 'สามตัวเรียง VS อีปุ่ม', 31)"><span class="branch-code">C</span><span>ทาง C</span></button>
+        </div>
+
+        <div class="line">
+          <button class="line-btn" onclick="openGame('เกม 2', 'สามตัวเรียง VS อีปุ่ม', 40)">
+            <span class="line-arrow">▶</span><span class="line-name">เกม 2</span><span class="line-move">(24→20)</span>
+          </button>
+        </div>
+
+        <div class="line">
+          <button class="line-btn" onclick="openGame('เกม 3', 'สามตัวเรียง VS อีปุ่ม', 35)">
+            <span class="line-arrow">▶</span><span class="line-name">เกม 3</span><span class="line-move">(24→20)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <button class="section-head" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="section-name">สามตัวเรียง VS สองปุ่ม</span>
+        <span class="count">4 เกม</span>
+      </button>
+      <div class="section-body" style="display:none">
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 1','สามตัวเรียง VS สองปุ่ม',29)"><span class="line-arrow">▶</span><span class="line-name">เกม 1</span><span class="line-move">(22→18)</span></button></div>
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 2','สามตัวเรียง VS สองปุ่ม',33)"><span class="line-arrow">▶</span><span class="line-name">เกม 2</span><span class="line-move">(23→19)</span></button></div>
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 3','สามตัวเรียง VS สองปุ่ม',37)"><span class="line-arrow">▶</span><span class="line-name">เกม 3</span><span class="line-move">(24→20)</span></button></div>
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 4','สามตัวเรียง VS สองปุ่ม',44)"><span class="line-arrow">▶</span><span class="line-name">เกม 4</span><span class="line-move">(24→19)</span></button></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <button class="section-head" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="section-name">สองตัวเรียง VS มาตรฐาน</span>
+        <span class="count">2 เกม</span>
+      </button>
+      <div class="section-body" style="display:none">
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 1','สองตัวเรียง VS มาตรฐาน',26)"><span class="line-arrow">▶</span><span class="line-name">เกม 1</span><span class="line-move">(20→16)</span></button></div>
+        <div class="line"><button class="line-btn" onclick="openGame('เกม 2','สองตัวเรียง VS มาตรฐาน',38)"><span class="line-arrow">▶</span><span class="line-name">เกม 2</span><span class="line-move">(21→17)</span></button></div>
+      </div>
+    </section>
+
+    <div class="hint">ข้อมูลชุดนี้เป็นข้อมูลจำลอง — ตอนต่อไปค่อยเชื่อมกับโปรแกรมจริง</div>
+  </main>
+
+  <!-- TRAINER -->
+  <main id="trainer">
+    <div class="trainer-head">
+      <div class="breadcrumb" id="breadcrumb">สามตัวเรียง VS อีปุ่ม › เกม 1</div>
+      <div class="trainer-title" id="gameTitle">เกม 1</div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="progress">
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text"><span id="step">19</span> / <span id="total">48</span></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="control" onclick="prevMove()">◀ Prev</button>
+      <button class="control primary" onclick="playMove()">▶ Play</button>
+      <button class="control primary" onclick="nextMove()">Next ▶</button>
+      <button class="control" onclick="stopPlay()">■ Stop</button>
+      <button class="control" onclick="resetGame()">↻ Reset</button>
+    </div>
+
+    <div class="status" id="status">
+      <strong>สถานะ:</strong> พร้อมฝึก กด Next เพื่อเดินตามสูตร
+    </div>
+
+    <div class="branch-choice" id="branchChoice">
+      <div class="choice-title">ถึงทางแยก</div>
+      <div class="choice-sub">เลือกเส้นทางที่ต้องการฝึก แล้วกด Next ต่อ</div>
+      <button class="choice-btn" onclick="chooseBranch('A')"><strong>A</strong> — ทางมาตรฐาน<br><small>ดำ 30→25</small></button>
+      <button class="choice-btn" onclick="chooseBranch('B')"><strong>B</strong> — ทางแก้<br><small>ดำ 30→26</small></button>
+      <button class="choice-btn" onclick="chooseBranch('C')"><strong>C</strong> — ทางสำรอง<br><small>ดำ 29→25</small></button>
+    </div>
+  </main>
+</div>
+
+<script>
+let currentGame = null;
+let step = 19;
+let total = 48;
+let playing = false;
+let timer = null;
+let selectedBranch = null;
+
+function toggleSection(btn) {
+  const body = btn.nextElementSibling;
+  const arrow = btn.querySelector('.arrow');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▶' : '▼';
+}
+
+function toggleBranches(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+function openGame(game, formula, gameTotal) {
+  currentGame = { game, formula };
+  step = 1;
+  total = gameTotal || 48;
+  selectedBranch = null;
+  document.getElementById('treeView').style.display = 'none';
+  document.getElementById('trainer').style.display = 'block';
+  document.getElementById('pageTitle').textContent = game;
+  document.getElementById('pageSubtitle').textContent = formula;
+  document.getElementById('gameTitle').textContent = game;
+  document.getElementById('breadcrumb').textContent = formula + ' › ' + game;
+  document.getElementById('branchChoice').classList.remove('show');
+  updateTrainer();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showTree() {
+  stopPlay();
+  document.getElementById('trainer').style.display = 'none';
+  document.getElementById('treeView').style.display = 'block';
+  document.getElementById('pageTitle').textContent = 'สูตรหมากฮอส';
+  document.getElementById('pageSubtitle').textContent = 'เลือกสูตร → เลือกเกม → ฝึกด้วย Next';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateTrainer() {
+  document.getElementById('step').textContent = step;
+  document.getElementById('total').textContent = total;
+  document.getElementById('progressFill').style.width = Math.min(100, step / total * 100) + '%';
+  document.getElementById('status').innerHTML =
+    '<strong>สถานะ:</strong> ' +
+    (selectedBranch ? 'กำลังฝึกทาง ' + selectedBranch : 'กำลังฝึกสูตรหลัก') +
+    ' — ตาเดินที่ ' + step;
+  renderBoard(step);
+}
+
+function nextMove() {
+  if (step >= total) {
+    document.getElementById('status').innerHTML = '<strong>จบสูตร:</strong> เดินครบแล้ว';
+    stopPlay();
+    return;
+  }
+  step++;
+  // จำลองว่ามีทางแยกในบางจุด
+  if ([8, 19, 31].includes(step) && !selectedBranch) {
+    document.getElementById('branchChoice').classList.add('show');
+    document.getElementById('status').innerHTML = '<strong>ถึงทางแยก:</strong> เลือกเส้นทางก่อนเดินต่อ';
+  } else {
+    document.getElementById('branchChoice').classList.remove('show');
+  }
+  updateTrainer();
+}
+
+function prevMove() {
+  if (step > 1) step--;
+  document.getElementById('branchChoice').classList.remove('show');
+  updateTrainer();
+}
+
+function resetGame() {
+  stopPlay();
+  step = 1;
+  selectedBranch = null;
+  document.getElementById('branchChoice').classList.remove('show');
+  updateTrainer();
+}
+
+function chooseBranch(branch) {
+  selectedBranch = branch;
+  document.getElementById('branchChoice').classList.remove('show');
+  document.getElementById('status').innerHTML =
+    '<strong>เลือกทาง ' + branch + ':</strong> กด Next เพื่อเดินต่อ';
+  renderBoard(step);
+}
+
+function playMove() {
+  if (playing) return;
+  playing = true;
+  timer = setInterval(() => {
+    if (step >= total) { stopPlay(); return; }
+    nextMove();
+  }, 650);
+}
+
+function stopPlay() {
+  playing = false;
+  if (timer) clearInterval(timer);
+  timer = null;
+}
+
+function renderBoard(n) {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  let darkIndex = 0;
+
+  // กระดานจำลอง: วางหมากให้เห็นการเปลี่ยนแปลงตาม step
+  const blackPositions = [2,5,8,10,13,17,20,23];
+  const whitePositions = [40,43,46,49,52,55,58,61];
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const sq = document.createElement('div');
+      const dark = (r + c) % 2 === 1;
+      sq.className = 'sq ' + (dark ? 'dark' : 'light');
+
+      if (dark) {
+        const num = document.createElement('span');
+        num.className = 'num';
+        num.textContent = darkIndex + 1;
+        sq.appendChild(num);
+
+        if (blackPositions.includes(darkIndex)) {
+          const p = document.createElement('div');
+          p.className = 'piece black';
+          sq.appendChild(p);
+        } else if (whitePositions.includes(darkIndex)) {
+          const p = document.createElement('div');
+          p.className = 'piece white';
+          sq.appendChild(p);
+        }
+        darkIndex++;
+      }
+      board.appendChild(sq);
+    }
+  }
+}
+</script>
+</body>
+</html>
