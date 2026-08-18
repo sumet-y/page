@@ -1,8 +1,7 @@
 [
   {
-    "id": "vs",
-    "name": "สามตัวเรียง VS มาตรฐาน",
-    "file": "samtua-standard.json"
+  "name": "สามตัวเรียง VS มาตรฐาน",
+  "file": "formulas/samtua-standard.json"
   },
   {
     "id": "vs",
