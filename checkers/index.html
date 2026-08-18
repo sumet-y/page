@@ -708,22 +708,49 @@ function renderFormulaTreeFromJSON(){
   const html=FORMULA_INDEX.map((item,si)=>{
     const games=FORMULAS[item.name]||{};
     const names=Object.keys(games);
+
     const body=names.map(g=>{
       const rec=games[g];
       const move=rec.moves?.[0]||"";
       const shown=move.replace(/^black\s+|^white\s+/i,"");
+
+      // สำคัญ: ไม่ใส่ JSON.stringify() ลงใน onclick attribute
+      // เพื่อป้องกัน quote ซ้อนกันจนเกิด SyntaxError
       return '<div class="formula-game">'+
-        '<button class="game-main" onclick="loadFormula('+JSON.stringify(item.name)+','+JSON.stringify(g)+')">'+
-        '<span class="ga">▶</span><span class="gn">'+g+'</span><span class="gm">'+(shown?"("+shown+")":"")+
+        '<button class="game-main" type="button" '+
+        'data-formula="'+escapeHtml(item.name)+'" '+
+        'data-game="'+escapeHtml(g)+'">'+
+        '<span class="ga">▶</span>'+
+        '<span class="gn">'+escapeHtml(g)+'</span>'+
+        '<span class="gm">'+(shown?"("+escapeHtml(shown)+")":"")+
         '</span></button></div>';
     }).join("");
+
     return '<section class="formula-section">'+
-      '<button class="formula-head" onclick="toggleFormulaSection(this)">'+
+      '<button class="formula-head" type="button" onclick="toggleFormulaSection(this)">'+
       '<span class="fa">'+(si===1?"▼":"▶")+'</span>'+
-      '<span class="fn">'+item.name+'</span><span class="fc">'+names.length+' เกม</span></button>'+
+      '<span class="fn">'+escapeHtml(item.name)+'</span>'+
+      '<span class="fc">'+names.length+' เกม</span></button>'+
       '<div class="formula-body '+(si===1?"open":"")+'">'+body+'</div></section>';
   }).join("");
+
   root.innerHTML=html;
+
+  // Bind click handlers after the HTML is inserted.
+  root.querySelectorAll(".game-main").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      loadFormula(btn.dataset.formula, btn.dataset.game);
+    });
+  });
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
 }
 function toggleFormulaSection(btn){
   const body=btn.nextElementSibling, arrow=btn.querySelector(".fa");
