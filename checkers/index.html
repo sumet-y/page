@@ -100,29 +100,26 @@ body.dark .btn-preview.active{background:#906010;color:#fff;}
   box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none;
   transition:opacity .2s;z-index:9999;}
 
-/* V2 FORMULA TREE */
+/* V3 RECURSIVE TREE */
 #formulaView{display:block;padding:8px 10px 26px}
 .formula-header{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px}
 .formula-header-title{font-size:1.05rem;font-weight:700}.formula-header-sub{font-size:.76rem;color:var(--muted);margin-top:2px}
-.formula-section{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:7px}
-.formula-head{width:100%;border:0;background:transparent;color:var(--text);display:flex;align-items:center;gap:8px;text-align:left;padding:12px;font-family:inherit;cursor:pointer}
-.formula-head .fa{width:20px;text-align:center}.formula-head .fn{flex:1;font-weight:700;font-size:.94rem}
-.formula-head .fc{font-size:.7rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:2px 7px}
-.formula-body{display:none;border-top:1px solid var(--border);padding:3px 8px 7px 30px}.formula-body.open{display:block}
-.formula-game{display:flex;align-items:center;border-bottom:1px solid var(--border)}.formula-game:last-child{border-bottom:0}
-.game-main{flex:1;min-width:0;border:0;background:transparent;color:var(--text);display:flex;align-items:center;gap:7px;text-align:left;padding:11px 5px;font-family:inherit;cursor:pointer}
-.game-main .ga{width:17px;color:var(--muted)}.game-main .gn{font-size:.88rem;font-weight:600;flex:1}.game-main .gm{font-size:.73rem;color:var(--muted)}
-.branch-toggle{border:0;background:transparent;color:var(--muted);font-size:17px;padding:8px;cursor:pointer}
-.branch-mini{display:none;border-left:2px solid var(--border);margin:0 8px 7px 22px;padding-left:7px}.branch-mini.open{display:block}
-.branch-mini button{display:block;width:100%;border:0;background:transparent;color:var(--text);text-align:left;padding:8px 6px;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer}
-.branch-code{font-weight:700;color:var(--gold);margin-right:7px}
-#trainerView{display:none}.formula-back{display:flex;align-items:center;gap:7px;margin:3px 10px 8px}
+.tree-root{display:flex;flex-direction:column;gap:7px}
+.tree-node{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tree-row{display:flex;align-items:center;min-height:48px}
+.tree-toggle{width:42px;height:48px;border:0;background:transparent;color:var(--text);font-size:16px;cursor:pointer;flex:0 0 42px}
+.tree-label{flex:1;min-width:0;border:0;background:transparent;color:var(--text);text-align:left;font-family:inherit;padding:10px 6px;font-size:.92rem;cursor:pointer}
+.tree-label strong{font-weight:700}.tree-meta{font-size:.70rem;color:var(--muted);margin-left:7px;white-space:nowrap}
+.tree-play{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;margin:5px 7px;padding:6px 9px;font-family:inherit;cursor:pointer}
+.tree-children{display:none;border-top:1px solid var(--border);padding:4px 7px 7px 13px;margin-left:16px}
+.tree-children.open{display:flex;flex-direction:column;gap:5px}
+.tree-child-wrap{position:relative}.tree-child-wrap:before{content:"";position:absolute;left:-7px;top:0;bottom:0;border-left:2px solid var(--border)}
+.tree-kind{font-size:.68rem;color:var(--gold);margin-left:8px}
+.tree-empty{padding:18px;text-align:center;color:var(--muted);font-size:.8rem}
+.formula-back{display:flex;align-items:center;gap:7px;margin:3px 10px 8px}
 .formula-back button{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 11px;font-family:inherit;font-weight:600;cursor:pointer}
 .formula-current{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.branch-choice-v1{display:none;margin:4px 12px 12px;border:2px solid var(--gold);background:var(--panel);border-radius:10px;padding:10px}
-.branch-choice-v1.show{display:block}.branch-choice-v1 .bt{font-weight:700;font-size:.9rem}.branch-choice-v1 .bs{font-size:.72rem;color:var(--muted);margin:2px 0 6px}
-.branch-choice-v1 button{display:block;width:100%;margin-top:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:9px;text-align:left;font-family:inherit;cursor:pointer}
-.v1-empty{padding:15px;text-align:center;color:var(--muted);font-size:.8rem}
+#trainerView{display:none}
 
 </style>
 </head>
@@ -134,92 +131,64 @@ body.dark .btn-preview.active{background:#906010;color:#fff;}
      วางสูตรของคุณที่นี่
      ════════════════════════════════════ -->
 <script>
-/* V2 DATA: formulas are loaded from JSON */
-let FORMULAS = {};
-let FORMULA_INDEX = [];
+/* V3: timeline data is loaded from recursive JSON */
 
 </script>
 <!-- ════════════════════════════════════ -->
 
 
-<!-- V2 FORMULA TREE -->
 <div id="formulaView">
   <div class="formula-header">
     <div class="formula-header-title">สูตรหมากฮอส</div>
-    <div class="formula-header-sub">เลือกสูตร → เลือกเกม → ฝึกด้วย Next</div>
+    <div class="formula-header-sub">เลือกจุดในสูตร → ขยายทางแยก → กดเล่นสูตร</div>
   </div>
-
-  <div id="formulaList"></div>
-
-  <div class="v1-empty">สูตรถูกโหลดจาก JSON — เพิ่มสูตรโดยแก้ไฟล์ข้อมูล ไม่ต้องแก้ JavaScript</div>
+  <div id="treeRoot" class="tree-root"></div>
 </div>
 
-<!-- V2 REPLAY VIEW -->
 <div id="trainerView">
   <div class="formula-back">
-    <button onclick="showFormulaTree()">‹ สูตรทั้งหมด</button>
-    <span id="formulaCurrent" class="formula-current">สูตร › เกม</span>
+    <button type="button" onclick="showFormulaTree()">‹ สูตรทั้งหมด</button>
+    <span id="formulaCurrent" class="formula-current">สูตร › จุดเดิน</span>
   </div>
 
-  <!-- ORIGINAL TOP BAR -->
   <div class="topbar">
     <span class="rep-title" id="repTitle">สูตร</span>
     <div style="display:flex;align-items:center;gap:4px;">
-      <span style="font-size:.72rem;">🐢</span>
-      <input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)"
-        style="width:58px;accent-color:var(--accent);">
-      <span style="font-size:.72rem;">🐇</span>
-      <span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;
-        color:var(--accent);min-width:42px;">กลาง</span>
+      <span>🐢</span>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)" style="width:58px;accent-color:var(--accent);">
+      <span>🐇</span>
+      <span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:42px;">กลาง</span>
     </div>
     <span id="stepLabel" class="rep-step">0 / 0</span>
-    <button id="orientBtn" onclick="toggleOrient()"
-      class="btn btn-sec" style="padding:5px 8px;font-size:.75rem;">↕ หมุน</button>
-    <button id="darkBtn" onclick="toggleDark()"
-      class="btn btn-sec" style="padding:5px 8px;font-size:.8rem;">🌙</button>
+    <button onclick="toggleOrient()" class="btn btn-sec" style="padding:5px 8px;font-size:.75rem;">↕ หมุน</button>
+    <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 8px;font-size:.8rem;">🌙</button>
   </div>
 
-  <!-- BOARD -->
   <div id="boardWrap">
     <div id="board"></div>
     <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <marker id="ah-red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#e02020" opacity="0.92"/>
-        </marker>
-        <marker id="ah-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#20c020" opacity="0.92"/>
-        </marker>
-        <marker id="ah-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#f0c000" opacity="0.92"/>
-        </marker>
-        <marker id="ah-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#d47000" opacity="0.90"/>
-        </marker>
-        <marker id="ah-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.70"/>
-        </marker>
-        <marker id="ah-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc" opacity="0.38"/>
-        </marker>
+        <marker id="ah-red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e02020"/></marker>
+        <marker id="ah-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#20c020"/></marker>
+        <marker id="ah-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f0c000"/></marker>
+        <marker id="ah-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d47000"/></marker>
+        <marker id="ah-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc"/></marker>
+        <marker id="ah-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc"/></marker>
       </defs>
     </svg>
   </div>
 
   <div class="status-bar" id="statusBar"></div>
-
   <div style="display:flex;align-items:center;gap:10px;padding:4px 16px 2px;">
-    <input id="slider" type="range" min="0" max="0" value="0"
-      oninput="sliderMove(this.value)"
-      style="flex:1;accent-color:var(--accent);">
+    <input id="slider" type="range" min="0" max="0" value="0" oninput="sliderMove(this.value)" style="flex:1;accent-color:var(--accent);">
   </div>
 
   <div class="ctrl-row">
-    <button class="btn btn-rep" id="rPrev" onclick="prev()">◀ Prev</button>
+    <button class="btn btn-rep" onclick="prev()">◀ Prev</button>
     <button class="btn btn-rep" id="rPlay" onclick="togglePlay()">▶ Play</button>
-    <button class="btn btn-rep" id="rNext" onclick="next()">Next ▶</button>
-    <button class="btn btn-rep" id="rStop" onclick="stop()">■ Stop</button>
-    <button class="btn btn-rep" id="rReset" onclick="resetToStart()">↺ Reset</button>
+    <button class="btn btn-rep" onclick="next()">Next ▶</button>
+    <button class="btn btn-rep" onclick="stop()">■ Stop</button>
+    <button class="btn btn-rep" onclick="resetToStart()">↺ Reset</button>
   </div>
 
   <div class="ctrl-row">
@@ -232,25 +201,13 @@ let FORMULA_INDEX = [];
   <div class="ctrl-row" style="padding:2px 8px 6px;">
     <button class="btn btn-preview active" id="previewBtn" onclick="togglePreview()">👁 ตาเทพ</button>
     <div class="prev-step-wrap">
-      <button class="btn btn-sec" onclick="changeSteps(-1)"
-        style="padding:3px 8px;font-size:.85rem;min-width:28px;">−</button>
-      <input type="range" id="stepsSlider" min="1" max="8" value="3"
-        oninput="setSteps(this.value)">
-      <button class="btn btn-sec" onclick="changeSteps(1)"
-        style="padding:3px 8px;font-size:.85rem;min-width:28px;">+</button>
+      <button class="btn btn-sec" onclick="changeSteps(-1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">−</button>
+      <input type="range" id="stepsSlider" min="1" max="8" value="3" oninput="setSteps(this.value)">
+      <button class="btn btn-sec" onclick="changeSteps(1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">+</button>
       <span id="stepsLabel">3</span>
     </div>
   </div>
-
-  <div id="branchChoiceV1" class="branch-choice-v1">
-    <div class="bt">ถึงทางแยก</div>
-    <div class="bs">จุดนี้เป็นตัวอย่าง V2 — ภายหลังจะเชื่อมกับทางแยกจริง</div>
-    <button onclick="chooseV1Branch('A')"><b>A</b> — ทางมาตรฐาน</button>
-    <button onclick="chooseV1Branch('B')"><b>B</b> — ทางแก้</button>
-    <button onclick="chooseV1Branch('C')"><b>C</b> — ทางสำรอง</button>
-  </div>
 </div>
-
 <script>
 document.addEventListener("dblclick",e=>e.preventDefault());
 
@@ -677,109 +634,107 @@ function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
 }
 
 
-/* ══ V2 JSON DATA + TREE ══ */
-async function loadFormulaIndex(){
-  const indexUrl = new URL("./formulas/index.json", document.baseURI).href;
+/* V3 RECURSIVE TREE + JSON */
+let TREE_DATA=null;
+let CURRENT_NODE_ID=null;
+
+async function loadTreeData(){
+  const indexUrl=new URL("./formulas/index.json",document.baseURI).href;
   try{
-    const r = await fetch(indexUrl, {cache:"no-store"});
-    if(!r.ok) throw new Error("โหลด index.json ไม่สำเร็จ HTTP "+r.status+" : "+indexUrl);
-    const index = await r.json();
-    FORMULA_INDEX = index;
-    FORMULAS = {};
+    const r=await fetch(indexUrl,{cache:"no-store"});
+    if(!r.ok) throw new Error("โหลด formulas/index.json ไม่สำเร็จ HTTP "+r.status+" : "+indexUrl);
+    const index=await r.json();
+    const rootNodes=[];
     for(const item of index){
-      const formulaUrl = new URL(item.file, indexUrl).href;
-      const fr = await fetch(formulaUrl, {cache:"no-store"});
-      if(!fr.ok) throw new Error("โหลดสูตรไม่สำเร็จ HTTP "+fr.status+" : "+formulaUrl);
-      FORMULAS[item.name] = await fr.json();
+      const url=new URL(item.file,indexUrl).href;
+      const rr=await fetch(url,{cache:"no-store"});
+      if(!rr.ok) throw new Error("โหลดสูตรไม่สำเร็จ HTTP "+rr.status+" : "+url);
+      rootNodes.push(await rr.json());
     }
-    renderFormulaTreeFromJSON();
+    TREE_DATA=rootNodes;
+    renderRecursiveTree();
   }catch(err){
     console.error(err);
-    const msg = String(err.message || err);
-    const root = document.getElementById("formulaList");
-    if(root) root.innerHTML =
-      '<div class="v1-empty" style="text-align:left;word-break:break-word;">' +
-      '<b>โหลดสูตรไม่สำเร็จ</b><br>'+msg.replace(/</g,"&lt;").replace(/>/g,"&gt;")+
-      '</div>';
+    document.getElementById("treeRoot").innerHTML='<div class="tree-empty"><b>โหลดโครงสร้างสูตรไม่สำเร็จ</b><br>'+escapeHtml(err.message||err)+'</div>';
   }
 }
-function renderFormulaTreeFromJSON(){
-  const root=document.getElementById("formulaList");
-  const html=FORMULA_INDEX.map((item,si)=>{
-    const games=FORMULAS[item.name]||{};
-    const names=Object.keys(games);
-
-    const body=names.map(g=>{
-      const rec=games[g];
-      const move=rec.moves?.[0]||"";
-      const shown=move.replace(/^black\s+|^white\s+/i,"");
-
-      // สำคัญ: ไม่ใส่ JSON.stringify() ลงใน onclick attribute
-      // เพื่อป้องกัน quote ซ้อนกันจนเกิด SyntaxError
-      return '<div class="formula-game">'+
-        '<button class="game-main" type="button" '+
-        'data-formula="'+escapeHtml(item.name)+'" '+
-        'data-game="'+escapeHtml(g)+'">'+
-        '<span class="ga">▶</span>'+
-        '<span class="gn">'+escapeHtml(g)+'</span>'+
-        '<span class="gm">'+(shown?"("+escapeHtml(shown)+")":"")+
-        '</span></button></div>';
-    }).join("");
-
-    return '<section class="formula-section">'+
-      '<button class="formula-head" type="button" onclick="toggleFormulaSection(this)">'+
-      '<span class="fa">'+(si===1?"▼":"▶")+'</span>'+
-      '<span class="fn">'+escapeHtml(item.name)+'</span>'+
-      '<span class="fc">'+names.length+' เกม</span></button>'+
-      '<div class="formula-body '+(si===1?"open":"")+'">'+body+'</div></section>';
-  }).join("");
-
-  root.innerHTML=html;
-
-  // Bind click handlers after the HTML is inserted.
-  root.querySelectorAll(".game-main").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      loadFormula(btn.dataset.formula, btn.dataset.game);
-    });
-  });
+function escapeHtml(v){
+  return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-
-function escapeHtml(value){
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#39;");
+function renderRecursiveTree(){
+  const root=document.getElementById("treeRoot");
+  if(!TREE_DATA||!TREE_DATA.length){root.innerHTML='<div class="tree-empty">ยังไม่มีสูตร</div>';return;}
+  root.innerHTML=TREE_DATA.map((n,i)=>renderNode(n,0,i)).join("");
 }
-function toggleFormulaSection(btn){
-  const body=btn.nextElementSibling, arrow=btn.querySelector(".fa");
-  const open=body.classList.toggle("open");
-  arrow.textContent=open?"▼":"▶";
+function renderNode(node,depth,index){
+  const hasChildren=Array.isArray(node.children)&&node.children.length>0;
+  const open=depth===0 || !!node.defaultOpen;
+  const label=escapeHtml(node.name||"");
+  const kind=node.type?'<span class="tree-kind">'+escapeHtml(node.type)+'</span>':"";
+  const meta=node.timeline?.moves?.length?'<span class="tree-meta">'+node.timeline.moves.length+' เดิน</span>':"";
+  let children="";
+  if(hasChildren){
+    children=node.children.map((c,i)=>'<div class="tree-child-wrap">'+renderNode(c,depth+1,i)+'</div>').join("");
+  }
+  const play=node.timeline?'<button type="button" class="tree-play" data-node="'+escapeHtml(node.id)+'">▶ เล่น</button>':"";
+  return '<div class="tree-node"><div class="tree-row">'+
+    '<button type="button" class="tree-toggle" '+(hasChildren?'':'disabled')+'>'+ (hasChildren?(open?"▼":"▶"):"•") +'</button>'+
+    '<button type="button" class="tree-label" data-node="'+escapeHtml(node.id)+'"><strong>'+label+'</strong>'+kind+meta+'</button>'+
+    play+
+    '</div>'+
+    (hasChildren?'<div class="tree-children '+(open?"open":"")+'">'+children+'</div>':"")+
+    '</div>';
 }
-let currentFormulaName="", currentGameName="";
-function getTimeline(formula, game){
-  const rec=FORMULAS[formula]?.[game];
-  if(!rec) return null;
-  return [
-    "@name:"+rec.name,
-    "@white:"+rec.white.join(","),
-    "@black:"+rec.black.join(","),
-    "@first:"+(rec.first||"black"),
-    ...rec.moves
-  ].join("\n");
+document.addEventListener("click",function(e){
+  const toggle=e.target.closest(".tree-toggle");
+  if(toggle && !toggle.disabled){
+    const box=toggle.closest(".tree-row").nextElementSibling;
+    if(box){const open=box.classList.toggle("open");toggle.textContent=open?"▼":"▶";}
+    return;
+  }
+  const play=e.target.closest(".tree-play");
+  if(play){playTreeNode(play.dataset.node);return;}
+  const label=e.target.closest(".tree-label");
+  if(label){
+    const node=findNodeById(label.dataset.node);
+    if(node&&node.timeline) playTreeNode(node.id);
+  }
+});
+function findNodeById(id,nodes=TREE_DATA){
+  for(const n of nodes||[]){
+    if(n.id===id) return n;
+    const f=findNodeById(id,n.children||[]);
+    if(f) return f;
+  }
+  return null;
 }
-function loadFormula(formula, game){
-  const timeline=getTimeline(formula,game);
-  if(!timeline){ showToast("ไม่พบสูตร"); return; }
+function timelineToText(t){
+  return ["@name:"+t.name,"@white:"+t.white.join(","),"@black:"+t.black.join(","),"@first:"+(t.first||"black"),...(t.moves||[])].join("\n");
+}
+function playTreeNode(id){
+  const node=findNodeById(id);
+  if(!node||!node.timeline){showToast("จุดนี้ยังไม่มี Timeline");return;}
   stop();
-  currentFormulaName=formula; currentGameName=game;
+  CURRENT_NODE_ID=id;
   document.getElementById("formulaView").style.display="none";
   document.getElementById("trainerView").style.display="block";
-  document.getElementById("formulaCurrent").textContent=formula+" › "+game;
-  parseTimeline(timeline);
-  document.getElementById("branchChoiceV1").classList.remove("show");
+  document.getElementById("formulaCurrent").textContent=breadcrumb(id);
+  parseTimeline(timelineToText(node.timeline));
   window.scrollTo({top:0,behavior:"smooth"});
+}
+function breadcrumb(id){
+  const path=[];
+  function walk(nodes){
+    for(const n of nodes||[]){
+      path.push(n.name);
+      if(n.id===id)return true;
+      if(walk(n.children||[]))return true;
+      path.pop();
+    }
+    return false;
+  }
+  walk(TREE_DATA);
+  return path.join(" › ");
 }
 function showFormulaTree(){
   stop();
@@ -787,22 +742,6 @@ function showFormulaTree(){
   document.getElementById("formulaView").style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function chooseV1Branch(branch){
-  document.getElementById("branchChoiceV1").classList.remove("show");
-  showToast("เลือกทาง "+branch+" — ตัวอย่าง V2");
-}
-const _v2next = next;
-next = function(){
-  _v2next();
-  if([8,19].includes(step)) document.getElementById("branchChoiceV1").classList.add("show");
-};
-const _v2prev = prev;
-prev = function(){ _v2prev(); document.getElementById("branchChoiceV1").classList.remove("show"); };
-const _v2reset = resetToStart;
-resetToStart = function(){ _v2reset(); document.getElementById("branchChoiceV1").classList.remove("show"); };
-const _v2slider = sliderMove;
-sliderMove = function(v){ _v2slider(v); document.getElementById("branchChoiceV1").classList.remove("show"); };
-
 
 /* ══ INIT ══ */
 document.getElementById("formulaView").style.display="block";
@@ -810,7 +749,7 @@ document.getElementById("trainerView").style.display="none";
 drawBoard();
 resizeBoard();
 render();
-loadFormulaIndex();
+loadTreeData();
 </script>
 </body>
 </html>
