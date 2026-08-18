@@ -1,22 +1,7 @@
 [
   {
-    "id": "vs",
-    "name": "สามตัวเรียง VS มาตรฐาน",
-    "file": "samtua-standard.json"
-  },
-  {
-    "id": "vs",
-    "name": "สามตัวเรียง VS อีปุ่ม",
-    "file": "samtua-epum.json"
-  },
-  {
-    "id": "vs",
-    "name": "สามตัวเรียง VS สองปุ่ม",
-    "file": "samtua-songpum.json"
-  },
-  {
-    "id": "vs",
-    "name": "สองตัวเรียง VS มาตรฐาน",
-    "file": "songtua-standard.json"
+    "id": "samriang-lang-vs-epum-kon",
+    "name": "สามเรียง(หลัง) VS อีปุ่ม(ก่อน)",
+    "file": "samriang-lang-vs-epum-kon.json"
   }
 ]
