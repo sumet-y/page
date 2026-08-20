@@ -1,125 +1,258 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AI IT Support Copilot</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <title>
+        AI IT Support Copilot
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-    <!-- Header -->
+
+    <!-- =====================================
+         HEADER
+    ====================================== -->
+
     <header class="header">
+
         <div>
-            <h1>🤖 AI IT Support Copilot</h1>
-            <p>AI Native IT Support — Phase 1 Prototype</p>
+
+            <h1>
+                🤖 AI IT Support Copilot
+            </h1>
+
+            <p>
+                AI Native IT Support — Phase 2
+            </p>
+
         </div>
 
+
         <div class="status">
-            ● DEMO MODE
+
+            ● SUPABASE CONNECTED
+
         </div>
+
     </header>
 
 
-    <!-- Main -->
+
+    <!-- =====================================
+         MAIN
+    ====================================== -->
+
     <main class="container">
 
-        <!-- Ticket -->
+
+        <!-- =================================
+             CREATE TICKET
+        ================================== -->
+
         <section class="card">
 
+
             <div class="card-title">
-                <span>01</span>
-                <h2>รับแจ้งปัญหา</h2>
+
+                <span>
+                    01
+                </span>
+
+                <h2>
+                    รับแจ้งปัญหา
+                </h2>
+
             </div>
 
-            <label>ผู้แจ้ง</label>
+
+
+            <!-- USER -->
+
+            <label for="userName">
+
+                ผู้แจ้ง
+
+            </label>
+
 
             <input
                 type="text"
                 id="userName"
                 value="สมชาย - สาขา A"
+                placeholder="ชื่อผู้แจ้ง"
             >
 
 
-            <label>ระบบ / อุปกรณ์</label>
+
+            <!-- SYSTEM -->
+
+            <label for="systemType">
+
+                ระบบ / อุปกรณ์
+
+            </label>
+
 
             <select id="systemType">
 
-                <option value="handheld">
+                <option value="Handheld + Web Application">
+
                     Handheld + Web Application
+
                 </option>
 
-                <option value="wifi">
+
+                <option value="Wi-Fi">
+
                     Wi-Fi
+
                 </option>
 
-                <option value="printer">
+
+                <option value="Printer">
+
                     Printer
+
                 </option>
 
-                <option value="pc">
+
+                <option value="PC / Windows">
+
                     PC / Windows
+
                 </option>
 
-                <option value="network">
+
+                <option value="Network">
+
                     Network
+
+                </option>
+
+
+            </select>
+
+
+
+            <!-- PROBLEM -->
+
+            <label for="problem">
+
+                รายละเอียดปัญหา
+
+            </label>
+
+
+            <textarea
+                id="problem"
+                placeholder="อธิบายปัญหาที่ User พบ..."
+            >Handheld บันทึกข้อมูลช้ามาก กดบันทึก 1 รายการใช้เวลาประมาณ 5 นาที และถ้าบันทึกหลายรายการอาจใช้เวลาถึง 40 นาที แต่เกิดเฉพาะสาขา A</textarea>
+
+
+
+            <!-- PRIORITY -->
+
+            <label for="priority">
+
+                Priority
+
+            </label>
+
+
+            <select id="priority">
+
+                <option value="Low">
+
+                    Low
+
+                </option>
+
+
+                <option
+                    value="Medium"
+                    selected
+                >
+
+                    Medium
+
+                </option>
+
+
+                <option value="High">
+
+                    High
+
+                </option>
+
+
+                <option value="Critical">
+
+                    Critical
+
                 </option>
 
             </select>
 
 
-            <label>รายละเอียดปัญหา</label>
 
-            <textarea id="problem">
+            <!-- BUTTON -->
 
-Handheld บันทึกข้อมูลช้ามาก
-กดบันทึก 1 รายการใช้เวลาประมาณ 5 นาที
-และถ้าบันทึกหลายรายการอาจใช้เวลาถึง 40 นาที
-แต่เกิดเฉพาะสาขา A
+            <button
+                class="btn-primary"
+                id="createTicketButton"
+                onclick="createTicket()"
+            >
 
-            </textarea>
+                🎫 Create Ticket
 
+            </button>
 
-           <div class="button-group">
-
-    <button
-        class="btn-primary"
-        onclick="createTicket()"
-    >
-        🎫 Create Ticket
-    </button>
-
-    <button
-    class="btn-primary"
-    onclick="createTicket()"
->
-    🎫 Create Ticket
-</button>
-
-</div>
 
         </section>
 
 
 
-        <!-- AI Analysis -->
+        <!-- =================================
+             RESULT
+        ================================== -->
+
         <section class="card">
+
 
             <div class="card-title">
 
-                <span>02</span>
+                <span>
+                    02
+                </span>
 
-                <h2>AI Analysis</h2>
+                <h2>
+                    Ticket Result
+                </h2>
 
             </div>
 
 
-            <!-- Progress -->
+
+            <!-- PROGRESS -->
 
             <div class="progress-container">
 
@@ -131,17 +264,21 @@ Handheld บันทึกข้อมูลช้ามาก
             </div>
 
 
+
+            <!-- STATUS -->
+
             <div
                 id="status"
                 class="status-box"
             >
 
-                รอรับ Ticket...
+                🟢 พร้อมสร้าง Ticket
 
             </div>
 
 
-            <!-- AI Result -->
+
+            <!-- RESULT -->
 
             <div
                 id="result"
@@ -150,79 +287,156 @@ Handheld บันทึกข้อมูลช้ามาก
 
                 <div class="empty">
 
-                    🤖
+                    🎫
 
                     <h3>
-                        AI Copilot พร้อมทำงาน
+                        Create Ticket
                     </h3>
 
                     <p>
-                        กรอกปัญหาแล้วกด
-                        "ให้ AI วิเคราะห์"
+                        กรอกข้อมูลทางด้านซ้าย
+                        แล้วกด Create Ticket
                     </p>
 
                 </div>
 
             </div>
 
+
         </section>
+
 
     </main>
 
 
 
-    <!-- Workflow -->
+    <!-- =====================================
+         WORKFLOW
+    ====================================== -->
 
     <section class="workflow">
 
+
         <h2>
-            🔄 AI Native Workflow
+            🔄 Phase 2 Workflow
         </h2>
 
 
         <div class="workflow-grid">
 
-            <div class="workflow-item">
-                <strong>1</strong>
-                <span>Ticket</span>
-            </div>
-
-            <div class="arrow">→</div>
 
             <div class="workflow-item">
-                <strong>2</strong>
-                <span>Analyze</span>
+
+                <strong>
+                    1
+                </strong>
+
+                <span>
+                    User Problem
+                </span>
+
             </div>
 
-            <div class="arrow">→</div>
+
+            <div class="arrow">
+                →
+            </div>
+
 
             <div class="workflow-item">
-                <strong>3</strong>
-                <span>Evidence</span>
+
+                <strong>
+                    2
+                </strong>
+
+                <span>
+                    Create Ticket
+                </span>
+
             </div>
 
-            <div class="arrow">→</div>
+
+            <div class="arrow">
+                →
+            </div>
+
 
             <div class="workflow-item">
-                <strong>4</strong>
-                <span>Root Cause</span>
+
+                <strong>
+                    3
+                </strong>
+
+                <span>
+                    Supabase
+                </span>
+
             </div>
 
-            <div class="arrow">→</div>
+
+            <div class="arrow">
+                →
+            </div>
+
 
             <div class="workflow-item">
-                <strong>5</strong>
-                <span>Knowledge</span>
+
+                <strong>
+                    4
+                </strong>
+
+                <span>
+                    PostgreSQL
+                </span>
+
             </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div class="workflow-item">
+
+                <strong>
+                    5
+                </strong>
+
+                <span>
+                    Ticket Saved
+                </span>
+
+            </div>
+
 
         </div>
+
 
     </section>
 
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<!-- =====================================
+     SUPABASE JAVASCRIPT LIBRARY
+====================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
+
+
+<!-- =====================================
+     APPLICATION JAVASCRIPT
+====================================== -->
+
 <script src="app.js"></script>
+
+
 </body>
+
 </html>
