@@ -1,39 +1,18 @@
-/* =====================================================
-   AI IT SUPPORT COPILOT
-   PHASE 3.1
-
-   Knowledge Retrieval / Similar Case Search
-
-   Phase 2.3
-   - Create Ticket
-   - Ticket List
-   - Search
-   - Status
-   - Solution
-   - Knowledge Base
-
-   Phase 3.1
-   - Search Knowledge Base
-   - Keyword Ranking
-   - Similar Case
-===================================================== */
+/* =========================================================
+   AI IT SUPPORT COPILOT V2
+   ========================================================= */
 
 
-/* =====================================================
-   1. SUPABASE CONFIG
-===================================================== */
+/* =========================================================
+   SUPABASE CONFIG
+   ========================================================= */
 
 const SUPABASE_URL =
     "https://cpdakjvwsvtottatulwo.supabase.co";
 
-
 const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
+    "ใส่_PUBLISHABLE_KEY_ของคุณตรงนี้";
 
-
-/* =====================================================
-   2. SUPABASE CLIENT
-===================================================== */
 
 const supabaseClient =
     window.supabase.createClient(
@@ -42,208 +21,137 @@ const supabaseClient =
     );
 
 
-/* =====================================================
-   3. GLOBAL VARIABLES
-===================================================== */
+/* =========================================================
+   STATE
+   ========================================================= */
 
-let allTickets = [];
+let tickets = [];
 
-let currentTicket = null;
+let selectedTicket = null;
 
-let currentSolution = null;
-
-
-/* =====================================================
-   4. COMMON HELPERS
-===================================================== */
-
-function escapeHtml(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        String(value);
-
-    return div.innerHTML;
-}
+let knowledgeCache = [];
 
 
+/* =========================================================
+   DOM
+   ========================================================= */
 
-function generateTicketNumber() {
-
-    return (
-        "INC-" +
-        Date.now()
-            .toString()
-            .slice(-8)
-    );
-
-}
+const $ = (id) =>
+    document.getElementById(id);
 
 
-
-function setDetailMessage(
-    message,
-    type = "normal"
-) {
-
-    const element =
-        document.getElementById(
-            "detailStatusMessage"
-        );
-
-    if (!element) {
-        return;
-    }
-
-    element.innerHTML =
-        message;
-
-    if (type === "success") {
-
-        element.style.borderLeft =
-            "4px solid #16a34a";
-
-    }
-
-    if (type === "error") {
-
-        element.style.borderLeft =
-            "4px solid #dc2626";
-
-    }
-
-}
-
-
-/* =====================================================
-   5. PAGE START
-===================================================== */
+/* =========================================================
+   INIT
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    async () => {
 
-        loadTickets();
+        bindEvents();
+
+        await testConnection();
+
+        await loadTickets();
 
     }
 );
 
 
-/* =====================================================
-   6. CREATE TICKET
-===================================================== */
+/* =========================================================
+   EVENTS
+   ========================================================= */
 
-async function createTicket() {
-
-    const userName =
-        document
-            .getElementById("userName")
-            .value
-            .trim();
+function bindEvents() {
 
 
-    const systemType =
-        document
-            .getElementById("systemType")
-            .value;
+    $("refreshBtn")
+        ?.addEventListener(
+            "click",
+            async () => {
 
+                await loadTickets();
 
-    const problem =
-        document
-            .getElementById("problem")
-            .value
-            .trim();
+                showToast(
+                    "Refresh สำเร็จ"
+                );
 
-
-    const priority =
-        document
-            .getElementById("priority")
-            .value;
-
-
-    const button =
-        document
-            .getElementById(
-                "createTicketButton"
-            );
-
-
-    if (!userName) {
-
-        alert(
-            "กรุณากรอกชื่อผู้แจ้ง"
+            }
         );
 
-        return;
 
-    }
-
-
-    if (!problem) {
-
-        alert(
-            "กรุณากรอกรายละเอียดปัญหา"
+    $("ticketSearch")
+        ?.addEventListener(
+            "input",
+            renderTickets
         );
 
-        return;
 
-    }
+    $("statusFilter")
+        ?.addEventListener(
+            "change",
+            renderTickets
+        );
 
 
-    button.disabled =
-        true;
+    $("searchKnowledgeBtn")
+        ?.addEventListener(
+            "click",
+            searchKnowledge
+        );
 
-    button.innerHTML =
-        "⏳ กำลังบันทึก...";
+
+    $("knowledgeQuery")
+        ?.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    searchKnowledge();
+
+                }
+
+            }
+        );
+
+
+    $("saveKnowledgeBtn")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                showToast(
+                    "Knowledge Learning จะเชื่อมกับ Module 6"
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   SUPABASE CONNECTION
+   ========================================================= */
+
+async function testConnection() {
+
+    const status =
+        $("connectionStatus");
 
 
     try {
 
-        const ticketNo =
-            generateTicketNumber();
-
-
         const {
-            data,
             error
-        } = await supabaseClient
-
+        } =
+        await supabaseClient
             .from("tickets")
-
-            .insert({
-
-                ticket_no:
-                    ticketNo,
-
-                user_name:
-                    userName,
-
-                system_type:
-                    systemType,
-
-                problem:
-                    problem,
-
-                status:
-                    "Open",
-
-                priority:
-                    priority
-
-            })
-
-            .select()
-
-            .single();
+            .select("id")
+            .limit(1);
 
 
         if (error) {
@@ -253,85 +161,40 @@ async function createTicket() {
         }
 
 
-        alert(
-            "✅ สร้าง Ticket สำเร็จ\n\n" +
-            ticketNo
-        );
+        status.className =
+            "status-pill connected";
+
+        status.innerHTML =
+            '<span class="status-dot"></span> SUPABASE CONNECTED';
 
 
-        document
-            .getElementById("userName")
-            .value = "";
-
-
-        document
-            .getElementById("problem")
-            .value = "";
-
-
-        await loadTickets();
-
-
-        openTicket(
-            data.id
-        );
-
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Create Ticket Error:",
+            "Supabase connection error:",
             error
         );
 
 
-        alert(
-            "❌ ไม่สามารถสร้าง Ticket ได้\n\n" +
-            error.message
-        );
+        status.className =
+            "status-pill connecting";
 
-    }
-
-    finally {
-
-        button.disabled =
-            false;
-
-        button.innerHTML =
-            "🎫 Create Ticket";
+        status.innerHTML =
+            '<span class="status-dot"></span> DATABASE ERROR';
 
     }
 
 }
 
 
-/* =====================================================
-   7. LOAD TICKETS
-===================================================== */
+/* =========================================================
+   LOAD TICKETS
+   ========================================================= */
 
 async function loadTickets() {
 
-    const container =
-        document.getElementById(
-            "ticketList"
-        );
-
-
-    container.innerHTML = `
-
-        <div class="empty">
-
-            ⏳
-
-            <p>
-                Loading tickets...
-            </p>
-
-        </div>
-
-    `;
+    $("ticketList").innerHTML =
+        '<div class="loading">Loading tickets...</div>';
 
 
     try {
@@ -339,14 +202,12 @@ async function loadTickets() {
         const {
             data,
             error
-        } = await supabaseClient
-
+        } =
+        await supabaseClient
             .from("tickets")
-
             .select("*")
-
             .order(
-                "created_at",
+                "id",
                 {
                     ascending: false
                 }
@@ -360,40 +221,54 @@ async function loadTickets() {
         }
 
 
-        allTickets =
+        tickets =
             data || [];
 
 
-        updateDashboard();
+        updateSummary();
+
+        renderTickets();
 
 
-        renderTickets(
-            allTickets
-        );
+        /*
+         * Automatically select first ticket
+         * if nothing is selected.
+         */
 
-    }
+        if (
+            !selectedTicket &&
+            tickets.length > 0
+        ) {
 
-    catch (error) {
+            selectTicket(
+                tickets[0]
+            );
+
+        }
+
+
+    } catch (error) {
 
         console.error(
-            "Load Tickets Error:",
+            "Load tickets error:",
             error
         );
 
 
-        container.innerHTML = `
+        $("ticketList").innerHTML = `
 
-            <div class="ai-box warning">
+            <div class="loading">
 
                 ❌ ไม่สามารถโหลด Ticket ได้
 
-                <p>
+                <br><br>
 
+                <small>
                     ${escapeHtml(
-                        error.message
+                        error.message ||
+                        "Database Error"
                     )}
-
-                </p>
+                </small>
 
             </div>
 
@@ -404,97 +279,141 @@ async function loadTickets() {
 }
 
 
-/* =====================================================
-   8. DASHBOARD
-===================================================== */
+/* =========================================================
+   SUMMARY
+   ========================================================= */
 
-function updateDashboard() {
+function updateSummary() {
 
     const total =
-        allTickets.length;
+        tickets.length;
 
 
     const open =
-        allTickets.filter(
-            ticket =>
-                ticket.status === "Open"
+        tickets.filter(
+            t =>
+                normalizeStatus(
+                    t.status
+                ) === "open"
         ).length;
 
 
     const progress =
-        allTickets.filter(
-            ticket =>
-                ticket.status === "In Progress"
+        tickets.filter(
+            t =>
+                normalizeStatus(
+                    t.status
+                ) === "in progress"
         ).length;
 
 
     const resolved =
-        allTickets.filter(
-            ticket =>
-                ticket.status === "Resolved" ||
-                ticket.status === "Closed"
+        tickets.filter(
+            t =>
+                [
+                    "resolved",
+                    "closed"
+                ].includes(
+                    normalizeStatus(
+                        t.status
+                    )
+                )
         ).length;
 
 
-    document
-        .getElementById(
-            "totalTickets"
-        )
-        .textContent =
-        total;
+    $("totalTickets")
+        .textContent = total;
 
+    $("openTickets")
+        .textContent = open;
 
-    document
-        .getElementById(
-            "openTickets"
-        )
-        .textContent =
-        open;
+    $("progressTickets")
+        .textContent = progress;
 
-
-    document
-        .getElementById(
-            "progressTickets"
-        )
-        .textContent =
-        progress;
-
-
-    document
-        .getElementById(
-            "resolvedTickets"
-        )
-        .textContent =
-        resolved;
+    $("resolvedTickets")
+        .textContent = resolved;
 
 }
 
 
-/* =====================================================
-   9. RENDER TICKETS
-===================================================== */
+/* =========================================================
+   RENDER TICKETS
+   ========================================================= */
 
-function renderTickets(
-    tickets
-) {
+function renderTickets() {
 
     const container =
-        document.getElementById(
-            "ticketList"
+        $("ticketList");
+
+
+    const keyword =
+        (
+            $("ticketSearch")
+                ?.value || ""
+        )
+        .toLowerCase()
+        .trim();
+
+
+    const status =
+        $("statusFilter")
+            ?.value || "";
+
+
+    const filtered =
+        tickets.filter(
+            ticket => {
+
+                const searchable = [
+
+                    ticket.ticket_no,
+
+                    ticket.user_name,
+
+                    ticket.system_type,
+
+                    ticket.problem
+
+                ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+                const matchKeyword =
+                    !keyword ||
+                    searchable.includes(
+                        keyword
+                    );
+
+
+                const matchStatus =
+                    !status ||
+                    ticket.status === status;
+
+
+                return (
+                    matchKeyword &&
+                    matchStatus
+                );
+
+            }
         );
 
 
-    if (!tickets.length) {
+    if (
+        filtered.length === 0
+    ) {
 
         container.innerHTML = `
 
-            <div class="empty">
+            <div class="loading">
 
-                📭
+                🔎
 
-                <h3>
-                    ไม่พบ Ticket
-                </h3>
+                <br><br>
+
+                ไม่พบ Ticket
 
             </div>
 
@@ -506,1224 +425,281 @@ function renderTickets(
 
 
     container.innerHTML =
-        tickets.map(
-            ticket => {
-
-                return `
-
-                    <div
-                        class="ticket-row"
-                        onclick="openTicket(${ticket.id})"
-                    >
-
-                        <div>
-
-                            <strong>
-
-                                ${escapeHtml(
-                                    ticket.ticket_no
-                                )}
-
-                            </strong>
-
-
-                            <div class="ticket-meta">
-
-                                ${escapeHtml(
-                                    ticket.user_name
-                                )}
-
-                                ·
-
-                                ${escapeHtml(
-                                    ticket.system_type
-                                )}
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="ticket-problem">
-
-                            ${escapeHtml(
-                                ticket.problem
-                            )}
-
-                        </div>
-
-
-                        <div>
-
-                            <span
-                                class="status-badge
-                                ${getStatusClass(
-                                    ticket.status
-                                )}"
-                            >
-
-                                ${escapeHtml(
-                                    ticket.status
-                                )}
-
-                            </span>
-
-                        </div>
-
-
-                        <div>
-
-                            <span
-                                class="priority-badge
-                                ${getPriorityClass(
-                                    ticket.priority
-                                )}"
-                            >
-
-                                ${escapeHtml(
-                                    ticket.priority
-                                )}
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }
-        ).join("");
-
-}
-
-
-/* =====================================================
-   10. STATUS CLASS
-===================================================== */
-
-function getStatusClass(
-    status
-) {
-
-    switch (status) {
-
-        case "Open":
-            return "status-open";
-
-        case "In Progress":
-            return "status-progress";
-
-        case "Resolved":
-            return "status-resolved";
-
-        case "Closed":
-            return "status-closed";
-
-        default:
-            return "";
-
-    }
-
-}
-
-
-/* =====================================================
-   11. PRIORITY CLASS
-===================================================== */
-
-function getPriorityClass(
-    priority
-) {
-
-    switch (priority) {
-
-        case "Critical":
-            return "priority-critical";
-
-        case "High":
-            return "priority-high";
-
-        case "Medium":
-            return "priority-medium";
-
-        case "Low":
-            return "priority-low";
-
-        default:
-            return "";
-
-    }
-
-}
-
-
-/* =====================================================
-   12. FILTER TICKETS
-===================================================== */
-
-function filterTickets() {
-
-    const search =
-        document
-            .getElementById(
-                "searchTicket"
+        filtered
+            .map(
+                ticket =>
+                    ticketCard(
+                        ticket
+                    )
             )
-            .value
-            .toLowerCase()
-            .trim();
+            .join("");
 
 
-    const status =
-        document
-            .getElementById(
-                "statusFilter"
-            )
-            .value;
+    container
+        .querySelectorAll(
+            ".ticket-item"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        const id =
+                            Number(
+                                element.dataset.id
+                            );
 
 
-    const filtered =
-        allTickets.filter(
-            ticket => {
-
-                const text = (
-
-                    ticket.ticket_no +
-                    " " +
-                    ticket.user_name +
-                    " " +
-                    ticket.system_type +
-                    " " +
-                    ticket.problem
-
-                ).toLowerCase();
+                        const ticket =
+                            tickets.find(
+                                t =>
+                                    Number(
+                                        t.id
+                                    ) === id
+                            );
 
 
-                const matchSearch =
-                    !search ||
-                    text.includes(
-                        search
-                    );
+                        if (ticket) {
 
+                            selectTicket(
+                                ticket
+                            );
 
-                const matchStatus =
-                    status === "All" ||
-                    ticket.status === status;
+                        }
 
-
-                return (
-                    matchSearch &&
-                    matchStatus
+                    }
                 );
 
             }
         );
 
-
-    renderTickets(
-        filtered
-    );
-
 }
 
 
-/* =====================================================
-   13. OPEN TICKET
-===================================================== */
+/* =========================================================
+   TICKET CARD
+   ========================================================= */
 
-async function openTicket(
-    ticketId
+function ticketCard(
+    ticket
 ) {
 
-    const ticket =
-        allTickets.find(
-            item =>
-                Number(item.id) ===
-                Number(ticketId)
+    const active =
+        selectedTicket &&
+        Number(
+            selectedTicket.id
+        ) === Number(
+            ticket.id
         );
 
 
-    if (!ticket) {
-
-        alert(
-            "ไม่พบ Ticket"
-        );
-
-        return;
-
-    }
-
-
-    currentTicket =
-        ticket;
-
-
-    const section =
-        document.getElementById(
-            "ticketDetailSection"
-        );
-
-
-    section.style.display =
-        "block";
-
-
-    section.scrollIntoView({
-
-        behavior: "smooth"
-
-    });
-
-
-    document
-        .getElementById(
-            "detailStatus"
+    const statusClass =
+        normalizeStatus(
+            ticket.status
         )
-        .value =
-        ticket.status;
+        .replace(
+            /\s+/g,
+            "-"
+        );
 
 
-    document
-        .getElementById(
-            "ticketDetail"
-        )
-        .innerHTML = `
+    return `
 
-            <div class="ticket-detail">
+        <div
+            class="ticket-item ${
+                active ? "active" : ""
+            }"
+            data-id="${ticket.id}"
+        >
 
-                <h3>
+            <div class="ticket-number">
 
-                    🎫
-
-                    ${escapeHtml(
-                        ticket.ticket_no
-                    )}
-
-                </h3>
-
-
-                <p>
-
-                    <b>
-                        ผู้แจ้ง:
-                    </b>
-
-                    ${escapeHtml(
-                        ticket.user_name
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        ระบบ:
-                    </b>
-
-                    ${escapeHtml(
-                        ticket.system_type
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        Priority:
-                    </b>
-
-                    ${escapeHtml(
-                        ticket.priority
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        Status:
-                    </b>
-
-                    ${escapeHtml(
-                        ticket.status
-                    )}
-
-                </p>
-
-
-                <div class="problem-box">
-
-                    <b>
-                        Problem
-                    </b>
-
-                    <p>
-
-                        ${escapeHtml(
-                            ticket.problem
-                        )}
-
-                    </p>
-
-                </div>
+                ${escapeHtml(
+                    ticket.ticket_no ||
+                    `TICKET-${ticket.id}`
+                )}
 
             </div>
 
-        `;
+
+            <div class="ticket-item-problem">
+
+                ${escapeHtml(
+                    ticket.problem ||
+                    "No problem description"
+                )}
+
+            </div>
 
 
-    await loadSolution(
-        ticket.id
-    );
+            <div class="ticket-item-user">
+
+                ${escapeHtml(
+                    ticket.user_name ||
+                    "-"
+                )}
+
+                ${ticket.system_type
+                    ? " • " +
+                      escapeHtml(
+                          ticket.system_type
+                      )
+                    : ""
+                }
+
+            </div>
+
+
+            <div class="ticket-item-bottom">
+
+                <span
+                    class="status-badge ${statusClass}"
+                >
+
+                    ${escapeHtml(
+                        ticket.status ||
+                        "-"
+                    )}
+
+                </span>
+
+            </div>
+
+        </div>
+
+    `;
 
 }
 
 
-/* =====================================================
-   14. LOAD SOLUTION
-===================================================== */
+/* =========================================================
+   SELECT TICKET
+   ========================================================= */
 
-async function loadSolution(
-    ticketId
+function selectTicket(
+    ticket
 ) {
 
-    currentSolution =
-        null;
+    selectedTicket =
+        ticket;
 
 
-    document
-        .getElementById(
-            "rootCause"
-        )
-        .value = "";
+    $("emptyState")
+        .classList
+        .add("hidden");
 
 
-    document
-        .getElementById(
-            "evidence"
-        )
-        .value = "";
+    $("ticketWorkspace")
+        .classList
+        .remove("hidden");
 
 
-    document
-        .getElementById(
-            "solution"
-        )
-        .value = "";
+    $("detailTicketNo")
+        .textContent =
+        ticket.ticket_no ||
+        `TICKET-${ticket.id}`;
 
 
-    document
-        .getElementById(
-            "verification"
-        )
-        .value = "";
+    $("detailProblem")
+        .textContent =
+        ticket.problem ||
+        "ไม่ระบุปัญหา";
 
 
-    try {
-
-        const {
-            data,
-            error
-        } = await supabaseClient
-
-            .from("solutions")
-
-            .select("*")
-
-            .eq(
-                "ticket_id",
-                ticketId
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            )
-
-            .limit(1);
+    $("detailProblemText")
+        .textContent =
+        ticket.problem ||
+        "ไม่ระบุรายละเอียด";
 
 
-        if (error) {
-
-            throw error;
-
-        }
-
-
-        if (
-            data &&
-            data.length
-        ) {
-
-            currentSolution =
-                data[0];
+    $("detailUser")
+        .textContent =
+        ticket.user_name ||
+        "-";
 
 
-            document
-                .getElementById(
-                    "rootCause"
-                )
-                .value =
-                data[0].root_cause || "";
-
-
-            document
-                .getElementById(
-                    "evidence"
-                )
-                .value =
-                data[0].evidence || "";
-
-
-            document
-                .getElementById(
-                    "solution"
-                )
-                .value =
-                data[0].solution || "";
-
-
-            document
-                .getElementById(
-                    "verification"
-                )
-                .value =
-                data[0].verification || "";
-
-
-            setDetailMessage(
-                "📝 โหลด Solution เดิมแล้ว"
-            );
-
-        }
-
-        else {
-
-            setDetailMessage(
-                "🆕 Ticket นี้ยังไม่มี Solution"
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Load Solution Error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   15. SAVE SOLUTION
-===================================================== */
-
-async function saveSolution() {
-
-    if (!currentTicket) {
-
-        alert(
-            "กรุณาเลือก Ticket ก่อน"
-        );
-
-        return;
-
-    }
-
-
-    const rootCause =
-        document
-            .getElementById(
-                "rootCause"
-            )
-            .value
-            .trim();
-
-
-    const evidence =
-        document
-            .getElementById(
-                "evidence"
-            )
-            .value
-            .trim();
-
-
-    const solution =
-        document
-            .getElementById(
-                "solution"
-            )
-            .value
-            .trim();
-
-
-    const verification =
-        document
-            .getElementById(
-                "verification"
-            )
-            .value
-            .trim();
+    $("detailSystem")
+        .textContent =
+        ticket.system_type ||
+        "-";
 
 
     const status =
-        document
-            .getElementById(
-                "detailStatus"
-            )
-            .value;
+        $("detailStatus");
 
 
-    if (!rootCause) {
+    status.textContent =
+        ticket.status ||
+        "-";
 
-        alert(
-            "กรุณากรอก Root Cause"
-        );
 
-        return;
-
-    }
-
-
-    if (!solution) {
-
-        alert(
-            "กรุณากรอก Solution"
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        const {
-            data: existing,
-            error: findError
-        } = await supabaseClient
-
-            .from("solutions")
-
-            .select("id")
-
-            .eq(
-                "ticket_id",
-                currentTicket.id
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            )
-
-            .limit(1);
-
-
-        if (findError) {
-
-            throw findError;
-
-        }
-
-
-        let solutionData;
-
-
-        if (
-            existing &&
-            existing.length
-        ) {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-
-                .from("solutions")
-
-                .update({
-
-                    root_cause:
-                        rootCause,
-
-                    evidence:
-                        evidence,
-
-                    solution:
-                        solution,
-
-                    verification:
-                        verification
-
-                })
-
-                .eq(
-                    "id",
-                    existing[0].id
-                )
-
-                .select()
-                .single();
-
-
-            if (error) {
-
-                throw error;
-
-            }
-
-
-            solutionData =
-                data;
-
-        }
-
-        else {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-
-                .from("solutions")
-
-                .insert({
-
-                    ticket_id:
-                        currentTicket.id,
-
-                    root_cause:
-                        rootCause,
-
-                    evidence:
-                        evidence,
-
-                    solution:
-                        solution,
-
-                    verification:
-                        verification
-
-                })
-
-                .select()
-                .single();
-
-
-            if (error) {
-
-                throw error;
-
-            }
-
-
-            solutionData =
-                data;
-
-        }
-
-
-        currentSolution =
-            solutionData;
-
-
-        const {
-            error: ticketError
-        } = await supabaseClient
-
-            .from("tickets")
-
-            .update({
-
-                status:
-                    status
-
-            })
-
-            .eq(
-                "id",
-                currentTicket.id
-            );
-
-
-        if (ticketError) {
-
-            throw ticketError;
-
-        }
-
-
-        currentTicket.status =
-            status;
-
-
-        setDetailMessage(
-            "✅ บันทึก Solution สำเร็จ",
-            "success"
-        );
-
-
-        await loadTickets();
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Save Solution Error:",
-            error
-        );
-
-
-        setDetailMessage(
-            "❌ บันทึกไม่สำเร็จ: " +
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   16. SAVE TO KNOWLEDGE BASE
-===================================================== */
-
-async function saveToKnowledgeBase() {
-
-    if (!currentTicket) {
-
-        alert(
-            "กรุณาเลือก Ticket ก่อน"
-        );
-
-        return;
-
-    }
-
-
-    const rootCause =
-        document
-            .getElementById(
-                "rootCause"
-            )
-            .value
-            .trim();
-
-
-    const evidence =
-        document
-            .getElementById(
-                "evidence"
-            )
-            .value
-            .trim();
-
-
-    const solution =
-        document
-            .getElementById(
-                "solution"
-            )
-            .value
-            .trim();
-
-
-    const verification =
-        document
-            .getElementById(
-                "verification"
-            )
-            .value
-            .trim();
-
-
-    if (!rootCause) {
-
-        alert(
-            "กรุณากรอก Root Cause ก่อน"
-        );
-
-        return;
-
-    }
-
-
-    if (!solution) {
-
-        alert(
-            "กรุณากรอก Solution ก่อน"
-        );
-
-        return;
-
-    }
-
-
-    if (!verification) {
-
-        alert(
-            "กรุณากรอก Verification ก่อน"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        !confirm(
-            "ต้องการบันทึก Case นี้เข้า Knowledge Base หรือไม่?"
+    status.className =
+        "status-badge " +
+        normalizeStatus(
+            ticket.status
         )
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const title =
-
-            currentTicket.system_type +
-            " - " +
-            currentTicket.problem
-                .substring(
-                    0,
-                    80
-                );
-
-
-        const {
-            data,
-            error
-        } = await supabaseClient
-
-            .from("knowledge_base")
-
-            .insert({
-
-                title:
-                    title,
-
-                category:
-                    currentTicket.system_type,
-
-                symptom:
-                    currentTicket.problem,
-
-                environment:
-                    currentTicket.user_name,
-
-                root_cause:
-                    rootCause,
-
-                solution:
-                    solution,
-
-                verification:
-                    verification
-
-            })
-
-            .select()
-            .single();
-
-
-        if (error) {
-
-            throw error;
-
-        }
-
-
-        setDetailMessage(
-            "🧠 บันทึก Knowledge Base สำเร็จ",
-            "success"
-        );
-
-
-        alert(
-            "🧠 Knowledge Base Saved\n\n" +
-            "KB ID: " +
-            data.id
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Save KB Error:",
-            error
-        );
-
-
-        setDetailMessage(
-            "❌ บันทึก Knowledge Base ไม่สำเร็จ: " +
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   17. PHASE 3.1
-   KNOWLEDGE BASE SEARCH
-===================================================== */
-
-
-/*
-    ตัดคำสำหรับ Search
-
-    ตอนนี้เราใช้วิธีง่ายก่อน:
-
-    - แยกคำ
-    - ตัดคำที่สั้นเกินไป
-    - เอาคำซ้ำออก
-
-    Phase 3.2 จะเปลี่ยนเป็น
-    Embedding / Semantic Search
-*/
-
-
-function tokenize(
-    text
-) {
-
-    if (!text) {
-        return [];
-    }
-
-
-    return text
-
-        .toLowerCase()
-
         .replace(
-            /[^\p{L}\p{N}\s+#.-]/gu,
-            " "
-        )
-
-        .split(/\s+/)
-
-        .map(
-            word =>
-                word.trim()
-        )
-
-        .filter(
-            word =>
-                word.length >= 2
+            /\s+/g,
+            "-"
         );
-
-}
-
-
-/*
-    Stop Words
-
-    ลดคำทั่วไปที่ไม่ช่วยในการ Search
-*/
-
-const STOP_WORDS = new Set([
-
-    "และ",
-    "หรือ",
-    "ของ",
-    "ที่",
-    "เป็น",
-    "มี",
-    "ใน",
-    "จาก",
-    "แล้ว",
-    "ให้",
-    "กับ",
-    "ว่า",
-    "ได้",
-    "การ",
-    "โดย",
-    "this",
-    "that",
-    "with",
-    "from",
-    "the",
-    "and",
-    "for"
-
-]);
-
-
-/*
-    ทำความสะอาด Token
-*/
-
-function cleanTokens(
-    text
-) {
-
-    return tokenize(text)
-
-        .filter(
-            token =>
-                !STOP_WORDS.has(
-                    token
-                )
-        );
-
-}
-
-
-/*
-    คำนวณคะแนน Match
-
-    คะแนนสูง =
-    มีคำที่ตรงกันมาก
-
-*/
-
-function calculateKnowledgeScore(
-    queryText,
-    knowledge
-) {
-
-    const queryTokens =
-        cleanTokens(
-            queryText
-        );
-
-
-    if (!queryTokens.length) {
-
-        return 0;
-
-    }
-
-
-    const knowledgeText = (
-
-        (knowledge.title || "") +
-        " " +
-        (knowledge.category || "") +
-        " " +
-        (knowledge.symptom || "") +
-        " " +
-        (knowledge.environment || "") +
-        " " +
-        (knowledge.root_cause || "") +
-        " " +
-        (knowledge.solution || "") +
-        " " +
-        (knowledge.verification || "")
-
-    );
-
-
-    const knowledgeTokens =
-        cleanTokens(
-            knowledgeText
-        );
-
-
-    const knowledgeSet =
-        new Set(
-            knowledgeTokens
-        );
-
-
-    let matched = 0;
-
-
-    for (
-        const token of queryTokens
-    ) {
-
-        if (
-            knowledgeSet.has(
-                token
-            )
-        ) {
-
-            matched++;
-
-        }
-
-    }
-
-
-    let score =
-        (
-            matched /
-            queryTokens.length
-        ) * 100;
 
 
     /*
-        Category/System match
-        เพิ่มน้ำหนักเล็กน้อย
-    */
+     * Put problem into AI Search
+     */
 
-    const system =
-        currentTicket
-            ?.system_type
-            ?.toLowerCase() || "";
-
-
-    const category =
-        knowledge
-            .category
-            ?.toLowerCase() || "";
+    $("knowledgeQuery")
+        .value =
+        ticket.problem ||
+        "";
 
 
-    if (
-        system &&
-        category &&
-        system === category
-    ) {
+    /*
+     * Clear previous search results
+     */
 
-        score += 15;
+    $("knowledgeResults")
+        .innerHTML = `
 
-    }
+        <div class="knowledge-empty">
+
+            พร้อมค้นหา Case ที่ใกล้เคียง
+
+        </div>
+
+    `;
 
 
-    return Math.min(
-        Math.round(score),
-        100
-    );
+    $("knowledgeStatus")
+        .textContent =
+        "กด Search เพื่อค้นหา Knowledge Base";
+
+
+    renderTickets();
 
 }
 
 
-/* =====================================================
-   18. SEARCH KNOWLEDGE BASE
-===================================================== */
+/* =========================================================
+   KNOWLEDGE SEARCH
+   ========================================================= */
 
 async function searchKnowledge() {
 
-    if (!currentTicket) {
+    const query =
+        (
+            $("knowledgeQuery")
+                ?.value || ""
+        )
+        .trim();
 
-        alert(
-            "กรุณาเลือก Ticket ก่อน"
+
+    if (!query) {
+
+        showToast(
+            "กรุณาระบุข้อความที่ต้องการค้นหา"
         );
 
         return;
@@ -1731,56 +707,43 @@ async function searchKnowledge() {
     }
 
 
-    const button =
-        document.getElementById(
-            "knowledgeSearchButton"
-        );
-
-
-    const status =
-        document.getElementById(
-            "knowledgeSearchStatus"
-        );
-
-
-    const results =
-        document.getElementById(
-            "knowledgeResults"
-        );
-
-
-    button.disabled =
-        true;
-
-
-    button.innerHTML =
-        "⏳ กำลังค้นหา...";
-
-
-    status.innerHTML =
+    $("knowledgeStatus")
+        .textContent =
         "🔎 กำลังค้นหา Knowledge Base...";
 
 
-    results.innerHTML =
-        "";
+    $("knowledgeResults")
+        .innerHTML = `
+
+        <div class="knowledge-empty">
+
+            🔎 Searching...
+
+        </div>
+
+    `;
 
 
     try {
 
-
         /*
-            ดึงเฉพาะ Knowledge ที่จำเป็น
+         * Current V2 keeps compatibility
+         * with the existing Phase 3.1
+         * keyword/category search.
+         *
+         * Semantic Vector Search will replace
+         * this function in Module 3 backend.
+         */
 
-            ไม่ใช้ secret key
-        */
 
         const {
             data,
             error
-        } = await supabaseClient
-
-            .from("knowledge_base")
-
+        } =
+        await supabaseClient
+            .from(
+                "knowledge_base"
+            )
             .select(
                 "id,title,category,symptom,environment,root_cause,solution,verification"
             );
@@ -1793,309 +756,19 @@ async function searchKnowledge() {
         }
 
 
-        const knowledgeBase =
-            data || [];
+        const results =
+            rankKnowledge(
+                query,
+                data || []
+            );
 
 
-        if (!knowledgeBase.length) {
-
-            status.innerHTML =
-                "📭 Knowledge Base ยังไม่มีข้อมูล";
-
-
-            results.innerHTML = `
-
-                <div class="ai-box">
-
-                    <h3>
-                        ยังไม่มี Case สำหรับค้นหา
-                    </h3>
-
-                    <p>
-
-                        เมื่อ IT แก้ Ticket สำเร็จ
-                        ให้กด
-
-                        <b>
-                            Save to Knowledge Base
-                        </b>
-
-                        เพื่อสร้าง Memory ให้ระบบ
-
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-            สร้าง Query จาก Ticket
-        */
-
-        const queryText = (
-
-            currentTicket.system_type +
-            " " +
-            currentTicket.problem
-
+        renderKnowledgeResults(
+            results
         );
 
 
-        /*
-            คำนวณคะแนนทุก Case
-        */
-
-        const scored =
-            knowledgeBase
-
-                .map(
-                    item => ({
-
-                        ...item,
-
-                        matchScore:
-                            calculateKnowledgeScore(
-                                queryText,
-                                item
-                            )
-
-                    })
-                )
-
-                .filter(
-                    item =>
-                        item.matchScore > 0
-                )
-
-                .sort(
-                    (
-                        a,
-                        b
-                    ) =>
-                        b.matchScore -
-                        a.matchScore
-                )
-
-                .slice(
-                    0,
-                    3
-                );
-
-
-        if (!scored.length) {
-
-            status.innerHTML =
-                "🔍 ไม่พบ Case ที่มีคำตรงกัน";
-
-
-            results.innerHTML = `
-
-                <div class="ai-box">
-
-                    <h3>
-                        ไม่พบ Similar Case
-                    </h3>
-
-                    <p>
-
-                        ลองใช้คำอธิบายปัญหา
-                        ที่ละเอียดขึ้น
-
-                    </p>
-
-                    <p>
-
-                        หรือให้ IT แก้ Case นี้
-                        แล้วบันทึกเข้า Knowledge Base
-
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-            แสดงผล
-        */
-
-        status.innerHTML =
-
-            "🧠 พบ " +
-            scored.length +
-            " Similar Case";
-
-
-        results.innerHTML = `
-
-            <div>
-
-                <h3>
-
-                    🔎 Similar Cases
-
-                </h3>
-
-                <p>
-
-                    ระบบจัดอันดับจาก
-                    Keyword Match
-                    และ System Category
-
-                </p>
-
-            </div>
-
-            ${
-
-                scored
-                    .map(
-                        (
-                            item,
-                            index
-                        ) => {
-
-                            return `
-
-                                <div
-                                    class="ai-box"
-                                    style="
-                                        margin-top:12px;
-                                    "
-                                >
-
-                                    <div
-                                        style="
-                                            display:flex;
-                                            justify-content:space-between;
-                                            gap:10px;
-                                        "
-                                    >
-
-                                        <h3>
-
-                                            #${index + 1}
-
-                                            ${escapeHtml(
-                                                item.title
-                                            )}
-
-                                        </h3>
-
-
-                                        <strong>
-
-                                            ${item.matchScore}%
-
-                                        </strong>
-
-                                    </div>
-
-
-                                    <hr>
-
-
-                                    <p>
-
-                                        <b>
-                                            Category:
-                                        </b>
-
-                                        ${escapeHtml(
-                                            item.category
-                                        )}
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <b>
-                                            Symptom:
-                                        </b>
-
-                                        ${escapeHtml(
-                                            item.symptom
-                                        )}
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <b>
-                                            Root Cause:
-                                        </b>
-
-                                        ${escapeHtml(
-                                            item.root_cause
-                                        )}
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <b>
-                                            Solution:
-                                        </b>
-
-                                        ${escapeHtml(
-                                            item.solution
-                                        )}
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <b>
-                                            Verification:
-                                        </b>
-
-                                        ${escapeHtml(
-                                            item.verification
-                                        )}
-
-                                    </p>
-
-
-                                    <small>
-
-                                        KB ID:
-
-                                        ${escapeHtml(
-                                            item.id
-                                        )}
-
-                                    </small>
-
-
-                                </div>
-
-                            `;
-
-                        }
-                    )
-                    .join("")
-
-            }
-
-        `;
-
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Knowledge Search Error:",
@@ -2103,25 +776,23 @@ async function searchKnowledge() {
         );
 
 
-        status.innerHTML =
-            "❌ Knowledge Search Error";
+        $("knowledgeStatus")
+            .textContent =
+            "❌ Search Error";
 
 
-        results.innerHTML = `
+        $("knowledgeResults")
+            .innerHTML = `
 
-            <div class="ai-box warning">
+            <div class="knowledge-empty">
 
-                <h3>
-                    ❌ ค้น Knowledge Base ไม่สำเร็จ
-                </h3>
+                ❌ ไม่สามารถค้นหา Knowledge Base ได้
 
-                <p>
+                <br><br>
 
-                    ${escapeHtml(
-                        error.message
-                    )}
-
-                </p>
+                ${escapeHtml(
+                    error.message || ""
+                )}
 
             </div>
 
@@ -2129,70 +800,372 @@ async function searchKnowledge() {
 
     }
 
-    finally {
+}
 
-        button.disabled =
-            false;
 
-        button.innerHTML =
-            "🔎 ค้นหา Case ที่ใกล้เคียง";
+/* =========================================================
+   KNOWLEDGE RANKING
+   ========================================================= */
 
-    }
+function rankKnowledge(
+    query,
+    knowledge
+) {
+
+    const q =
+        query
+            .toLowerCase();
+
+
+    const words =
+        q
+            .split(
+                /\s+/u
+            )
+            .filter(
+                word =>
+                    word.length >= 2
+            );
+
+
+    return knowledge
+        .map(
+            item => {
+
+                const text = [
+
+                    item.title,
+
+                    item.category,
+
+                    item.symptom,
+
+                    item.environment,
+
+                    item.root_cause,
+
+                    item.solution,
+
+                    item.verification
+
+                ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+                let score = 0;
+
+
+                /*
+                 * Exact phrase
+                 */
+
+                if (
+                    text.includes(q)
+                ) {
+
+                    score += 50;
+
+                }
+
+
+                /*
+                 * Word match
+                 */
+
+                words.forEach(
+                    word => {
+
+                        if (
+                            text.includes(
+                                word
+                            )
+                        ) {
+
+                            score += 5;
+
+                        }
+
+                    }
+                );
+
+
+                /*
+                 * Category/system match
+                 */
+
+                if (
+                    selectedTicket &&
+                    item.category &&
+                    selectedTicket.system_type &&
+                    item.category
+                        .toLowerCase()
+                        .includes(
+                            selectedTicket
+                                .system_type
+                                .toLowerCase()
+                        )
+                ) {
+
+                    score += 20;
+
+                }
+
+
+                return {
+
+                    ...item,
+
+                    score
+
+                };
+
+            }
+        )
+        .filter(
+            item =>
+                item.score > 0
+        )
+        .sort(
+            (a, b) =>
+                b.score -
+                a.score
+        )
+        .slice(
+            0,
+            5
+        );
 
 }
 
 
-/* =====================================================
-   19. DATABASE TEST
-===================================================== */
+/* =========================================================
+   RENDER KNOWLEDGE
+   ========================================================= */
 
-async function testDatabase() {
+function renderKnowledgeResults(
+    results
+) {
 
-    try {
-
-        const {
-            data,
-            error
-        } = await supabaseClient
-
-            .from("tickets")
-
-            .select("id")
-
-            .limit(1);
+    const container =
+        $("knowledgeResults");
 
 
-        if (error) {
+    if (
+        results.length === 0
+    ) {
 
-            console.error(
-                "Database Test FAILED:",
-                error
+        $("knowledgeStatus")
+            .textContent =
+            "ไม่พบ Case ที่เกี่ยวข้อง";
+
+
+        container.innerHTML = `
+
+            <div class="knowledge-empty">
+
+                🔎 ไม่พบ Knowledge Case
+
+                <br><br>
+
+                ลองใช้คำค้นอื่น
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    $("knowledgeStatus")
+        .textContent =
+        `พบ ${results.length} Similar Case`;
+
+
+    container.innerHTML =
+        results
+            .map(
+                item => {
+
+                    const similarity =
+                        Math.min(
+                            99,
+                            Math.max(
+                                55,
+                                item.score
+                            )
+                        );
+
+
+                    return `
+
+                        <div
+                            class="knowledge-result"
+                        >
+
+                            <div
+                                class="knowledge-result-top"
+                            >
+
+                                <h4>
+
+                                    ${escapeHtml(
+                                        item.title ||
+                                        "Knowledge Case"
+                                    )}
+
+                                </h4>
+
+
+                                <span
+                                    class="similarity"
+                                >
+
+                                    ${similarity}%
+
+                                </span>
+
+                            </div>
+
+
+                            <p>
+
+                                <strong>
+                                    Category:
+                                </strong>
+
+                                ${escapeHtml(
+                                    item.category ||
+                                    "-"
+                                )}
+
+                                <br>
+
+                                <strong>
+                                    Symptom:
+                                </strong>
+
+                                ${escapeHtml(
+                                    item.symptom ||
+                                    "-"
+                                )}
+
+                                <br>
+
+                                <strong>
+                                    Root Cause:
+                                </strong>
+
+                                ${escapeHtml(
+                                    item.root_cause ||
+                                    "-"
+                                )}
+
+                                <br>
+
+                                <strong>
+                                    Solution:
+                                </strong>
+
+                                ${escapeHtml(
+                                    item.solution ||
+                                    "-"
+                                )}
+
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function normalizeStatus(
+    status
+) {
+
+    return String(
+        status || ""
+    )
+    .trim()
+    .toLowerCase();
+
+}
+
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+function showToast(
+    message
+) {
+
+    const toast =
+        $("toast");
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.classList.remove(
+                "show"
             );
 
-            return false;
-
-        }
-
-
-        console.log(
-            "Database Test SUCCESS:",
-            data
-        );
-
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Database Test ERROR:",
-            error
-        );
-
-        return false;
-
-    }
+        },
+        2500
+    );
 
 }
