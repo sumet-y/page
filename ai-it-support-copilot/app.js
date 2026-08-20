@@ -1,58 +1,233 @@
+/* =====================================================
+   AI IT SUPPORT COPILOT
+   PHASE 2.2
+
+   GitHub Pages
+        ↓
+   Supabase JS
+        ↓
+   Supabase Data API
+        ↓
+   PostgreSQL
+        ↓
+   tickets
+===================================================== */
+
+
+
+/* =====================================================
+   1. SUPABASE CONFIGURATION
+===================================================== */
+
+
+/*
+    Project URL ของคุณ
+
+    ใช้ .supabase.co
+*/
+
 const SUPABASE_URL =
-    "https://cpdakjvwsvtottatulwo.supabase.co";
+    "https://cpdakjvwsvtotatulwo.supabase.co";
+
+
+
+/*
+    ใส่ Publishable Key ของคุณตรงนี้
+
+    ต้องขึ้นต้นด้วย:
+
+    sb_publishable_
+
+    ห้ามใช้:
+
+    sb_secret_
+*/
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
+    "วาง_sb_publishable_key_ของคุณตรงนี้";
+
+
+
+/* =====================================================
+   2. CREATE SUPABASE CLIENT
+===================================================== */
+
+
+/*
+    ตรวจสอบว่า Supabase Library โหลดสำเร็จหรือไม่
+*/
+
+if (!window.supabase) {
+
+    console.error(
+        "Supabase JavaScript library was not loaded."
+    );
+
+}
+
+
+
+/*
+    สร้าง Supabase Client
+*/
 
 const supabaseClient =
     window.supabase.createClient(
+
         SUPABASE_URL,
+
         SUPABASE_PUBLISHABLE_KEY
+
     );
 
-function sleep(ms) {
 
-    return new Promise(
-        resolve => setTimeout(resolve, ms)
-    );
 
-}
+/* =====================================================
+   3. HELPER FUNCTIONS
+===================================================== */
 
+
+/*
+    เปลี่ยน Progress Bar
+*/
 
 function setProgress(percent) {
 
-    document.getElementById(
-        "progressBar"
-    ).style.width = percent + "%";
+    const progressBar =
+        document.getElementById(
+            "progressBar"
+        );
+
+
+    if (!progressBar) {
+        return;
+    }
+
+
+    progressBar.style.width =
+        percent + "%";
 
 }
 
 
-function setStatus(text) {
 
-    document.getElementById(
-        "status"
-    ).innerHTML = text;
+/*
+    เปลี่ยนข้อความ Status
+*/
+
+function setStatus(message) {
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    if (!status) {
+        return;
+    }
+
+
+    status.innerHTML =
+        message;
 
 }
 
 
-async function analyzeTicket() {
 
-    const user =
+/*
+    Escape HTML
+
+    ป้องกันข้อมูล User ถูกนำไปแสดงเป็น HTML
+*/
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+
+        return "";
+
+    }
+
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        String(value);
+
+
+    return div.innerHTML;
+
+}
+
+
+
+/*
+    สร้าง Ticket Number
+
+    ตัวอย่าง:
+
+    INC-12345678
+*/
+
+function generateTicketNumber() {
+
+    const timestamp =
+        Date.now()
+            .toString()
+            .slice(-8);
+
+
+    return "INC-" + timestamp;
+
+}
+
+
+
+/* =====================================================
+   4. CREATE TICKET
+===================================================== */
+
+
+async function createTicket() {
+
+
+    /* -----------------------------------------------
+       Get Form Elements
+    ------------------------------------------------ */
+
+    const userInput =
         document.getElementById(
             "userName"
-        ).value;
+        );
 
-    const system =
+
+    const systemInput =
         document.getElementById(
             "systemType"
-        ).value;
+        );
 
-    const problem =
+
+    const problemInput =
         document.getElementById(
             "problem"
-        ).value;
+        );
+
+
+    const priorityInput =
+        document.getElementById(
+            "priority"
+        );
+
+
+    const button =
+        document.getElementById(
+            "createTicketButton"
+        );
 
 
     const result =
@@ -61,338 +236,178 @@ async function analyzeTicket() {
         );
 
 
-    /* STEP 1 */
 
-    setProgress(10);
+    /* -----------------------------------------------
+       Get Values
+    ------------------------------------------------ */
 
-    setStatus(
-        "🧠 AI กำลังรับ Ticket..."
-    );
+    const userName =
+        userInput.value.trim();
 
 
-    result.innerHTML = `
-        <div class="ai-box">
+    const systemType =
+        systemInput.value;
 
-            <h3>
-                📥 Ticket Received
-            </h3>
-
-            <p>
-                <b>ผู้แจ้ง:</b>
-                ${user}
-            </p>
-
-            <p>
-                <b>ระบบ:</b>
-                ${system}
-            </p>
-
-            <p>
-                <b>ปัญหา:</b>
-                ${problem}
-            </p>
-
-        </div>
-    `;
-
-
-    await sleep(900);
-
-
-    /* STEP 2 */
-
-    setProgress(30);
-
-    setStatus(
-        "🔎 AI กำลังจำแนกปัญหา..."
-    );
-
-
-    result.innerHTML += `
-
-        <div class="ai-box">
-
-            <h3>
-                🧠 AI Classification
-            </h3>
-
-            <p>
-                Category:
-                <b>Incident / Performance</b>
-            </p>
-
-            <p>
-                AI กำลังสร้างสมมติฐาน
-                Root Cause...
-            </p>
-
-        </div>
-
-    `;
-
-
-    await sleep(1000);
-
-
-    /* STEP 3 */
-
-    setProgress(55);
-
-    setStatus(
-        "🧪 AI กำลังสร้าง Troubleshooting Plan..."
-    );
-
-
-    result.innerHTML += `
-
-        <div class="ai-box warning">
-
-            <h3>
-                🧪 Recommended Tests
-            </h3>
-
-            <ul>
-
-                <li>
-                    ตรวจ Network Latency
-                </li>
-
-                <li>
-                    ตรวจ Packet Loss
-                </li>
-
-                <li>
-                    ตรวจ Server CPU / RAM
-                </li>
-
-                <li>
-                    ตรวจ Database Response Time
-                </li>
-
-                <li>
-                    ตรวจ Application Log
-                </li>
-
-            </ul>
-
-        </div>
-
-    `;
-
-
-    await sleep(1100);
-
-
-    /* STEP 4 */
-
-    setProgress(75);
-
-    setStatus(
-        "🎯 AI กำลังประเมิน Root Cause..."
-    );
-
-
-    result.innerHTML += `
-
-        <div class="ai-box success">
-
-            <h3>
-                🎯 Root Cause Hypothesis
-            </h3>
-
-            <p>
-                <b>
-                Database / Application
-                Performance Bottleneck
-                </b>
-            </p>
-
-            <div class="metrics">
-
-                <div class="metric">
-
-                    <strong>
-                        82%
-                    </strong>
-
-                    <small>
-                        Confidence
-                    </small>
-
-                </div>
-
-
-                <div class="metric">
-
-                    <strong>
-                        5
-                    </strong>
-
-                    <small>
-                        Tests
-                    </small>
-
-                </div>
-
-
-                <div class="metric">
-
-                    <strong>
-                        2
-                    </strong>
-
-                    <small>
-                        Suspects
-                    </small>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    await sleep(1000);
-
-
-    /* STEP 5 */
-
-    setProgress(100);
-
-    setStatus(
-        "✅ AI Analysis เสร็จแล้ว"
-    );
-
-
-    result.innerHTML += `
-
-        <div class="ai-box">
-
-            <h3>
-                📄 AI Recommendation
-            </h3>
-
-            <p>
-
-                ตรวจสอบ Database Query
-                และ Application Response Time
-                ก่อนสรุป Root Cause
-
-            </p>
-
-            <p>
-
-                <b>
-                ⚠️ หมายเหตุ:
-                </b>
-
-                ผลนี้เป็น
-                <b>Hypothesis</b>
-                ต้องยืนยันด้วย Evidence จริง
-
-            </p>
-
-        </div>
-
-
-        <div class="ai-box">
-
-            <h3>
-                🧠 Knowledge Base Candidate
-            </h3>
-
-            <p>
-
-                AI สามารถนำ Case นี้ไปสร้าง
-                Knowledge Base หลังจาก IT
-                ยืนยันวิธีแก้ไขแล้ว
-
-            </p>
-
-        </div>
-
-    `;
-
-}
-
-async function createTicket() {
-
-    const user =
-        document.getElementById("userName").value.trim();
-
-    const system =
-        document.getElementById("systemType").value;
 
     const problem =
-        document.getElementById("problem").value.trim();
-
-    const result =
-        document.getElementById("result");
-
-    const status =
-        document.getElementById("status");
+        problemInput.value.trim();
 
 
-    // Validate
-    if (!user || !problem) {
+    const priority =
+        priorityInput.value;
 
-        status.innerHTML =
-            "⚠️ กรุณากรอกผู้แจ้งและรายละเอียดปัญหา";
+
+
+    /* -----------------------------------------------
+       Validate
+    ------------------------------------------------ */
+
+    if (!userName) {
+
+        setStatus(
+            "⚠️ กรุณากรอกชื่อผู้แจ้ง"
+        );
+
+        userInput.focus();
 
         return;
+
     }
 
 
-    // Generate Ticket Number
+
+    if (!problem) {
+
+        setStatus(
+            "⚠️ กรุณากรอกรายละเอียดปัญหา"
+        );
+
+        problemInput.focus();
+
+        return;
+
+    }
+
+
+
+    /* -----------------------------------------------
+       Disable Button
+    ------------------------------------------------ */
+
+    button.disabled = true;
+
+    button.innerHTML =
+        "⏳ กำลังบันทึก...";
+
+
+
+    setProgress(20);
+
+
+    setStatus(
+        "🔄 กำลังเชื่อมต่อ Supabase..."
+    );
+
+
+
+    /* -----------------------------------------------
+       Generate Ticket Number
+    ------------------------------------------------ */
+
     const ticketNo =
-        "INC-" +
-        Date.now().toString().slice(-8);
+        generateTicketNumber();
 
-
-    status.innerHTML =
-        "⏳ กำลังบันทึก Ticket ลง Supabase...";
-
-    setProgress(30);
 
 
     try {
 
-        const { data, error } =
-            await supabaseClient
-                .from("tickets")
-                .insert([
-                    {
-                        ticket_no: ticketNo,
 
-                        user_name: user,
+        /* =============================================
+           INSERT INTO tickets
+        ============================================== */
 
-                        system_type: system,
 
-                        problem: problem,
+        setProgress(40);
 
-                        status: "Open",
 
-                        priority: "Medium"
-                    }
-                ])
-                .select()
-                .single();
+        setStatus(
+            "🗄️ กำลังบันทึก Ticket ลง Database..."
+        );
+
+
+
+        const {
+
+            data,
+
+            error
+
+        } = await supabaseClient
+
+
+            .from("tickets")
+
+
+            .insert({
+
+                ticket_no:
+                    ticketNo,
+
+                user_name:
+                    userName,
+
+                system_type:
+                    systemType,
+
+                problem:
+                    problem,
+
+                status:
+                    "Open",
+
+                priority:
+                    priority
+
+            })
+
+
+            .select()
+
+
+            .single();
+
+
+
+        /* -------------------------------------------
+           Check Error
+        -------------------------------------------- */
 
 
         if (error) {
 
-            console.error(error);
+            console.error(
+                "Supabase Insert Error:",
+                error
+            );
 
             throw error;
+
         }
+
+
+
+        /* =============================================
+           SUCCESS
+        ============================================== */
 
 
         setProgress(100);
 
-        status.innerHTML =
-            "✅ Ticket ถูกบันทึกลง Database แล้ว";
+
+        setStatus(
+            "✅ Ticket บันทึกสำเร็จ"
+        );
+
 
 
         result.innerHTML = `
@@ -400,35 +415,78 @@ async function createTicket() {
             <div class="ai-box success">
 
                 <h3>
-                    🎫 Ticket Created
+                    🎉 Ticket Created Successfully
                 </h3>
 
-                <p>
-                    <b>Ticket No:</b>
-                    ${data.ticket_no}
-                </p>
 
                 <p>
-                    <b>ผู้แจ้ง:</b>
-                    ${data.user_name}
+
+                    <b>
+                        Ticket No:
+                    </b>
+
+                    ${escapeHtml(
+                        data.ticket_no
+                    )}
+
                 </p>
 
-                <p>
-                    <b>ระบบ:</b>
-                    ${data.system_type}
-                </p>
 
                 <p>
-                    <b>สถานะ:</b>
-                    ${data.status}
+
+                    <b>
+                        ผู้แจ้ง:
+                    </b>
+
+                    ${escapeHtml(
+                        data.user_name
+                    )}
+
                 </p>
 
+
                 <p>
-                    <b>Priority:</b>
-                    ${data.priority}
+
+                    <b>
+                        ระบบ:
+                    </b>
+
+                    ${escapeHtml(
+                        data.system_type
+                    )}
+
                 </p>
+
+
+                <p>
+
+                    <b>
+                        Priority:
+                    </b>
+
+                    ${escapeHtml(
+                        data.priority
+                    )}
+
+                </p>
+
+
+                <p>
+
+                    <b>
+                        Status:
+                    </b>
+
+                    ${escapeHtml(
+                        data.status
+                    )}
+
+                </p>
+
 
             </div>
+
+
 
             <div class="ai-box">
 
@@ -436,42 +494,145 @@ async function createTicket() {
                     🗄️ Database
                 </h3>
 
+
                 <p>
+
                     ข้อมูลถูกบันทึกลง
-                    <b>Supabase → tickets</b>
+
+                    <b>
+                        Supabase
+                    </b>
+
+                    →
+
+                    <b>
+                        tickets
+                    </b>
+
                     เรียบร้อยแล้ว
+
                 </p>
 
+
             </div>
+
+
 
             <div class="ai-box">
 
                 <h3>
-                    🤖 Next Step
+                    🔗 Ticket ID
                 </h3>
 
+
                 <p>
-                    Phase 3 จะให้ AI อ่าน Ticket นี้
-                    และค้น Knowledge Base
-                    เพื่อสร้าง Troubleshooting Plan
+
+                    Database ID:
+
+                    <b>
+                        ${escapeHtml(
+                            data.id
+                        )}
+                    </b>
+
                 </p>
+
+
+                <p>
+
+                    Created:
+
+                    ${escapeHtml(
+                        data.created_at
+                    )}
+
+                </p>
+
+
+            </div>
+
+
+
+            <div class="ai-box">
+
+                <h3>
+                    🚀 Next Phase
+                </h3>
+
+
+                <p>
+
+                    Phase 2.3:
+
+                    <b>
+                        Ticket List
+                    </b>
+
+                    และ
+
+                    <b>
+                        Ticket Detail
+                    </b>
+
+                </p>
+
+
+                <p>
+
+                    Phase 3:
+
+                    AI จะนำ Ticket
+                    ไปค้น Knowledge Base
+
+                </p>
+
 
             </div>
 
         `;
 
+
+
     }
+
     catch (error) {
+
+
+        /* =============================================
+           ERROR
+        ============================================== */
+
 
         console.error(
             "Create Ticket Error:",
             error
         );
 
+
         setProgress(0);
 
-        status.innerHTML =
-            "❌ ไม่สามารถบันทึก Ticket ได้";
+
+        setStatus(
+            "❌ ไม่สามารถบันทึก Ticket ได้"
+        );
+
+
+
+        let errorMessage =
+            "Unknown error";
+
+
+
+        if (error) {
+
+            errorMessage =
+                error.message ||
+                error.details ||
+                error.hint ||
+                "Unknown error";
+
+        }
+
 
 
         result.innerHTML = `
@@ -482,27 +643,54 @@ async function createTicket() {
                     ❌ Database Error
                 </h3>
 
-                <p>
-                    ${escapeHtml(error.message)}
-                </p>
 
                 <p>
-                    ตรวจสอบ:
+
+                    <b>
+                        Error:
+                    </b>
+
+                    ${escapeHtml(
+                        errorMessage
+                    )}
+
                 </p>
+
+
+                <hr>
+
+
+                <h3>
+                    🔍 ตรวจสอบ
+                </h3>
+
 
                 <ul>
 
                     <li>
-                        Supabase URL
+                        Supabase Project URL
                     </li>
+
 
                     <li>
                         Publishable Key
                     </li>
 
+
+                    <li>
+                        Data API
+                    </li>
+
+
                     <li>
                         RLS Policy
                     </li>
+
+
+                    <li>
+                        tickets table
+                    </li>
+
 
                     <li>
                         Internet Connection
@@ -510,19 +698,115 @@ async function createTicket() {
 
                 </ul>
 
+
             </div>
 
         `;
+
     }
+
+
+
+    finally {
+
+
+        /* -------------------------------------------
+           Enable Button
+        -------------------------------------------- */
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            "🎫 Create Ticket";
+
+    }
+
 }
 
 
-function escapeHtml(text) {
 
-    const div =
-        document.createElement("div");
+/* =====================================================
+   5. TEST DATABASE CONNECTION
+===================================================== */
 
-    div.textContent = text;
 
-    return div.innerHTML;
+/*
+    ฟังก์ชันนี้เอาไว้ Debug
+
+    ยังไม่ต้องเรียกใช้จากหน้าเว็บก็ได้
+
+    เปิด Browser Console แล้วพิมพ์:
+
+    testDatabase()
+
+    เพื่อทดสอบ Supabase
+*/
+
+async function testDatabase() {
+
+
+    console.log(
+        "Testing Supabase connection..."
+    );
+
+
+    try {
+
+
+        const {
+
+            data,
+
+            error
+
+        } = await supabaseClient
+
+            .from("tickets")
+
+            .select("id")
+
+            .limit(1);
+
+
+
+        if (error) {
+
+            console.error(
+                "Database Test FAILED:",
+                error
+            );
+
+
+            return false;
+
+        }
+
+
+
+        console.log(
+            "Database Test SUCCESS:",
+            data
+        );
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "Database Test ERROR:",
+            error
+        );
+
+
+        return false;
+
+    }
+
 }
