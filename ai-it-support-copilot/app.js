@@ -11,7 +11,7 @@ const SUPABASE_URL =
     "https://cpdakjvwsvtottatulwo.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "ใส่_PUBLISHABLE_KEY_ของคุณตรงนี้";
+    "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
 
 
 const supabaseClient =
