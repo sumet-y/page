@@ -40,13 +40,16 @@
             </h1>
 
             <p>
-                AI Native IT Support — Phase 2.3
+                AI Native IT Support — Phase 3.1
             </p>
 
         </div>
 
+
         <div class="status">
+
             ● SUPABASE CONNECTED
+
         </div>
 
     </header>
@@ -59,9 +62,13 @@
 
     <section class="dashboard">
 
+
         <div class="stat-card">
 
-            <div class="stat-number" id="totalTickets">
+            <div
+                class="stat-number"
+                id="totalTickets"
+            >
                 0
             </div>
 
@@ -74,7 +81,10 @@
 
         <div class="stat-card">
 
-            <div class="stat-number" id="openTickets">
+            <div
+                class="stat-number"
+                id="openTickets"
+            >
                 0
             </div>
 
@@ -87,7 +97,10 @@
 
         <div class="stat-card">
 
-            <div class="stat-number" id="progressTickets">
+            <div
+                class="stat-number"
+                id="progressTickets"
+            >
                 0
             </div>
 
@@ -100,7 +113,10 @@
 
         <div class="stat-card">
 
-            <div class="stat-number" id="resolvedTickets">
+            <div
+                class="stat-number"
+                id="resolvedTickets"
+            >
                 0
             </div>
 
@@ -109,6 +125,7 @@
             </div>
 
         </div>
+
 
     </section>
 
@@ -119,6 +136,7 @@
     ================================================== -->
 
     <section class="card">
+
 
         <div class="card-title">
 
@@ -133,6 +151,7 @@
         </div>
 
 
+
         <div class="form-grid">
 
 
@@ -141,6 +160,7 @@
                 <label for="userName">
                     ผู้แจ้ง
                 </label>
+
 
                 <input
                     type="text"
@@ -151,11 +171,13 @@
             </div>
 
 
+
             <div>
 
                 <label for="systemType">
                     ระบบ / อุปกรณ์
                 </label>
+
 
                 <select id="systemType">
 
@@ -195,9 +217,13 @@
         </div>
 
 
+
         <label for="problem">
+
             รายละเอียดปัญหา
+
         </label>
+
 
         <textarea
             id="problem"
@@ -206,14 +232,18 @@
         ></textarea>
 
 
+
         <div class="form-grid">
 
 
             <div>
 
                 <label for="priority">
+
                     Priority
+
                 </label>
+
 
                 <select id="priority">
 
@@ -221,7 +251,10 @@
                         Low
                     </option>
 
-                    <option value="Medium" selected>
+                    <option
+                        value="Medium"
+                        selected
+                    >
                         Medium
                     </option>
 
@@ -238,20 +271,29 @@
             </div>
 
 
-            <div style="display:flex;align-items:end;">
+
+            <div
+                style="
+                    display:flex;
+                    align-items:end;
+                "
+            >
 
                 <button
                     class="btn-primary"
                     id="createTicketButton"
                     onclick="createTicket()"
                 >
+
                     🎫 Create Ticket
+
                 </button>
 
             </div>
 
 
         </div>
+
 
     </section>
 
@@ -262,6 +304,7 @@
     ================================================== -->
 
     <section class="card">
+
 
         <div class="card-title">
 
@@ -276,7 +319,9 @@
         </div>
 
 
+
         <div class="toolbar">
+
 
             <input
                 type="text"
@@ -318,10 +363,14 @@
                 class="btn-secondary"
                 onclick="loadTickets()"
             >
+
                 🔄 Refresh
+
             </button>
 
+
         </div>
+
 
 
         <div
@@ -341,6 +390,7 @@
 
         </div>
 
+
     </section>
 
 
@@ -355,6 +405,7 @@
         style="display:none;"
     >
 
+
         <div class="card-title">
 
             <span>
@@ -368,14 +419,76 @@
         </div>
 
 
+
         <div id="ticketDetail"></div>
 
 
-        <!-- =============================================
+
+        <!-- =================================================
+             KNOWLEDGE SEARCH
+        ================================================== -->
+
+        <div
+            class="ai-box"
+            id="knowledgeSearchBox"
+        >
+
+
+            <h3>
+
+                🧠 AI Knowledge Search
+
+            </h3>
+
+
+            <p>
+
+                ค้นหา Case เก่าที่มีอาการ
+                หรือระบบใกล้เคียงกับ Ticket นี้
+
+            </p>
+
+
+            <button
+                class="btn-primary"
+                onclick="searchKnowledge()"
+                id="knowledgeSearchButton"
+            >
+
+                🔎 ค้นหา Case ที่ใกล้เคียง
+
+            </button>
+
+
+            <div
+                id="knowledgeSearchStatus"
+                class="status-box"
+                style="margin-top:15px;"
+            >
+
+                กดปุ่มเพื่อค้นหา Knowledge Base
+
+            </div>
+
+
+            <div
+                id="knowledgeResults"
+                style="margin-top:15px;"
+            >
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =================================================
              TROUBLESHOOTING
-        ============================================== -->
+        ================================================== -->
 
         <div id="solutionSection">
+
 
             <hr>
 
@@ -385,9 +498,11 @@
             </h3>
 
 
+
             <label for="rootCause">
                 Root Cause
             </label>
+
 
             <textarea
                 id="rootCause"
@@ -396,9 +511,11 @@
             ></textarea>
 
 
+
             <label for="evidence">
                 Evidence
             </label>
+
 
             <textarea
                 id="evidence"
@@ -407,9 +524,11 @@
             ></textarea>
 
 
+
             <label for="solution">
                 Solution
             </label>
+
 
             <textarea
                 id="solution"
@@ -418,15 +537,18 @@
             ></textarea>
 
 
+
             <label for="verification">
                 Verification
             </label>
+
 
             <textarea
                 id="verification"
                 rows="3"
                 placeholder="วิธีตรวจสอบหลังแก้ไข..."
             ></textarea>
+
 
 
             <div class="form-grid">
@@ -437,6 +559,7 @@
                     <label for="detailStatus">
                         Ticket Status
                     </label>
+
 
                     <select id="detailStatus">
 
@@ -461,13 +584,22 @@
                 </div>
 
 
-                <div style="display:flex;align-items:end;gap:10px;">
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:end;
+                        gap:10px;
+                    "
+                >
 
                     <button
                         class="btn-primary"
                         onclick="saveSolution()"
                     >
+
                         💾 Save Solution
+
                     </button>
 
 
@@ -475,7 +607,9 @@
                         class="btn-secondary"
                         onclick="saveToKnowledgeBase()"
                     >
+
                         🧠 Save to Knowledge Base
+
                     </button>
 
                 </div>
@@ -484,14 +618,19 @@
             </div>
 
 
+
             <div
                 id="detailStatusMessage"
                 class="status-box"
             >
+
                 พร้อมแก้ไข Ticket
+
             </div>
 
+
         </div>
+
 
     </section>
 
@@ -503,8 +642,11 @@
 
     <section class="workflow">
 
+
         <h2>
-            🔄 Phase 2.3 Workflow
+
+            🔄 AI Native Workflow
+
         </h2>
 
 
@@ -513,10 +655,12 @@
 
             <div class="workflow-item">
 
-                <strong>1</strong>
+                <strong>
+                    1
+                </strong>
 
                 <span>
-                    Create Ticket
+                    Ticket
                 </span>
 
             </div>
@@ -529,10 +673,12 @@
 
             <div class="workflow-item">
 
-                <strong>2</strong>
+                <strong>
+                    2
+                </strong>
 
                 <span>
-                    Ticket List
+                    Search Knowledge
                 </span>
 
             </div>
@@ -545,7 +691,27 @@
 
             <div class="workflow-item">
 
-                <strong>3</strong>
+                <strong>
+                    3
+                </strong>
+
+                <span>
+                    Similar Cases
+                </span>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div class="workflow-item">
+
+                <strong>
+                    4
+                </strong>
 
                 <span>
                     Troubleshoot
@@ -561,32 +727,19 @@
 
             <div class="workflow-item">
 
-                <strong>4</strong>
+                <strong>
+                    5
+                </strong>
 
                 <span>
-                    Verify
-                </span>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>5</strong>
-
-                <span>
-                    Knowledge Base
+                    New Knowledge
                 </span>
 
             </div>
 
 
         </div>
+
 
     </section>
 
@@ -602,6 +755,7 @@
 <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
 ></script>
+
 
 
 <!-- =====================================================
