@@ -13,6 +13,10 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
 
+// Semantic Knowledge Search Edge Function
+const SEARCH_KNOWLEDGE_URL =
+    `${SUPABASE_URL}/functions/v1/search-knowledge`;
+
 
 const supabaseClient =
     window.supabase.createClient(
@@ -686,121 +690,7 @@ function selectTicket(
    KNOWLEDGE SEARCH
    ========================================================= */
 
-async function searchKnowledge() {
 
-    const query =
-        (
-            $("knowledgeQuery")
-                ?.value || ""
-        )
-        .trim();
-
-
-    if (!query) {
-
-        showToast(
-            "กรุณาระบุข้อความที่ต้องการค้นหา"
-        );
-
-        return;
-
-    }
-
-
-    $("knowledgeStatus")
-        .textContent =
-        "🔎 กำลังค้นหา Knowledge Base...";
-
-
-    $("knowledgeResults")
-        .innerHTML = `
-
-        <div class="knowledge-empty">
-
-            🔎 Searching...
-
-        </div>
-
-    `;
-
-
-    try {
-
-        /*
-         * Current V2 keeps compatibility
-         * with the existing Phase 3.1
-         * keyword/category search.
-         *
-         * Semantic Vector Search will replace
-         * this function in Module 3 backend.
-         */
-
-
-        const {
-            data,
-            error
-        } =
-        await supabaseClient
-            .from(
-                "knowledge_base"
-            )
-            .select(
-                "id,title,category,symptom,environment,root_cause,solution,verification"
-            );
-
-
-        if (error) {
-
-            throw error;
-
-        }
-
-
-        const results =
-            rankKnowledge(
-                query,
-                data || []
-            );
-
-
-        renderKnowledgeResults(
-            results
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Knowledge Search Error:",
-            error
-        );
-
-
-        $("knowledgeStatus")
-            .textContent =
-            "❌ Search Error";
-
-
-        $("knowledgeResults")
-            .innerHTML = `
-
-            <div class="knowledge-empty">
-
-                ❌ ไม่สามารถค้นหา Knowledge Base ได้
-
-                <br><br>
-
-                ${escapeHtml(
-                    error.message || ""
-                )}
-
-            </div>
-
-        `;
-
-    }
-
-}
 
 
 /* =========================================================
@@ -1230,15 +1120,10 @@ function buildKnowledgeText(item) {
 
 /*
  * FINAL Module 3 search.
- * This intentionally does not require an AI API key in the browser.
- * It performs hybrid lexical matching and gives stronger weight to:
- *   1. exact phrase
- *   2. system/category
- *   3. symptom/problem words
- *   4. root cause / solution evidence
- *
- * When a server-side embedding RPC is added later, this function can
- * merge its similarity score into the same result format.
+ * Uses the Supabase Edge Function `search-knowledge`
+ * for semantic vector search, then enriches the results with
+ * structured fields from `knowledge_base` so Modules 4-6 can
+ * continue using Root Cause / Solution / Verification evidence.
  */
 async function searchKnowledge() {
 
@@ -1252,47 +1137,172 @@ async function searchKnowledge() {
     const statusEl = $("knowledgeStatus");
     const resultEl = $("knowledgeResults");
 
-    if (statusEl) statusEl.textContent = "🔎 กำลังค้นหา Knowledge Base...";
+    if (statusEl) {
+        statusEl.textContent = "🔎 กำลังค้นหา Semantic Knowledge...";
+    }
 
     if (resultEl) {
         resultEl.innerHTML = `
             <div class="knowledge-empty">
-                <div style="font-size:28px">🔎</div>
-                <strong>กำลังวิเคราะห์ Case...</strong>
+                <div style="font-size:28px">🧠</div>
+                <strong>AI กำลังค้นหา Case ที่ใกล้เคียง...</strong>
                 <br>
-                <small>ค้นหา Similar Knowledge และวิเคราะห์หลักฐาน</small>
+                <small>กำลังสร้าง Query Vector และค้นหา Similar Knowledge</small>
             </div>
         `;
     }
 
     try {
 
-        const { data, error } = await supabaseClient
-            .from("knowledge_base")
-            .select(
-                "id,title,category,symptom,environment,root_cause,solution,verification"
+        /*
+         * Module 3 — Semantic Vector Search
+         *
+         * The browser calls the Supabase Edge Function with the
+         * publishable key only. Never expose the service-role key here.
+         */
+        const response = await fetch(
+            SEARCH_KNOWLEDGE_URL,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_PUBLISHABLE_KEY
+                },
+                body: JSON.stringify({
+                    query
+                })
+            }
+        );
+
+        let payload = {};
+
+        try {
+            payload = await response.json();
+        } catch {
+            payload = {};
+        }
+
+        if (!response.ok || payload.success !== true) {
+            throw new Error(
+                payload.error ||
+                payload.message ||
+                `search-knowledge failed (${response.status})`
+            );
+        }
+
+        const semanticResults = Array.isArray(payload.results)
+            ? payload.results
+            : [];
+
+        /*
+         * The Edge Function returns:
+         *   id
+         *   knowledge_id
+         *   content
+         *   similarity
+         *
+         * Module 4-6 also need the structured Knowledge Base fields,
+         * so enrich the semantic results with the matching records.
+         */
+        const knowledgeIds = [
+            ...new Set(
+                semanticResults
+                    .map(item => Number(item.knowledge_id))
+                    .filter(Number.isFinite)
+            )
+        ];
+
+        let knowledgeRows = [];
+
+        if (knowledgeIds.length > 0) {
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("knowledge_base")
+                .select(
+                    "id,title,category,symptom,environment,root_cause,solution,verification"
+                )
+                .in("id", knowledgeIds);
+
+            if (error) {
+                throw error;
+            }
+
+            knowledgeRows = data || [];
+        }
+
+        const knowledgeMap = new Map(
+            knowledgeRows.map(item => [
+                Number(item.id),
+                item
+            ])
+        );
+
+        const results = semanticResults.map(item => {
+
+            const knowledge =
+                knowledgeMap.get(
+                    Number(item.knowledge_id)
+                ) || {};
+
+            const similarity = Number(
+                item.similarity || 0
             );
 
-        if (error) throw error;
-
-        const results = rankKnowledgeV1(query, data || []);
+            return {
+                ...knowledge,
+                id: knowledge.id ?? item.knowledge_id,
+                knowledge_id: item.knowledge_id,
+                content: item.content || "",
+                similarity,
+                score: Math.max(
+                    0,
+                    Math.min(100, similarity * 100)
+                )
+            };
+        });
 
         aiCopilotContext.results = results;
 
         renderKnowledgeResultsV1(results);
 
+        if (statusEl) {
+            statusEl.textContent = results.length
+                ? `พบ ${results.length} Similar Case จาก Semantic Search`
+                : "ไม่พบ Case ที่มีความหมายใกล้เคียง";
+        }
+
+        if (!results.length) {
+            showToast("ไม่พบ Similar Knowledge");
+        } else {
+            showToast(
+                `พบ ${results.length} Similar Case`
+            );
+        }
+
     } catch (error) {
 
-        console.error("V1 Knowledge Search Error:", error);
+        console.error(
+            "Semantic Knowledge Search Error:",
+            error
+        );
 
-        if (statusEl) statusEl.textContent = "❌ Search Error";
+        if (statusEl) {
+            statusEl.textContent =
+                "❌ Semantic Search Error";
+        }
 
         if (resultEl) {
             resultEl.innerHTML = `
                 <div class="knowledge-empty">
-                    ❌ ไม่สามารถค้นหา Knowledge Base ได้
+                    ❌ ไม่สามารถค้นหา Semantic Knowledge ได้
                     <br><br>
-                    <small>${escapeHtml(error.message || "Database Error")}</small>
+                    <small>${escapeHtml(
+                        error.message ||
+                        "Search Error"
+                    )}</small>
                 </div>
             `;
         }
