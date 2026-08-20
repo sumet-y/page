@@ -1,770 +1,670 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <title>AI IT Support Copilot</title>
 
-    <title>
-        AI IT Support Copilot
-    </title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
 <div class="app">
 
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
 
-    <!-- =================================================
-         HEADER
-    ================================================== -->
+    <header class="topbar">
 
-    <header class="header">
+        <div class="brand">
 
-        <div>
+            <div class="brand-icon">
+                🤖
+            </div>
 
-            <h1>
-                🤖 AI IT Support Copilot
-            </h1>
-
-            <p>
-                AI Native IT Support — Phase 3.1
-            </p>
+            <div>
+                <h1>AI IT Support Copilot</h1>
+                <p>AI Native IT Support</p>
+            </div>
 
         </div>
 
+        <div class="top-status">
 
-        <div class="status">
+            <span id="connectionStatus"
+                  class="status-pill connecting">
+                <span class="status-dot"></span>
+                CONNECTING
+            </span>
 
-            ● SUPABASE CONNECTED
+            <button id="refreshBtn"
+                    class="icon-btn"
+                    title="Refresh">
+                ↻
+            </button>
 
         </div>
 
     </header>
 
 
+    <!-- =====================================================
+         DASHBOARD SUMMARY
+    ====================================================== -->
 
-    <!-- =================================================
-         DASHBOARD
-    ================================================== -->
+    <section class="summary">
 
-    <section class="dashboard">
-
-
-        <div class="stat-card">
-
-            <div
-                class="stat-number"
-                id="totalTickets"
-            >
-                0
+        <div class="summary-card">
+            <span class="summary-icon blue">🎫</span>
+            <div>
+                <strong id="totalTickets">0</strong>
+                <span>Total Tickets</span>
             </div>
-
-            <div class="stat-label">
-                Total Tickets
-            </div>
-
         </div>
 
-
-        <div class="stat-card">
-
-            <div
-                class="stat-number"
-                id="openTickets"
-            >
-                0
+        <div class="summary-card">
+            <span class="summary-icon orange">🔵</span>
+            <div>
+                <strong id="openTickets">0</strong>
+                <span>Open</span>
             </div>
-
-            <div class="stat-label">
-                Open
-            </div>
-
         </div>
 
-
-        <div class="stat-card">
-
-            <div
-                class="stat-number"
-                id="progressTickets"
-            >
-                0
+        <div class="summary-card">
+            <span class="summary-icon purple">⚙️</span>
+            <div>
+                <strong id="progressTickets">0</strong>
+                <span>In Progress</span>
             </div>
-
-            <div class="stat-label">
-                In Progress
-            </div>
-
         </div>
 
-
-        <div class="stat-card">
-
-            <div
-                class="stat-number"
-                id="resolvedTickets"
-            >
-                0
+        <div class="summary-card">
+            <span class="summary-icon green">✓</span>
+            <div>
+                <strong id="resolvedTickets">0</strong>
+                <span>Resolved</span>
             </div>
-
-            <div class="stat-label">
-                Resolved
-            </div>
-
         </div>
-
 
     </section>
 
 
+    <!-- =====================================================
+         MAIN WORKSPACE
+    ====================================================== -->
 
-    <!-- =================================================
-         CREATE TICKET
-    ================================================== -->
-
-    <section class="card">
-
-
-        <div class="card-title">
-
-            <span>
-                01
-            </span>
-
-            <h2>
-                🎫 Create Ticket
-            </h2>
-
-        </div>
+    <main class="workspace">
 
 
+        <!-- =================================================
+             LEFT : TICKET LIST
+        ================================================== -->
 
-        <div class="form-grid">
+        <aside class="ticket-panel">
 
+            <div class="panel-header">
 
-            <div>
+                <div>
+                    <h2>🎫 Tickets</h2>
+                    <p>IT Support Queue</p>
+                </div>
 
-                <label for="userName">
-                    ผู้แจ้ง
-                </label>
-
-
-                <input
-                    type="text"
-                    id="userName"
-                    placeholder="ชื่อผู้แจ้ง"
-                >
-
-            </div>
-
-
-
-            <div>
-
-                <label for="systemType">
-                    ระบบ / อุปกรณ์
-                </label>
-
-
-                <select id="systemType">
-
-                    <option value="Handheld + Web Application">
-                        Handheld + Web Application
-                    </option>
-
-                    <option value="Wi-Fi">
-                        Wi-Fi
-                    </option>
-
-                    <option value="Printer">
-                        Printer
-                    </option>
-
-                    <option value="PC / Windows">
-                        PC / Windows
-                    </option>
-
-                    <option value="Network">
-                        Network
-                    </option>
-
-                    <option value="Server">
-                        Server
-                    </option>
-
-                    <option value="Other">
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-        </div>
-
-
-
-        <label for="problem">
-
-            รายละเอียดปัญหา
-
-        </label>
-
-
-        <textarea
-            id="problem"
-            rows="4"
-            placeholder="อธิบายปัญหาที่พบ..."
-        ></textarea>
-
-
-
-        <div class="form-grid">
-
-
-            <div>
-
-                <label for="priority">
-
-                    Priority
-
-                </label>
-
-
-                <select id="priority">
-
-                    <option value="Low">
-                        Low
-                    </option>
-
-                    <option
-                        value="Medium"
-                        selected
-                    >
-                        Medium
-                    </option>
-
-                    <option value="High">
-                        High
-                    </option>
-
-                    <option value="Critical">
-                        Critical
-                    </option>
-
-                </select>
-
-            </div>
-
-
-
-            <div
-                style="
-                    display:flex;
-                    align-items:end;
-                "
-            >
-
-                <button
-                    class="btn-primary"
-                    id="createTicketButton"
-                    onclick="createTicket()"
-                >
-
-                    🎫 Create Ticket
-
+                <button id="newTicketBtn"
+                        class="primary-small">
+                    + New
                 </button>
 
             </div>
 
 
-        </div>
+            <div class="ticket-search">
+
+                <input
+                    id="ticketSearch"
+                    type="text"
+                    placeholder="🔎 Search ticket / user / problem..."
+                >
+
+                <select id="statusFilter">
+
+                    <option value="">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Resolved">Resolved</option>
+
+                </select>
+
+            </div>
 
 
-    </section>
+            <div id="ticketList"
+                 class="ticket-list">
 
+                <div class="loading">
+                    Loading tickets...
+                </div>
 
+            </div>
 
-    <!-- =================================================
-         TICKET LIST
-    ================================================== -->
-
-    <section class="card">
-
-
-        <div class="card-title">
-
-            <span>
-                02
-            </span>
-
-            <h2>
-                📋 Ticket List
-            </h2>
-
-        </div>
-
-
-
-        <div class="toolbar">
-
-
-            <input
-                type="text"
-                id="searchTicket"
-                placeholder="🔎 Search Ticket / User / Problem..."
-                oninput="filterTickets()"
-            >
-
-
-            <select
-                id="statusFilter"
-                onchange="filterTickets()"
-            >
-
-                <option value="All">
-                    All Status
-                </option>
-
-                <option value="Open">
-                    Open
-                </option>
-
-                <option value="In Progress">
-                    In Progress
-                </option>
-
-                <option value="Resolved">
-                    Resolved
-                </option>
-
-                <option value="Closed">
-                    Closed
-                </option>
-
-            </select>
-
-
-            <button
-                class="btn-secondary"
-                onclick="loadTickets()"
-            >
-
-                🔄 Refresh
-
-            </button>
-
-
-        </div>
+        </aside>
 
 
 
-        <div
-            id="ticketList"
-            class="ticket-list"
-        >
+        <!-- =================================================
+             RIGHT : COPILOT
+        ================================================== -->
 
-            <div class="empty">
+        <section class="copilot-panel">
 
-                ⏳
+
+            <!-- =============================================
+                 EMPTY STATE
+            ============================================== -->
+
+            <div id="emptyState"
+                 class="empty-state">
+
+                <div class="empty-icon">
+                    🤖
+                </div>
+
+                <h2>AI IT Support Copilot</h2>
 
                 <p>
-                    Loading tickets...
+                    เลือก Ticket เพื่อเริ่มวิเคราะห์ปัญหา
                 </p>
 
             </div>
 
-        </div>
 
 
-    </section>
+            <!-- =============================================
+                 TICKET DETAIL
+            ============================================== -->
 
+            <div id="ticketWorkspace"
+                 class="ticket-workspace hidden">
 
 
-    <!-- =================================================
-         TICKET DETAIL
-    ================================================== -->
+                <!-- Ticket Header -->
 
-    <section
-        class="card"
-        id="ticketDetailSection"
-        style="display:none;"
-    >
+                <div class="ticket-header">
 
+                    <div>
 
-        <div class="card-title">
+                        <div class="ticket-number"
+                             id="detailTicketNo">
+                            INC-00000000
+                        </div>
 
-            <span>
-                03
-            </span>
+                        <h2 id="detailProblem">
+                            -
+                        </h2>
 
-            <h2>
-                📄 Ticket Detail
-            </h2>
+                        <div class="ticket-meta">
 
-        </div>
+                            <span id="detailUser">
+                                -
+                            </span>
 
+                            <span>•</span>
 
+                            <span id="detailSystem">
+                                -
+                            </span>
 
-        <div id="ticketDetail"></div>
+                        </div>
 
+                    </div>
 
-
-        <!-- =================================================
-             KNOWLEDGE SEARCH
-        ================================================== -->
-
-        <div
-            class="ai-box"
-            id="knowledgeSearchBox"
-        >
-
-
-            <h3>
-
-                🧠 AI Knowledge Search
-
-            </h3>
-
-
-            <p>
-
-                ค้นหา Case เก่าที่มีอาการ
-                หรือระบบใกล้เคียงกับ Ticket นี้
-
-            </p>
-
-
-            <button
-                class="btn-primary"
-                onclick="searchKnowledge()"
-                id="knowledgeSearchButton"
-            >
-
-                🔎 ค้นหา Case ที่ใกล้เคียง
-
-            </button>
-
-
-            <div
-                id="knowledgeSearchStatus"
-                class="status-box"
-                style="margin-top:15px;"
-            >
-
-                กดปุ่มเพื่อค้นหา Knowledge Base
-
-            </div>
-
-
-            <div
-                id="knowledgeResults"
-                style="margin-top:15px;"
-            >
-
-            </div>
-
-
-        </div>
-
-
-
-        <!-- =================================================
-             TROUBLESHOOTING
-        ================================================== -->
-
-        <div id="solutionSection">
-
-
-            <hr>
-
-
-            <h3>
-                🛠️ Troubleshooting / Solution
-            </h3>
-
-
-
-            <label for="rootCause">
-                Root Cause
-            </label>
-
-
-            <textarea
-                id="rootCause"
-                rows="3"
-                placeholder="สาเหตุที่ยืนยันแล้ว..."
-            ></textarea>
-
-
-
-            <label for="evidence">
-                Evidence
-            </label>
-
-
-            <textarea
-                id="evidence"
-                rows="3"
-                placeholder="หลักฐานที่ใช้ยืนยัน Root Cause..."
-            ></textarea>
-
-
-
-            <label for="solution">
-                Solution
-            </label>
-
-
-            <textarea
-                id="solution"
-                rows="3"
-                placeholder="วิธีแก้ไข..."
-            ></textarea>
-
-
-
-            <label for="verification">
-                Verification
-            </label>
-
-
-            <textarea
-                id="verification"
-                rows="3"
-                placeholder="วิธีตรวจสอบหลังแก้ไข..."
-            ></textarea>
-
-
-
-            <div class="form-grid">
-
-
-                <div>
-
-                    <label for="detailStatus">
-                        Ticket Status
-                    </label>
-
-
-                    <select id="detailStatus">
-
-                        <option value="Open">
-                            Open
-                        </option>
-
-                        <option value="In Progress">
-                            In Progress
-                        </option>
-
-                        <option value="Resolved">
-                            Resolved
-                        </option>
-
-                        <option value="Closed">
-                            Closed
-                        </option>
-
-                    </select>
+                    <div id="detailStatus"
+                         class="status-badge">
+                        Open
+                    </div>
 
                 </div>
 
 
 
-                <div
-                    style="
-                        display:flex;
-                        align-items:end;
-                        gap:10px;
-                    "
-                >
+                <!-- =========================================
+                     PROBLEM
+                ========================================== -->
 
-                    <button
-                        class="btn-primary"
-                        onclick="saveSolution()"
-                    >
+                <section class="copilot-card problem-card">
 
-                        💾 Save Solution
+                    <div class="section-title">
 
-                    </button>
+                        <span>🔴</span>
+
+                        <div>
+                            <h3>Problem</h3>
+                            <small>Reported Issue</small>
+                        </div>
+
+                    </div>
+
+                    <p id="detailProblemText">
+                        -
+                    </p>
+
+                </section>
 
 
-                    <button
-                        class="btn-secondary"
-                        onclick="saveToKnowledgeBase()"
-                    >
 
-                        🧠 Save to Knowledge Base
+                <!-- =========================================
+                     AI KNOWLEDGE SEARCH
+                ========================================== -->
 
-                    </button>
+                <section class="copilot-card ai-search-card">
 
-                </div>
+                    <div class="section-title">
+
+                        <span>🧠</span>
+
+                        <div>
+                            <h3>AI Knowledge Search</h3>
+                            <small>
+                                ค้นหา Case ที่มีความหมายใกล้เคียง
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="ai-search-box">
+
+                        <input
+                            id="knowledgeQuery"
+                            type="text"
+                            placeholder="เช่น เครื่องสแกนใช้เวลาบันทึกรายการนาน"
+                        >
+
+                        <button id="searchKnowledgeBtn"
+                                class="ai-search-btn">
+                            🔎 Search
+                        </button>
+
+                    </div>
+
+
+                    <div id="knowledgeStatus"
+                         class="search-status">
+                        พร้อมค้นหา Knowledge Base
+                    </div>
+
+
+                    <div id="knowledgeResults"
+                         class="knowledge-results">
+
+                        <div class="knowledge-empty">
+                            ยังไม่ได้ค้นหา
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =========================================
+                     AI ANALYSIS
+                ========================================== -->
+
+                <section class="copilot-card">
+
+                    <div class="section-title">
+
+                        <span>🧠</span>
+
+                        <div>
+                            <h3>AI Analysis</h3>
+                            <small>Possible Root Cause</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-grid">
+
+
+                        <div class="cause-card high">
+
+                            <div class="cause-score">
+                                HIGH
+                            </div>
+
+                            <strong>
+                                Database Query
+                            </strong>
+
+                            <p>
+                                ตรวจสอบ Query และ Database Index
+                            </p>
+
+                        </div>
+
+
+                        <div class="cause-card medium">
+
+                            <div class="cause-score">
+                                MEDIUM
+                            </div>
+
+                            <strong>
+                                Network
+                            </strong>
+
+                            <p>
+                                ตรวจสอบ latency และ packet loss
+                            </p>
+
+                        </div>
+
+
+                        <div class="cause-card low">
+
+                            <div class="cause-score">
+                                LOW
+                            </div>
+
+                            <strong>
+                                Application
+                            </strong>
+
+                            <p>
+                                ตรวจสอบ processing time
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =========================================
+                     INVESTIGATION
+                ========================================== -->
+
+                <section class="copilot-card">
+
+                    <div class="section-title">
+
+                        <span>🔍</span>
+
+                        <div>
+                            <h3>Investigation</h3>
+                            <small>Recommended troubleshooting path</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="investigation">
+
+                        <div class="investigation-step done">
+
+                            <span>✓</span>
+
+                            <div>
+                                <strong>Network</strong>
+                                <small>
+                                    ตรวจสอบ latency / packet loss
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="investigation-step warning">
+
+                            <span>!</span>
+
+                            <div>
+                                <strong>Database</strong>
+                                <small>
+                                    ตรวจสอบ Query / Index
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="investigation-step">
+
+                            <span>3</span>
+
+                            <div>
+                                <strong>Server</strong>
+                                <small>
+                                    ตรวจสอบ CPU / RAM / Disk
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="investigation-step">
+
+                            <span>4</span>
+
+                            <div>
+                                <strong>Application</strong>
+                                <small>
+                                    ตรวจสอบ response time
+                                </small>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =========================================
+                     RECOMMENDED SOLUTION
+                ========================================== -->
+
+                <section class="copilot-card solution-card">
+
+                    <div class="section-title">
+
+                        <span>💡</span>
+
+                        <div>
+                            <h3>Recommended Solution</h3>
+                            <small>AI suggestion — Human approval required</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="solution-content">
+
+                        <h4>
+                            ตรวจสอบ Database Query และเพิ่ม Index
+                        </h4>
+
+                        <ul>
+
+                            <li>
+                                ตรวจสอบ Slow Query
+                            </li>
+
+                            <li>
+                                ตรวจสอบ Execution Plan
+                            </li>
+
+                            <li>
+                                ตรวจสอบ Index
+                            </li>
+
+                            <li>
+                                ทดสอบ Response Time หลังแก้ไข
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+
+                    <div class="solution-actions">
+
+                        <button class="secondary-btn">
+                            ✕ Reject
+                        </button>
+
+                        <button class="primary-btn">
+                            ✓ Accept Recommendation
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =========================================
+                     KNOWLEDGE LEARNING
+                ========================================== -->
+
+                <section class="copilot-card learning-card">
+
+                    <div class="section-title">
+
+                        <span>📚</span>
+
+                        <div>
+                            <h3>Knowledge Learning</h3>
+                            <small>
+                                เพิ่มความรู้ให้ระบบหลังแก้ปัญหา
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="learning-box">
+
+                        <div>
+                            <strong>
+                                Resolution ใหม่?
+                            </strong>
+
+                            <p>
+                                เมื่อแก้ปัญหาเสร็จ
+                                สามารถบันทึกเป็น Knowledge
+                                สำหรับ Case ในอนาคต
+                            </p>
+                        </div>
+
+
+                        <button id="saveKnowledgeBtn"
+                                class="knowledge-btn">
+                            📚 Save as Knowledge
+                        </button>
+
+                    </div>
+
+                </section>
 
 
             </div>
 
+        </section>
+
+    </main>
 
 
-            <div
-                id="detailStatusMessage"
-                class="status-box"
-            >
-
-                พร้อมแก้ไข Ticket
-
-            </div>
-
-
-        </div>
-
-
-    </section>
-
-
-
-    <!-- =================================================
+    <!-- =====================================================
          WORKFLOW
-    ================================================== -->
+    ====================================================== -->
 
     <section class="workflow">
 
+        <div class="workflow-header">
 
-        <h2>
+            <div>
+                <h2>🔄 AI Native Workflow</h2>
 
-            🔄 AI Native Workflow
-
-        </h2>
-
-
-        <div class="workflow-grid">
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    1
-                </strong>
-
-                <span>
-                    Ticket
-                </span>
-
+                <p>
+                    Ticket → Knowledge → Reason → Recommend → Learn
+                </p>
             </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    2
-                </strong>
-
-                <span>
-                    Search Knowledge
-                </span>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    3
-                </strong>
-
-                <span>
-                    Similar Cases
-                </span>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    4
-                </strong>
-
-                <span>
-                    Troubleshoot
-                </span>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    5
-                </strong>
-
-                <span>
-                    New Knowledge
-                </span>
-
-            </div>
-
 
         </div>
 
 
+        <div class="workflow-steps">
+
+            <div class="workflow-step active">
+                <span>1</span>
+                <strong>Ticket</strong>
+            </div>
+
+            <div class="workflow-arrow">→</div>
+
+            <div class="workflow-step active">
+                <span>2</span>
+                <strong>Knowledge</strong>
+            </div>
+
+            <div class="workflow-arrow">→</div>
+
+            <div class="workflow-step">
+                <span>3</span>
+                <strong>Reason</strong>
+            </div>
+
+            <div class="workflow-arrow">→</div>
+
+            <div class="workflow-step">
+                <span>4</span>
+                <strong>Recommend</strong>
+            </div>
+
+            <div class="workflow-arrow">→</div>
+
+            <div class="workflow-step">
+                <span>5</span>
+                <strong>Resolve</strong>
+            </div>
+
+            <div class="workflow-arrow">→</div>
+
+            <div class="workflow-step">
+                <span>6</span>
+                <strong>Learn</strong>
+            </div>
+
+        </div>
+
     </section>
+
+
+    <!-- Toast -->
+
+    <div id="toast"
+         class="toast">
+    </div>
 
 
 </div>
 
 
-
-<!-- =====================================================
-     SUPABASE JS
-====================================================== -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
-
-
-<!-- =====================================================
-     APPLICATION JS
-====================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="app.js"></script>
 
-
 </body>
-
 </html>
