@@ -1,27 +1,22 @@
 /* =====================================================
    AI IT SUPPORT COPILOT
-   PHASE 2.3
+   PHASE 3.1
 
-   Ticket Management
+   Knowledge Retrieval / Similar Case Search
 
-   GitHub Pages
-        ↓
-   Supabase
-        ↓
-   PostgreSQL
+   Phase 2.3
+   - Create Ticket
+   - Ticket List
+   - Search
+   - Status
+   - Solution
+   - Knowledge Base
 
-   Features:
-
-   1. Create Ticket
-   2. Ticket List
-   3. Search
-   4. Status Filter
-   5. Ticket Detail
-   6. Save Solution
-   7. Update Status
-   8. Save to Knowledge Base
+   Phase 3.1
+   - Search Knowledge Base
+   - Keyword Ranking
+   - Similar Case
 ===================================================== */
-
 
 
 /* =====================================================
@@ -33,22 +28,18 @@ const SUPABASE_URL =
 
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
+    "วาง_sb_publishable_key_ของคุณตรงนี้";
 
 
 /* =====================================================
-   2. CREATE CLIENT
+   2. SUPABASE CLIENT
 ===================================================== */
 
 const supabaseClient =
     window.supabase.createClient(
-
         SUPABASE_URL,
-
         SUPABASE_PUBLISHABLE_KEY
-
     );
-
 
 
 /* =====================================================
@@ -62,9 +53,8 @@ let currentTicket = null;
 let currentSolution = null;
 
 
-
 /* =====================================================
-   4. HELPERS
+   4. COMMON HELPERS
 ===================================================== */
 
 function escapeHtml(value) {
@@ -73,22 +63,16 @@ function escapeHtml(value) {
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
-
 
     const div =
         document.createElement("div");
 
-
     div.textContent =
         String(value);
 
-
     return div.innerHTML;
-
 }
 
 
@@ -116,15 +100,12 @@ function setDetailMessage(
             "detailStatusMessage"
         );
 
-
     if (!element) {
         return;
     }
 
-
     element.innerHTML =
         message;
-
 
     if (type === "success") {
 
@@ -132,7 +113,6 @@ function setDetailMessage(
             "4px solid #16a34a";
 
     }
-
 
     if (type === "error") {
 
@@ -142,7 +122,6 @@ function setDetailMessage(
     }
 
 }
-
 
 
 /* =====================================================
@@ -159,13 +138,11 @@ document.addEventListener(
 );
 
 
-
 /* =====================================================
    6. CREATE TICKET
 ===================================================== */
 
 async function createTicket() {
-
 
     const userName =
         document
@@ -200,7 +177,6 @@ async function createTicket() {
             );
 
 
-
     if (!userName) {
 
         alert(
@@ -210,7 +186,6 @@ async function createTicket() {
         return;
 
     }
-
 
 
     if (!problem) {
@@ -224,29 +199,22 @@ async function createTicket() {
     }
 
 
-
     button.disabled =
         true;
-
 
     button.innerHTML =
         "⏳ กำลังบันทึก...";
 
 
-
     try {
-
 
         const ticketNo =
             generateTicketNumber();
 
 
         const {
-
             data,
-
             error
-
         } = await supabaseClient
 
             .from("tickets")
@@ -278,7 +246,6 @@ async function createTicket() {
             .single();
 
 
-
         if (error) {
 
             throw error;
@@ -286,15 +253,11 @@ async function createTicket() {
         }
 
 
-
         alert(
             "✅ สร้าง Ticket สำเร็จ\n\n" +
             ticketNo
         );
 
-
-
-        /* Clear Form */
 
         document
             .getElementById("userName")
@@ -306,14 +269,8 @@ async function createTicket() {
             .value = "";
 
 
-
-        /* Reload List */
-
         await loadTickets();
 
-
-
-        /* Open new ticket */
 
         openTicket(
             data.id
@@ -323,7 +280,6 @@ async function createTicket() {
     }
 
     catch (error) {
-
 
         console.error(
             "Create Ticket Error:",
@@ -338,12 +294,10 @@ async function createTicket() {
 
     }
 
-
     finally {
 
         button.disabled =
             false;
-
 
         button.innerHTML =
             "🎫 Create Ticket";
@@ -353,13 +307,11 @@ async function createTicket() {
 }
 
 
-
 /* =====================================================
    7. LOAD TICKETS
 ===================================================== */
 
 async function loadTickets() {
-
 
     const container =
         document.getElementById(
@@ -382,16 +334,11 @@ async function loadTickets() {
     `;
 
 
-
     try {
 
-
         const {
-
             data,
-
             error
-
         } = await supabaseClient
 
             .from("tickets")
@@ -406,7 +353,6 @@ async function loadTickets() {
             );
 
 
-
         if (error) {
 
             throw error;
@@ -414,10 +360,8 @@ async function loadTickets() {
         }
 
 
-
         allTickets =
             data || [];
-
 
 
         updateDashboard();
@@ -427,12 +371,9 @@ async function loadTickets() {
             allTickets
         );
 
-
-
     }
 
     catch (error) {
-
 
         console.error(
             "Load Tickets Error:",
@@ -463,13 +404,11 @@ async function loadTickets() {
 }
 
 
-
 /* =====================================================
    8. DASHBOARD
 ===================================================== */
 
 function updateDashboard() {
-
 
     const total =
         allTickets.length;
@@ -497,14 +436,12 @@ function updateDashboard() {
         ).length;
 
 
-
     document
         .getElementById(
             "totalTickets"
         )
         .textContent =
         total;
-
 
 
     document
@@ -515,14 +452,12 @@ function updateDashboard() {
         open;
 
 
-
     document
         .getElementById(
             "progressTickets"
         )
         .textContent =
         progress;
-
 
 
     document
@@ -535,21 +470,18 @@ function updateDashboard() {
 }
 
 
-
 /* =====================================================
-   9. RENDER TICKET LIST
+   9. RENDER TICKETS
 ===================================================== */
 
 function renderTickets(
     tickets
 ) {
 
-
     const container =
         document.getElementById(
             "ticketList"
         );
-
 
 
     if (!tickets.length) {
@@ -564,11 +496,6 @@ function renderTickets(
                     ไม่พบ Ticket
                 </h3>
 
-                <p>
-                    ลองเปลี่ยนคำค้นหา
-                    หรือสร้าง Ticket ใหม่
-                </p>
-
             </div>
 
         `;
@@ -578,23 +505,9 @@ function renderTickets(
     }
 
 
-
     container.innerHTML =
         tickets.map(
             ticket => {
-
-
-                const statusClass =
-                    getStatusClass(
-                        ticket.status
-                    );
-
-
-                const priorityClass =
-                    getPriorityClass(
-                        ticket.priority
-                    );
-
 
                 return `
 
@@ -606,10 +519,13 @@ function renderTickets(
                         <div>
 
                             <strong>
+
                                 ${escapeHtml(
                                     ticket.ticket_no
                                 )}
+
                             </strong>
+
 
                             <div class="ticket-meta">
 
@@ -640,7 +556,10 @@ function renderTickets(
                         <div>
 
                             <span
-                                class="status-badge ${statusClass}"
+                                class="status-badge
+                                ${getStatusClass(
+                                    ticket.status
+                                )}"
                             >
 
                                 ${escapeHtml(
@@ -655,7 +574,10 @@ function renderTickets(
                         <div>
 
                             <span
-                                class="priority-badge ${priorityClass}"
+                                class="priority-badge
+                                ${getPriorityClass(
+                                    ticket.priority
+                                )}"
                             >
 
                                 ${escapeHtml(
@@ -665,7 +587,6 @@ function renderTickets(
                             </span>
 
                         </div>
-
 
                     </div>
 
@@ -677,7 +598,6 @@ function renderTickets(
 }
 
 
-
 /* =====================================================
    10. STATUS CLASS
 ===================================================== */
@@ -686,24 +606,19 @@ function getStatusClass(
     status
 ) {
 
-
     switch (status) {
 
         case "Open":
             return "status-open";
 
-
         case "In Progress":
             return "status-progress";
-
 
         case "Resolved":
             return "status-resolved";
 
-
         case "Closed":
             return "status-closed";
-
 
         default:
             return "";
@@ -711,7 +626,6 @@ function getStatusClass(
     }
 
 }
-
 
 
 /* =====================================================
@@ -722,24 +636,19 @@ function getPriorityClass(
     priority
 ) {
 
-
     switch (priority) {
 
         case "Critical":
             return "priority-critical";
 
-
         case "High":
             return "priority-high";
-
 
         case "Medium":
             return "priority-medium";
 
-
         case "Low":
             return "priority-low";
-
 
         default:
             return "";
@@ -749,13 +658,11 @@ function getPriorityClass(
 }
 
 
-
 /* =====================================================
-   12. SEARCH / FILTER
+   12. FILTER TICKETS
 ===================================================== */
 
 function filterTickets() {
-
 
     const search =
         document
@@ -775,11 +682,9 @@ function filterTickets() {
             .value;
 
 
-
     const filtered =
         allTickets.filter(
             ticket => {
-
 
                 const text = (
 
@@ -794,7 +699,6 @@ function filterTickets() {
                 ).toLowerCase();
 
 
-
                 const matchSearch =
                     !search ||
                     text.includes(
@@ -802,11 +706,9 @@ function filterTickets() {
                     );
 
 
-
                 const matchStatus =
                     status === "All" ||
                     ticket.status === status;
-
 
 
                 return (
@@ -818,7 +720,6 @@ function filterTickets() {
         );
 
 
-
     renderTickets(
         filtered
     );
@@ -826,15 +727,13 @@ function filterTickets() {
 }
 
 
-
 /* =====================================================
-   13. OPEN TICKET DETAIL
+   13. OPEN TICKET
 ===================================================== */
 
 async function openTicket(
     ticketId
 ) {
-
 
     const ticket =
         allTickets.find(
@@ -842,7 +741,6 @@ async function openTicket(
                 Number(item.id) ===
                 Number(ticketId)
         );
-
 
 
     if (!ticket) {
@@ -856,10 +754,8 @@ async function openTicket(
     }
 
 
-
     currentTicket =
         ticket;
-
 
 
     const section =
@@ -872,13 +768,11 @@ async function openTicket(
         "block";
 
 
-
     section.scrollIntoView({
 
         behavior: "smooth"
 
     });
-
 
 
     document
@@ -887,7 +781,6 @@ async function openTicket(
         )
         .value =
         ticket.status;
-
 
 
     document
@@ -977,35 +870,16 @@ async function openTicket(
 
                 </div>
 
-
-                <p>
-
-                    <small>
-
-                        Created:
-
-                        ${escapeHtml(
-                            ticket.created_at
-                        )}
-
-                    </small>
-
-                </p>
-
             </div>
 
         `;
 
-
-
-    /* Load existing solution */
 
     await loadSolution(
         ticket.id
     );
 
 }
-
 
 
 /* =====================================================
@@ -1016,10 +890,8 @@ async function loadSolution(
     ticketId
 ) {
 
-
     currentSolution =
         null;
-
 
 
     document
@@ -1050,16 +922,11 @@ async function loadSolution(
         .value = "";
 
 
-
     try {
 
-
         const {
-
             data,
-
             error
-
         } = await supabaseClient
 
             .from("solutions")
@@ -1081,7 +948,6 @@ async function loadSolution(
             .limit(1);
 
 
-
         if (error) {
 
             throw error;
@@ -1089,12 +955,10 @@ async function loadSolution(
         }
 
 
-
         if (
             data &&
             data.length
         ) {
-
 
             currentSolution =
                 data[0];
@@ -1146,22 +1010,13 @@ async function loadSolution(
 
         }
 
-
     }
 
     catch (error) {
 
-
         console.error(
             "Load Solution Error:",
             error
-        );
-
-
-        setDetailMessage(
-            "⚠️ โหลด Solution ไม่สำเร็จ: " +
-            error.message,
-            "error"
         );
 
     }
@@ -1169,13 +1024,11 @@ async function loadSolution(
 }
 
 
-
 /* =====================================================
    15. SAVE SOLUTION
 ===================================================== */
 
 async function saveSolution() {
-
 
     if (!currentTicket) {
 
@@ -1186,7 +1039,6 @@ async function saveSolution() {
         return;
 
     }
-
 
 
     const rootCause =
@@ -1233,7 +1085,6 @@ async function saveSolution() {
             .value;
 
 
-
     if (!rootCause) {
 
         alert(
@@ -1243,7 +1094,6 @@ async function saveSolution() {
         return;
 
     }
-
 
 
     if (!solution) {
@@ -1257,20 +1107,11 @@ async function saveSolution() {
     }
 
 
-
     try {
 
-
-        /* ---------------------------------------------
-           Check existing solution
-        ---------------------------------------------- */
-
         const {
-
             data: existing,
-
             error: findError
-
         } = await supabaseClient
 
             .from("solutions")
@@ -1292,7 +1133,6 @@ async function saveSolution() {
             .limit(1);
 
 
-
         if (findError) {
 
             throw findError;
@@ -1300,27 +1140,17 @@ async function saveSolution() {
         }
 
 
-
         let solutionData;
 
-
-
-        /* ---------------------------------------------
-           UPDATE EXISTING
-        ---------------------------------------------- */
 
         if (
             existing &&
             existing.length
         ) {
 
-
             const {
-
                 data,
-
                 error
-
             } = await supabaseClient
 
                 .from("solutions")
@@ -1350,7 +1180,6 @@ async function saveSolution() {
                 .single();
 
 
-
             if (error) {
 
                 throw error;
@@ -1358,27 +1187,16 @@ async function saveSolution() {
             }
 
 
-
             solutionData =
                 data;
 
         }
 
-
-
-        /* ---------------------------------------------
-           INSERT NEW
-        ---------------------------------------------- */
-
         else {
 
-
             const {
-
                 data,
-
                 error
-
             } = await supabaseClient
 
                 .from("solutions")
@@ -1406,13 +1224,11 @@ async function saveSolution() {
                 .single();
 
 
-
             if (error) {
 
                 throw error;
 
             }
-
 
 
             solutionData =
@@ -1421,21 +1237,12 @@ async function saveSolution() {
         }
 
 
-
         currentSolution =
             solutionData;
 
 
-
-        /* ---------------------------------------------
-           Update Ticket Status
-        ---------------------------------------------- */
-
         const {
-
-            error:
-                ticketError
-
+            error: ticketError
         } = await supabaseClient
 
             .from("tickets")
@@ -1453,7 +1260,6 @@ async function saveSolution() {
             );
 
 
-
         if (ticketError) {
 
             throw ticketError;
@@ -1461,31 +1267,22 @@ async function saveSolution() {
         }
 
 
-
         currentTicket.status =
             status;
 
 
-
         setDetailMessage(
-            "✅ บันทึก Solution และ Status สำเร็จ",
+            "✅ บันทึก Solution สำเร็จ",
             "success"
         );
-
 
 
         await loadTickets();
 
 
-        await openTicket(
-            currentTicket.id
-        );
-
-
     }
 
     catch (error) {
-
 
         console.error(
             "Save Solution Error:",
@@ -1504,13 +1301,11 @@ async function saveSolution() {
 }
 
 
-
 /* =====================================================
    16. SAVE TO KNOWLEDGE BASE
 ===================================================== */
 
 async function saveToKnowledgeBase() {
-
 
     if (!currentTicket) {
 
@@ -1521,7 +1316,6 @@ async function saveToKnowledgeBase() {
         return;
 
     }
-
 
 
     const rootCause =
@@ -1560,11 +1354,6 @@ async function saveToKnowledgeBase() {
             .trim();
 
 
-
-    /* ---------------------------------------------
-       Validation
-    ---------------------------------------------- */
-
     if (!rootCause) {
 
         alert(
@@ -1598,52 +1387,33 @@ async function saveToKnowledgeBase() {
     }
 
 
-
-    /* ---------------------------------------------
-       Confirm
-    ---------------------------------------------- */
-
-    const confirmed =
-        confirm(
-
-            "ต้องการบันทึก Case นี้เข้า Knowledge Base หรือไม่?\n\n" +
-
-            "Ticket: " +
-            currentTicket.ticket_no +
-            "\n\n" +
-
-            "ควรบันทึกเฉพาะ Solution ที่ IT ตรวจสอบแล้วเท่านั้น."
-
-        );
-
-
-
-    if (!confirmed) {
+    if (
+        !confirm(
+            "ต้องการบันทึก Case นี้เข้า Knowledge Base หรือไม่?"
+        )
+    ) {
 
         return;
 
     }
 
 
-
     try {
-
 
         const title =
 
             currentTicket.system_type +
             " - " +
             currentTicket.problem
-                .substring(0, 80);
-
+                .substring(
+                    0,
+                    80
+                );
 
 
         const {
-
             data,
-
             error
-
         } = await supabaseClient
 
             .from("knowledge_base")
@@ -1677,7 +1447,6 @@ async function saveToKnowledgeBase() {
             .single();
 
 
-
         if (error) {
 
             throw error;
@@ -1685,12 +1454,10 @@ async function saveToKnowledgeBase() {
         }
 
 
-
         setDetailMessage(
-            "🧠 บันทึก Case เข้า Knowledge Base สำเร็จ",
+            "🧠 บันทึก Knowledge Base สำเร็จ",
             "success"
         );
-
 
 
         alert(
@@ -1699,15 +1466,12 @@ async function saveToKnowledgeBase() {
             data.id
         );
 
-
-
     }
 
     catch (error) {
 
-
         console.error(
-            "Save Knowledge Base Error:",
+            "Save KB Error:",
             error
         );
 
@@ -1723,23 +1487,672 @@ async function saveToKnowledgeBase() {
 }
 
 
-
 /* =====================================================
-   17. DATABASE TEST
+   17. PHASE 3.1
+   KNOWLEDGE BASE SEARCH
 ===================================================== */
 
-async function testDatabase() {
+
+/*
+    ตัดคำสำหรับ Search
+
+    ตอนนี้เราใช้วิธีง่ายก่อน:
+
+    - แยกคำ
+    - ตัดคำที่สั้นเกินไป
+    - เอาคำซ้ำออก
+
+    Phase 3.2 จะเปลี่ยนเป็น
+    Embedding / Semantic Search
+*/
+
+
+function tokenize(
+    text
+) {
+
+    if (!text) {
+        return [];
+    }
+
+
+    return text
+
+        .toLowerCase()
+
+        .replace(
+            /[^\p{L}\p{N}\s+#.-]/gu,
+            " "
+        )
+
+        .split(/\s+/)
+
+        .map(
+            word =>
+                word.trim()
+        )
+
+        .filter(
+            word =>
+                word.length >= 2
+        );
+
+}
+
+
+/*
+    Stop Words
+
+    ลดคำทั่วไปที่ไม่ช่วยในการ Search
+*/
+
+const STOP_WORDS = new Set([
+
+    "และ",
+    "หรือ",
+    "ของ",
+    "ที่",
+    "เป็น",
+    "มี",
+    "ใน",
+    "จาก",
+    "แล้ว",
+    "ให้",
+    "กับ",
+    "ว่า",
+    "ได้",
+    "การ",
+    "โดย",
+    "this",
+    "that",
+    "with",
+    "from",
+    "the",
+    "and",
+    "for"
+
+]);
+
+
+/*
+    ทำความสะอาด Token
+*/
+
+function cleanTokens(
+    text
+) {
+
+    return tokenize(text)
+
+        .filter(
+            token =>
+                !STOP_WORDS.has(
+                    token
+                )
+        );
+
+}
+
+
+/*
+    คำนวณคะแนน Match
+
+    คะแนนสูง =
+    มีคำที่ตรงกันมาก
+
+*/
+
+function calculateKnowledgeScore(
+    queryText,
+    knowledge
+) {
+
+    const queryTokens =
+        cleanTokens(
+            queryText
+        );
+
+
+    if (!queryTokens.length) {
+
+        return 0;
+
+    }
+
+
+    const knowledgeText = (
+
+        (knowledge.title || "") +
+        " " +
+        (knowledge.category || "") +
+        " " +
+        (knowledge.symptom || "") +
+        " " +
+        (knowledge.environment || "") +
+        " " +
+        (knowledge.root_cause || "") +
+        " " +
+        (knowledge.solution || "") +
+        " " +
+        (knowledge.verification || "")
+
+    );
+
+
+    const knowledgeTokens =
+        cleanTokens(
+            knowledgeText
+        );
+
+
+    const knowledgeSet =
+        new Set(
+            knowledgeTokens
+        );
+
+
+    let matched = 0;
+
+
+    for (
+        const token of queryTokens
+    ) {
+
+        if (
+            knowledgeSet.has(
+                token
+            )
+        ) {
+
+            matched++;
+
+        }
+
+    }
+
+
+    let score =
+        (
+            matched /
+            queryTokens.length
+        ) * 100;
+
+
+    /*
+        Category/System match
+        เพิ่มน้ำหนักเล็กน้อย
+    */
+
+    const system =
+        currentTicket
+            ?.system_type
+            ?.toLowerCase() || "";
+
+
+    const category =
+        knowledge
+            .category
+            ?.toLowerCase() || "";
+
+
+    if (
+        system &&
+        category &&
+        system === category
+    ) {
+
+        score += 15;
+
+    }
+
+
+    return Math.min(
+        Math.round(score),
+        100
+    );
+
+}
+
+
+/* =====================================================
+   18. SEARCH KNOWLEDGE BASE
+===================================================== */
+
+async function searchKnowledge() {
+
+    if (!currentTicket) {
+
+        alert(
+            "กรุณาเลือก Ticket ก่อน"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        document.getElementById(
+            "knowledgeSearchButton"
+        );
+
+
+    const status =
+        document.getElementById(
+            "knowledgeSearchStatus"
+        );
+
+
+    const results =
+        document.getElementById(
+            "knowledgeResults"
+        );
+
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML =
+        "⏳ กำลังค้นหา...";
+
+
+    status.innerHTML =
+        "🔎 กำลังค้นหา Knowledge Base...";
+
+
+    results.innerHTML =
+        "";
 
 
     try {
 
 
+        /*
+            ดึงเฉพาะ Knowledge ที่จำเป็น
+
+            ไม่ใช้ secret key
+        */
+
         const {
-
             data,
-
             error
+        } = await supabaseClient
 
+            .from("knowledge_base")
+
+            .select(
+                "id,title,category,symptom,environment,root_cause,solution,verification"
+            );
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+        const knowledgeBase =
+            data || [];
+
+
+        if (!knowledgeBase.length) {
+
+            status.innerHTML =
+                "📭 Knowledge Base ยังไม่มีข้อมูล";
+
+
+            results.innerHTML = `
+
+                <div class="ai-box">
+
+                    <h3>
+                        ยังไม่มี Case สำหรับค้นหา
+                    </h3>
+
+                    <p>
+
+                        เมื่อ IT แก้ Ticket สำเร็จ
+                        ให้กด
+
+                        <b>
+                            Save to Knowledge Base
+                        </b>
+
+                        เพื่อสร้าง Memory ให้ระบบ
+
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        /*
+            สร้าง Query จาก Ticket
+        */
+
+        const queryText = (
+
+            currentTicket.system_type +
+            " " +
+            currentTicket.problem
+
+        );
+
+
+        /*
+            คำนวณคะแนนทุก Case
+        */
+
+        const scored =
+            knowledgeBase
+
+                .map(
+                    item => ({
+
+                        ...item,
+
+                        matchScore:
+                            calculateKnowledgeScore(
+                                queryText,
+                                item
+                            )
+
+                    })
+                )
+
+                .filter(
+                    item =>
+                        item.matchScore > 0
+                )
+
+                .sort(
+                    (
+                        a,
+                        b
+                    ) =>
+                        b.matchScore -
+                        a.matchScore
+                )
+
+                .slice(
+                    0,
+                    3
+                );
+
+
+        if (!scored.length) {
+
+            status.innerHTML =
+                "🔍 ไม่พบ Case ที่มีคำตรงกัน";
+
+
+            results.innerHTML = `
+
+                <div class="ai-box">
+
+                    <h3>
+                        ไม่พบ Similar Case
+                    </h3>
+
+                    <p>
+
+                        ลองใช้คำอธิบายปัญหา
+                        ที่ละเอียดขึ้น
+
+                    </p>
+
+                    <p>
+
+                        หรือให้ IT แก้ Case นี้
+                        แล้วบันทึกเข้า Knowledge Base
+
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        /*
+            แสดงผล
+        */
+
+        status.innerHTML =
+
+            "🧠 พบ " +
+            scored.length +
+            " Similar Case";
+
+
+        results.innerHTML = `
+
+            <div>
+
+                <h3>
+
+                    🔎 Similar Cases
+
+                </h3>
+
+                <p>
+
+                    ระบบจัดอันดับจาก
+                    Keyword Match
+                    และ System Category
+
+                </p>
+
+            </div>
+
+            ${
+
+                scored
+                    .map(
+                        (
+                            item,
+                            index
+                        ) => {
+
+                            return `
+
+                                <div
+                                    class="ai-box"
+                                    style="
+                                        margin-top:12px;
+                                    "
+                                >
+
+                                    <div
+                                        style="
+                                            display:flex;
+                                            justify-content:space-between;
+                                            gap:10px;
+                                        "
+                                    >
+
+                                        <h3>
+
+                                            #${index + 1}
+
+                                            ${escapeHtml(
+                                                item.title
+                                            )}
+
+                                        </h3>
+
+
+                                        <strong>
+
+                                            ${item.matchScore}%
+
+                                        </strong>
+
+                                    </div>
+
+
+                                    <hr>
+
+
+                                    <p>
+
+                                        <b>
+                                            Category:
+                                        </b>
+
+                                        ${escapeHtml(
+                                            item.category
+                                        )}
+
+                                    </p>
+
+
+                                    <p>
+
+                                        <b>
+                                            Symptom:
+                                        </b>
+
+                                        ${escapeHtml(
+                                            item.symptom
+                                        )}
+
+                                    </p>
+
+
+                                    <p>
+
+                                        <b>
+                                            Root Cause:
+                                        </b>
+
+                                        ${escapeHtml(
+                                            item.root_cause
+                                        )}
+
+                                    </p>
+
+
+                                    <p>
+
+                                        <b>
+                                            Solution:
+                                        </b>
+
+                                        ${escapeHtml(
+                                            item.solution
+                                        )}
+
+                                    </p>
+
+
+                                    <p>
+
+                                        <b>
+                                            Verification:
+                                        </b>
+
+                                        ${escapeHtml(
+                                            item.verification
+                                        )}
+
+                                    </p>
+
+
+                                    <small>
+
+                                        KB ID:
+
+                                        ${escapeHtml(
+                                            item.id
+                                        )}
+
+                                    </small>
+
+
+                                </div>
+
+                            `;
+
+                        }
+                    )
+                    .join("")
+
+            }
+
+        `;
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Knowledge Search Error:",
+            error
+        );
+
+
+        status.innerHTML =
+            "❌ Knowledge Search Error";
+
+
+        results.innerHTML = `
+
+            <div class="ai-box warning">
+
+                <h3>
+                    ❌ ค้น Knowledge Base ไม่สำเร็จ
+                </h3>
+
+                <p>
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+        button.innerHTML =
+            "🔎 ค้นหา Case ที่ใกล้เคียง";
+
+    }
+
+}
+
+
+/* =====================================================
+   19. DATABASE TEST
+===================================================== */
+
+async function testDatabase() {
+
+    try {
+
+        const {
+            data,
+            error
         } = await supabaseClient
 
             .from("tickets")
@@ -1747,7 +2160,6 @@ async function testDatabase() {
             .select("id")
 
             .limit(1);
-
 
 
         if (error) {
@@ -1762,7 +2174,6 @@ async function testDatabase() {
         }
 
 
-
         console.log(
             "Database Test SUCCESS:",
             data
@@ -1775,12 +2186,10 @@ async function testDatabase() {
 
     catch (error) {
 
-
         console.error(
             "Database Test ERROR:",
             error
         );
-
 
         return false;
 
