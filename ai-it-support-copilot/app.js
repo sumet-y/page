@@ -44,7 +44,7 @@ const SUPABASE_URL =
 */
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "วาง_sb_publishable_key_ของคุณตรงนี้";
+    "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
 
 
 
