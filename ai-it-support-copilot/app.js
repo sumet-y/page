@@ -1,75 +1,44 @@
 /* =====================================================
    AI IT SUPPORT COPILOT
-   PHASE 2.2
+   PHASE 2.3
+
+   Ticket Management
 
    GitHub Pages
         ↓
-   Supabase JS
-        ↓
-   Supabase Data API
+   Supabase
         ↓
    PostgreSQL
-        ↓
-   tickets
+
+   Features:
+
+   1. Create Ticket
+   2. Ticket List
+   3. Search
+   4. Status Filter
+   5. Ticket Detail
+   6. Save Solution
+   7. Update Status
+   8. Save to Knowledge Base
 ===================================================== */
 
 
 
 /* =====================================================
-   1. SUPABASE CONFIGURATION
+   1. SUPABASE CONFIG
 ===================================================== */
-
-
-/*
-    Project URL ของคุณ
-
-    ใช้ .supabase.co
-*/
 
 const SUPABASE_URL =
     "https://cpdakjvwsvtottatulwo.supabase.co";
 
 
-
-/*
-    ใส่ Publishable Key ของคุณตรงนี้
-
-    ต้องขึ้นต้นด้วย:
-
-    sb_publishable_
-
-    ห้ามใช้:
-
-    sb_secret_
-*/
-
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
 
 
-
 /* =====================================================
-   2. CREATE SUPABASE CLIENT
+   2. CREATE CLIENT
 ===================================================== */
-
-
-/*
-    ตรวจสอบว่า Supabase Library โหลดสำเร็จหรือไม่
-*/
-
-if (!window.supabase) {
-
-    console.error(
-        "Supabase JavaScript library was not loaded."
-    );
-
-}
-
-
-
-/*
-    สร้าง Supabase Client
-*/
 
 const supabaseClient =
     window.supabase.createClient(
@@ -83,67 +52,27 @@ const supabaseClient =
 
 
 /* =====================================================
-   3. HELPER FUNCTIONS
+   3. GLOBAL VARIABLES
 ===================================================== */
 
+let allTickets = [];
 
-/*
-    เปลี่ยน Progress Bar
-*/
+let currentTicket = null;
 
-function setProgress(percent) {
-
-    const progressBar =
-        document.getElementById(
-            "progressBar"
-        );
-
-
-    if (!progressBar) {
-        return;
-    }
-
-
-    progressBar.style.width =
-        percent + "%";
-
-}
+let currentSolution = null;
 
 
 
-/*
-    เปลี่ยนข้อความ Status
-*/
-
-function setStatus(message) {
-
-    const status =
-        document.getElementById(
-            "status"
-        );
-
-
-    if (!status) {
-        return;
-    }
-
-
-    status.innerHTML =
-        message;
-
-}
-
-
-
-/*
-    Escape HTML
-
-    ป้องกันข้อมูล User ถูกนำไปแสดงเป็น HTML
-*/
+/* =====================================================
+   4. HELPERS
+===================================================== */
 
 function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
 
         return "";
 
@@ -151,9 +80,7 @@ function escapeHtml(value) {
 
 
     const div =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
     div.textContent =
@@ -166,109 +93,119 @@ function escapeHtml(value) {
 
 
 
-/*
-    สร้าง Ticket Number
-
-    ตัวอย่าง:
-
-    INC-12345678
-*/
-
 function generateTicketNumber() {
 
-    const timestamp =
+    return (
+        "INC-" +
         Date.now()
             .toString()
-            .slice(-8);
+            .slice(-8)
+    );
+
+}
 
 
-    return "INC-" + timestamp;
+
+function setDetailMessage(
+    message,
+    type = "normal"
+) {
+
+    const element =
+        document.getElementById(
+            "detailStatusMessage"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.innerHTML =
+        message;
+
+
+    if (type === "success") {
+
+        element.style.borderLeft =
+            "4px solid #16a34a";
+
+    }
+
+
+    if (type === "error") {
+
+        element.style.borderLeft =
+            "4px solid #dc2626";
+
+    }
 
 }
 
 
 
 /* =====================================================
-   4. CREATE TICKET
+   5. PAGE START
 ===================================================== */
 
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        loadTickets();
+
+    }
+);
+
+
+
+/* =====================================================
+   6. CREATE TICKET
+===================================================== */
 
 async function createTicket() {
 
 
-    /* -----------------------------------------------
-       Get Form Elements
-    ------------------------------------------------ */
-
-    const userInput =
-        document.getElementById(
-            "userName"
-        );
-
-
-    const systemInput =
-        document.getElementById(
-            "systemType"
-        );
-
-
-    const problemInput =
-        document.getElementById(
-            "problem"
-        );
-
-
-    const priorityInput =
-        document.getElementById(
-            "priority"
-        );
-
-
-    const button =
-        document.getElementById(
-            "createTicketButton"
-        );
-
-
-    const result =
-        document.getElementById(
-            "result"
-        );
-
-
-
-    /* -----------------------------------------------
-       Get Values
-    ------------------------------------------------ */
-
     const userName =
-        userInput.value.trim();
+        document
+            .getElementById("userName")
+            .value
+            .trim();
 
 
     const systemType =
-        systemInput.value;
+        document
+            .getElementById("systemType")
+            .value;
 
 
     const problem =
-        problemInput.value.trim();
+        document
+            .getElementById("problem")
+            .value
+            .trim();
 
 
     const priority =
-        priorityInput.value;
+        document
+            .getElementById("priority")
+            .value;
 
 
+    const button =
+        document
+            .getElementById(
+                "createTicketButton"
+            );
 
-    /* -----------------------------------------------
-       Validate
-    ------------------------------------------------ */
+
 
     if (!userName) {
 
-        setStatus(
-            "⚠️ กรุณากรอกชื่อผู้แจ้ง"
+        alert(
+            "กรุณากรอกชื่อผู้แจ้ง"
         );
-
-        userInput.focus();
 
         return;
 
@@ -278,11 +215,9 @@ async function createTicket() {
 
     if (!problem) {
 
-        setStatus(
-            "⚠️ กรุณากรอกรายละเอียดปัญหา"
+        alert(
+            "กรุณากรอกรายละเอียดปัญหา"
         );
-
-        problemInput.focus();
 
         return;
 
@@ -290,50 +225,20 @@ async function createTicket() {
 
 
 
-    /* -----------------------------------------------
-       Disable Button
-    ------------------------------------------------ */
+    button.disabled =
+        true;
 
-    button.disabled = true;
 
     button.innerHTML =
         "⏳ กำลังบันทึก...";
 
 
 
-    setProgress(20);
-
-
-    setStatus(
-        "🔄 กำลังเชื่อมต่อ Supabase..."
-    );
-
-
-
-    /* -----------------------------------------------
-       Generate Ticket Number
-    ------------------------------------------------ */
-
-    const ticketNo =
-        generateTicketNumber();
-
-
-
     try {
 
 
-        /* =============================================
-           INSERT INTO tickets
-        ============================================== */
-
-
-        setProgress(40);
-
-
-        setStatus(
-            "🗄️ กำลังบันทึก Ticket ลง Database..."
-        );
-
+        const ticketNo =
+            generateTicketNumber();
 
 
         const {
@@ -344,9 +249,7 @@ async function createTicket() {
 
         } = await supabaseClient
 
-
             .from("tickets")
-
 
             .insert({
 
@@ -370,25 +273,13 @@ async function createTicket() {
 
             })
 
-
             .select()
-
 
             .single();
 
 
 
-        /* -------------------------------------------
-           Check Error
-        -------------------------------------------- */
-
-
         if (error) {
-
-            console.error(
-                "Supabase Insert Error:",
-                error
-            );
 
             throw error;
 
@@ -396,211 +287,42 @@ async function createTicket() {
 
 
 
-        /* =============================================
-           SUCCESS
-        ============================================== */
-
-
-        setProgress(100);
-
-
-        setStatus(
-            "✅ Ticket บันทึกสำเร็จ"
+        alert(
+            "✅ สร้าง Ticket สำเร็จ\n\n" +
+            ticketNo
         );
 
 
 
-        result.innerHTML = `
+        /* Clear Form */
 
-            <div class="ai-box success">
+        document
+            .getElementById("userName")
+            .value = "";
 
-                <h3>
-                    🎉 Ticket Created Successfully
-                </h3>
 
+        document
+            .getElementById("problem")
+            .value = "";
 
-                <p>
 
-                    <b>
-                        Ticket No:
-                    </b>
 
-                    ${escapeHtml(
-                        data.ticket_no
-                    )}
+        /* Reload List */
 
-                </p>
+        await loadTickets();
 
 
-                <p>
 
-                    <b>
-                        ผู้แจ้ง:
-                    </b>
+        /* Open new ticket */
 
-                    ${escapeHtml(
-                        data.user_name
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        ระบบ:
-                    </b>
-
-                    ${escapeHtml(
-                        data.system_type
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        Priority:
-                    </b>
-
-                    ${escapeHtml(
-                        data.priority
-                    )}
-
-                </p>
-
-
-                <p>
-
-                    <b>
-                        Status:
-                    </b>
-
-                    ${escapeHtml(
-                        data.status
-                    )}
-
-                </p>
-
-
-            </div>
-
-
-
-            <div class="ai-box">
-
-                <h3>
-                    🗄️ Database
-                </h3>
-
-
-                <p>
-
-                    ข้อมูลถูกบันทึกลง
-
-                    <b>
-                        Supabase
-                    </b>
-
-                    →
-
-                    <b>
-                        tickets
-                    </b>
-
-                    เรียบร้อยแล้ว
-
-                </p>
-
-
-            </div>
-
-
-
-            <div class="ai-box">
-
-                <h3>
-                    🔗 Ticket ID
-                </h3>
-
-
-                <p>
-
-                    Database ID:
-
-                    <b>
-                        ${escapeHtml(
-                            data.id
-                        )}
-                    </b>
-
-                </p>
-
-
-                <p>
-
-                    Created:
-
-                    ${escapeHtml(
-                        data.created_at
-                    )}
-
-                </p>
-
-
-            </div>
-
-
-
-            <div class="ai-box">
-
-                <h3>
-                    🚀 Next Phase
-                </h3>
-
-
-                <p>
-
-                    Phase 2.3:
-
-                    <b>
-                        Ticket List
-                    </b>
-
-                    และ
-
-                    <b>
-                        Ticket Detail
-                    </b>
-
-                </p>
-
-
-                <p>
-
-                    Phase 3:
-
-                    AI จะนำ Ticket
-                    ไปค้น Knowledge Base
-
-                </p>
-
-
-            </div>
-
-        `;
-
+        openTicket(
+            data.id
+        );
 
 
     }
 
     catch (error) {
-
-
-        /* =============================================
-           ERROR
-        ============================================== */
 
 
         console.error(
@@ -609,111 +331,15 @@ async function createTicket() {
         );
 
 
-        setProgress(0);
-
-
-        setStatus(
-            "❌ ไม่สามารถบันทึก Ticket ได้"
+        alert(
+            "❌ ไม่สามารถสร้าง Ticket ได้\n\n" +
+            error.message
         );
-
-
-
-        let errorMessage =
-            "Unknown error";
-
-
-
-        if (error) {
-
-            errorMessage =
-                error.message ||
-                error.details ||
-                error.hint ||
-                "Unknown error";
-
-        }
-
-
-
-        result.innerHTML = `
-
-            <div class="ai-box warning">
-
-                <h3>
-                    ❌ Database Error
-                </h3>
-
-
-                <p>
-
-                    <b>
-                        Error:
-                    </b>
-
-                    ${escapeHtml(
-                        errorMessage
-                    )}
-
-                </p>
-
-
-                <hr>
-
-
-                <h3>
-                    🔍 ตรวจสอบ
-                </h3>
-
-
-                <ul>
-
-                    <li>
-                        Supabase Project URL
-                    </li>
-
-
-                    <li>
-                        Publishable Key
-                    </li>
-
-
-                    <li>
-                        Data API
-                    </li>
-
-
-                    <li>
-                        RLS Policy
-                    </li>
-
-
-                    <li>
-                        tickets table
-                    </li>
-
-
-                    <li>
-                        Internet Connection
-                    </li>
-
-                </ul>
-
-
-            </div>
-
-        `;
 
     }
 
 
-
     finally {
-
-
-        /* -------------------------------------------
-           Enable Button
-        -------------------------------------------- */
-
 
         button.disabled =
             false;
@@ -729,28 +355,1380 @@ async function createTicket() {
 
 
 /* =====================================================
-   5. TEST DATABASE CONNECTION
+   7. LOAD TICKETS
 ===================================================== */
 
+async function loadTickets() {
 
-/*
-    ฟังก์ชันนี้เอาไว้ Debug
 
-    ยังไม่ต้องเรียกใช้จากหน้าเว็บก็ได้
+    const container =
+        document.getElementById(
+            "ticketList"
+        );
 
-    เปิด Browser Console แล้วพิมพ์:
 
-    testDatabase()
+    container.innerHTML = `
 
-    เพื่อทดสอบ Supabase
-*/
+        <div class="empty">
+
+            ⏳
+
+            <p>
+                Loading tickets...
+            </p>
+
+        </div>
+
+    `;
+
+
+
+    try {
+
+
+        const {
+
+            data,
+
+            error
+
+        } = await supabaseClient
+
+            .from("tickets")
+
+            .select("*")
+
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+
+        allTickets =
+            data || [];
+
+
+
+        updateDashboard();
+
+
+        renderTickets(
+            allTickets
+        );
+
+
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "Load Tickets Error:",
+            error
+        );
+
+
+        container.innerHTML = `
+
+            <div class="ai-box warning">
+
+                ❌ ไม่สามารถโหลด Ticket ได้
+
+                <p>
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+
+/* =====================================================
+   8. DASHBOARD
+===================================================== */
+
+function updateDashboard() {
+
+
+    const total =
+        allTickets.length;
+
+
+    const open =
+        allTickets.filter(
+            ticket =>
+                ticket.status === "Open"
+        ).length;
+
+
+    const progress =
+        allTickets.filter(
+            ticket =>
+                ticket.status === "In Progress"
+        ).length;
+
+
+    const resolved =
+        allTickets.filter(
+            ticket =>
+                ticket.status === "Resolved" ||
+                ticket.status === "Closed"
+        ).length;
+
+
+
+    document
+        .getElementById(
+            "totalTickets"
+        )
+        .textContent =
+        total;
+
+
+
+    document
+        .getElementById(
+            "openTickets"
+        )
+        .textContent =
+        open;
+
+
+
+    document
+        .getElementById(
+            "progressTickets"
+        )
+        .textContent =
+        progress;
+
+
+
+    document
+        .getElementById(
+            "resolvedTickets"
+        )
+        .textContent =
+        resolved;
+
+}
+
+
+
+/* =====================================================
+   9. RENDER TICKET LIST
+===================================================== */
+
+function renderTickets(
+    tickets
+) {
+
+
+    const container =
+        document.getElementById(
+            "ticketList"
+        );
+
+
+
+    if (!tickets.length) {
+
+        container.innerHTML = `
+
+            <div class="empty">
+
+                📭
+
+                <h3>
+                    ไม่พบ Ticket
+                </h3>
+
+                <p>
+                    ลองเปลี่ยนคำค้นหา
+                    หรือสร้าง Ticket ใหม่
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+
+    container.innerHTML =
+        tickets.map(
+            ticket => {
+
+
+                const statusClass =
+                    getStatusClass(
+                        ticket.status
+                    );
+
+
+                const priorityClass =
+                    getPriorityClass(
+                        ticket.priority
+                    );
+
+
+                return `
+
+                    <div
+                        class="ticket-row"
+                        onclick="openTicket(${ticket.id})"
+                    >
+
+                        <div>
+
+                            <strong>
+                                ${escapeHtml(
+                                    ticket.ticket_no
+                                )}
+                            </strong>
+
+                            <div class="ticket-meta">
+
+                                ${escapeHtml(
+                                    ticket.user_name
+                                )}
+
+                                ·
+
+                                ${escapeHtml(
+                                    ticket.system_type
+                                )}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="ticket-problem">
+
+                            ${escapeHtml(
+                                ticket.problem
+                            )}
+
+                        </div>
+
+
+                        <div>
+
+                            <span
+                                class="status-badge ${statusClass}"
+                            >
+
+                                ${escapeHtml(
+                                    ticket.status
+                                )}
+
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <span
+                                class="priority-badge ${priorityClass}"
+                            >
+
+                                ${escapeHtml(
+                                    ticket.priority
+                                )}
+
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+
+/* =====================================================
+   10. STATUS CLASS
+===================================================== */
+
+function getStatusClass(
+    status
+) {
+
+
+    switch (status) {
+
+        case "Open":
+            return "status-open";
+
+
+        case "In Progress":
+            return "status-progress";
+
+
+        case "Resolved":
+            return "status-resolved";
+
+
+        case "Closed":
+            return "status-closed";
+
+
+        default:
+            return "";
+
+    }
+
+}
+
+
+
+/* =====================================================
+   11. PRIORITY CLASS
+===================================================== */
+
+function getPriorityClass(
+    priority
+) {
+
+
+    switch (priority) {
+
+        case "Critical":
+            return "priority-critical";
+
+
+        case "High":
+            return "priority-high";
+
+
+        case "Medium":
+            return "priority-medium";
+
+
+        case "Low":
+            return "priority-low";
+
+
+        default:
+            return "";
+
+    }
+
+}
+
+
+
+/* =====================================================
+   12. SEARCH / FILTER
+===================================================== */
+
+function filterTickets() {
+
+
+    const search =
+        document
+            .getElementById(
+                "searchTicket"
+            )
+            .value
+            .toLowerCase()
+            .trim();
+
+
+    const status =
+        document
+            .getElementById(
+                "statusFilter"
+            )
+            .value;
+
+
+
+    const filtered =
+        allTickets.filter(
+            ticket => {
+
+
+                const text = (
+
+                    ticket.ticket_no +
+                    " " +
+                    ticket.user_name +
+                    " " +
+                    ticket.system_type +
+                    " " +
+                    ticket.problem
+
+                ).toLowerCase();
+
+
+
+                const matchSearch =
+                    !search ||
+                    text.includes(
+                        search
+                    );
+
+
+
+                const matchStatus =
+                    status === "All" ||
+                    ticket.status === status;
+
+
+
+                return (
+                    matchSearch &&
+                    matchStatus
+                );
+
+            }
+        );
+
+
+
+    renderTickets(
+        filtered
+    );
+
+}
+
+
+
+/* =====================================================
+   13. OPEN TICKET DETAIL
+===================================================== */
+
+async function openTicket(
+    ticketId
+) {
+
+
+    const ticket =
+        allTickets.find(
+            item =>
+                Number(item.id) ===
+                Number(ticketId)
+        );
+
+
+
+    if (!ticket) {
+
+        alert(
+            "ไม่พบ Ticket"
+        );
+
+        return;
+
+    }
+
+
+
+    currentTicket =
+        ticket;
+
+
+
+    const section =
+        document.getElementById(
+            "ticketDetailSection"
+        );
+
+
+    section.style.display =
+        "block";
+
+
+
+    section.scrollIntoView({
+
+        behavior: "smooth"
+
+    });
+
+
+
+    document
+        .getElementById(
+            "detailStatus"
+        )
+        .value =
+        ticket.status;
+
+
+
+    document
+        .getElementById(
+            "ticketDetail"
+        )
+        .innerHTML = `
+
+            <div class="ticket-detail">
+
+                <h3>
+
+                    🎫
+
+                    ${escapeHtml(
+                        ticket.ticket_no
+                    )}
+
+                </h3>
+
+
+                <p>
+
+                    <b>
+                        ผู้แจ้ง:
+                    </b>
+
+                    ${escapeHtml(
+                        ticket.user_name
+                    )}
+
+                </p>
+
+
+                <p>
+
+                    <b>
+                        ระบบ:
+                    </b>
+
+                    ${escapeHtml(
+                        ticket.system_type
+                    )}
+
+                </p>
+
+
+                <p>
+
+                    <b>
+                        Priority:
+                    </b>
+
+                    ${escapeHtml(
+                        ticket.priority
+                    )}
+
+                </p>
+
+
+                <p>
+
+                    <b>
+                        Status:
+                    </b>
+
+                    ${escapeHtml(
+                        ticket.status
+                    )}
+
+                </p>
+
+
+                <div class="problem-box">
+
+                    <b>
+                        Problem
+                    </b>
+
+                    <p>
+
+                        ${escapeHtml(
+                            ticket.problem
+                        )}
+
+                    </p>
+
+                </div>
+
+
+                <p>
+
+                    <small>
+
+                        Created:
+
+                        ${escapeHtml(
+                            ticket.created_at
+                        )}
+
+                    </small>
+
+                </p>
+
+            </div>
+
+        `;
+
+
+
+    /* Load existing solution */
+
+    await loadSolution(
+        ticket.id
+    );
+
+}
+
+
+
+/* =====================================================
+   14. LOAD SOLUTION
+===================================================== */
+
+async function loadSolution(
+    ticketId
+) {
+
+
+    currentSolution =
+        null;
+
+
+
+    document
+        .getElementById(
+            "rootCause"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "evidence"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "solution"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "verification"
+        )
+        .value = "";
+
+
+
+    try {
+
+
+        const {
+
+            data,
+
+            error
+
+        } = await supabaseClient
+
+            .from("solutions")
+
+            .select("*")
+
+            .eq(
+                "ticket_id",
+                ticketId
+            )
+
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+
+            .limit(1);
+
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+
+        if (
+            data &&
+            data.length
+        ) {
+
+
+            currentSolution =
+                data[0];
+
+
+            document
+                .getElementById(
+                    "rootCause"
+                )
+                .value =
+                data[0].root_cause || "";
+
+
+            document
+                .getElementById(
+                    "evidence"
+                )
+                .value =
+                data[0].evidence || "";
+
+
+            document
+                .getElementById(
+                    "solution"
+                )
+                .value =
+                data[0].solution || "";
+
+
+            document
+                .getElementById(
+                    "verification"
+                )
+                .value =
+                data[0].verification || "";
+
+
+            setDetailMessage(
+                "📝 โหลด Solution เดิมแล้ว"
+            );
+
+        }
+
+        else {
+
+            setDetailMessage(
+                "🆕 Ticket นี้ยังไม่มี Solution"
+            );
+
+        }
+
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "Load Solution Error:",
+            error
+        );
+
+
+        setDetailMessage(
+            "⚠️ โหลด Solution ไม่สำเร็จ: " +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   15. SAVE SOLUTION
+===================================================== */
+
+async function saveSolution() {
+
+
+    if (!currentTicket) {
+
+        alert(
+            "กรุณาเลือก Ticket ก่อน"
+        );
+
+        return;
+
+    }
+
+
+
+    const rootCause =
+        document
+            .getElementById(
+                "rootCause"
+            )
+            .value
+            .trim();
+
+
+    const evidence =
+        document
+            .getElementById(
+                "evidence"
+            )
+            .value
+            .trim();
+
+
+    const solution =
+        document
+            .getElementById(
+                "solution"
+            )
+            .value
+            .trim();
+
+
+    const verification =
+        document
+            .getElementById(
+                "verification"
+            )
+            .value
+            .trim();
+
+
+    const status =
+        document
+            .getElementById(
+                "detailStatus"
+            )
+            .value;
+
+
+
+    if (!rootCause) {
+
+        alert(
+            "กรุณากรอก Root Cause"
+        );
+
+        return;
+
+    }
+
+
+
+    if (!solution) {
+
+        alert(
+            "กรุณากรอก Solution"
+        );
+
+        return;
+
+    }
+
+
+
+    try {
+
+
+        /* ---------------------------------------------
+           Check existing solution
+        ---------------------------------------------- */
+
+        const {
+
+            data: existing,
+
+            error: findError
+
+        } = await supabaseClient
+
+            .from("solutions")
+
+            .select("id")
+
+            .eq(
+                "ticket_id",
+                currentTicket.id
+            )
+
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+
+            .limit(1);
+
+
+
+        if (findError) {
+
+            throw findError;
+
+        }
+
+
+
+        let solutionData;
+
+
+
+        /* ---------------------------------------------
+           UPDATE EXISTING
+        ---------------------------------------------- */
+
+        if (
+            existing &&
+            existing.length
+        ) {
+
+
+            const {
+
+                data,
+
+                error
+
+            } = await supabaseClient
+
+                .from("solutions")
+
+                .update({
+
+                    root_cause:
+                        rootCause,
+
+                    evidence:
+                        evidence,
+
+                    solution:
+                        solution,
+
+                    verification:
+                        verification
+
+                })
+
+                .eq(
+                    "id",
+                    existing[0].id
+                )
+
+                .select()
+                .single();
+
+
+
+            if (error) {
+
+                throw error;
+
+            }
+
+
+
+            solutionData =
+                data;
+
+        }
+
+
+
+        /* ---------------------------------------------
+           INSERT NEW
+        ---------------------------------------------- */
+
+        else {
+
+
+            const {
+
+                data,
+
+                error
+
+            } = await supabaseClient
+
+                .from("solutions")
+
+                .insert({
+
+                    ticket_id:
+                        currentTicket.id,
+
+                    root_cause:
+                        rootCause,
+
+                    evidence:
+                        evidence,
+
+                    solution:
+                        solution,
+
+                    verification:
+                        verification
+
+                })
+
+                .select()
+                .single();
+
+
+
+            if (error) {
+
+                throw error;
+
+            }
+
+
+
+            solutionData =
+                data;
+
+        }
+
+
+
+        currentSolution =
+            solutionData;
+
+
+
+        /* ---------------------------------------------
+           Update Ticket Status
+        ---------------------------------------------- */
+
+        const {
+
+            error:
+                ticketError
+
+        } = await supabaseClient
+
+            .from("tickets")
+
+            .update({
+
+                status:
+                    status
+
+            })
+
+            .eq(
+                "id",
+                currentTicket.id
+            );
+
+
+
+        if (ticketError) {
+
+            throw ticketError;
+
+        }
+
+
+
+        currentTicket.status =
+            status;
+
+
+
+        setDetailMessage(
+            "✅ บันทึก Solution และ Status สำเร็จ",
+            "success"
+        );
+
+
+
+        await loadTickets();
+
+
+        await openTicket(
+            currentTicket.id
+        );
+
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "Save Solution Error:",
+            error
+        );
+
+
+        setDetailMessage(
+            "❌ บันทึกไม่สำเร็จ: " +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   16. SAVE TO KNOWLEDGE BASE
+===================================================== */
+
+async function saveToKnowledgeBase() {
+
+
+    if (!currentTicket) {
+
+        alert(
+            "กรุณาเลือก Ticket ก่อน"
+        );
+
+        return;
+
+    }
+
+
+
+    const rootCause =
+        document
+            .getElementById(
+                "rootCause"
+            )
+            .value
+            .trim();
+
+
+    const evidence =
+        document
+            .getElementById(
+                "evidence"
+            )
+            .value
+            .trim();
+
+
+    const solution =
+        document
+            .getElementById(
+                "solution"
+            )
+            .value
+            .trim();
+
+
+    const verification =
+        document
+            .getElementById(
+                "verification"
+            )
+            .value
+            .trim();
+
+
+
+    /* ---------------------------------------------
+       Validation
+    ---------------------------------------------- */
+
+    if (!rootCause) {
+
+        alert(
+            "กรุณากรอก Root Cause ก่อน"
+        );
+
+        return;
+
+    }
+
+
+    if (!solution) {
+
+        alert(
+            "กรุณากรอก Solution ก่อน"
+        );
+
+        return;
+
+    }
+
+
+    if (!verification) {
+
+        alert(
+            "กรุณากรอก Verification ก่อน"
+        );
+
+        return;
+
+    }
+
+
+
+    /* ---------------------------------------------
+       Confirm
+    ---------------------------------------------- */
+
+    const confirmed =
+        confirm(
+
+            "ต้องการบันทึก Case นี้เข้า Knowledge Base หรือไม่?\n\n" +
+
+            "Ticket: " +
+            currentTicket.ticket_no +
+            "\n\n" +
+
+            "ควรบันทึกเฉพาะ Solution ที่ IT ตรวจสอบแล้วเท่านั้น."
+
+        );
+
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+
+    try {
+
+
+        const title =
+
+            currentTicket.system_type +
+            " - " +
+            currentTicket.problem
+                .substring(0, 80);
+
+
+
+        const {
+
+            data,
+
+            error
+
+        } = await supabaseClient
+
+            .from("knowledge_base")
+
+            .insert({
+
+                title:
+                    title,
+
+                category:
+                    currentTicket.system_type,
+
+                symptom:
+                    currentTicket.problem,
+
+                environment:
+                    currentTicket.user_name,
+
+                root_cause:
+                    rootCause,
+
+                solution:
+                    solution,
+
+                verification:
+                    verification
+
+            })
+
+            .select()
+            .single();
+
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+
+        setDetailMessage(
+            "🧠 บันทึก Case เข้า Knowledge Base สำเร็จ",
+            "success"
+        );
+
+
+
+        alert(
+            "🧠 Knowledge Base Saved\n\n" +
+            "KB ID: " +
+            data.id
+        );
+
+
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "Save Knowledge Base Error:",
+            error
+        );
+
+
+        setDetailMessage(
+            "❌ บันทึก Knowledge Base ไม่สำเร็จ: " +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   17. DATABASE TEST
+===================================================== */
 
 async function testDatabase() {
-
-
-    console.log(
-        "Testing Supabase connection..."
-    );
 
 
     try {
@@ -778,7 +1756,6 @@ async function testDatabase() {
                 "Database Test FAILED:",
                 error
             );
-
 
             return false;
 
