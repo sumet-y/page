@@ -134,6 +134,20 @@ function bindEvents() {
             }
         );
 
+    // Module 4 button is rendered dynamically after Knowledge Search.
+    // Use event delegation so the button always works after re-render.
+    document.addEventListener("click", (event) => {
+
+        const button = event.target.closest("#analyzeRootCauseBtn");
+
+        if (!button) return;
+
+        event.preventDefault();
+
+        analyzeRootCause();
+
+    });
+
 }
 
 
