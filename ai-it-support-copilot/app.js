@@ -1,5 +1,5 @@
 const SUPABASE_URL =
-    "https://cpdakjvwsvtottatulwo.supabase.com";
+    "https://cpdakjvwsvtottatulwo.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_XM-TOIhVRRMqtPCQpIsX8A_XECc2BEv";
