@@ -27,7 +27,7 @@
 */
 
 const SUPABASE_URL =
-    "https://cpdakjvwsvtotatulwo.supabase.co";
+    "https://cpdakjvwsvtottatulwo.supabase.co";
 
 
 
