@@ -24,13 +24,12 @@
 
 <body>
 
-
 <div class="app">
 
 
-    <!-- =====================================
+    <!-- =================================================
          HEADER
-    ====================================== -->
+    ================================================== -->
 
     <header class="header">
 
@@ -41,284 +40,471 @@
             </h1>
 
             <p>
-                AI Native IT Support — Phase 2
+                AI Native IT Support — Phase 2.3
             </p>
 
         </div>
 
-
         <div class="status">
-
             ● SUPABASE CONNECTED
-
         </div>
 
     </header>
 
 
 
-    <!-- =====================================
-         MAIN
-    ====================================== -->
+    <!-- =================================================
+         DASHBOARD
+    ================================================== -->
 
-    <main class="container">
+    <section class="dashboard">
+
+        <div class="stat-card">
+
+            <div class="stat-number" id="totalTickets">
+                0
+            </div>
+
+            <div class="stat-label">
+                Total Tickets
+            </div>
+
+        </div>
 
 
-        <!-- =================================
-             CREATE TICKET
-        ================================== -->
+        <div class="stat-card">
 
-        <section class="card">
+            <div class="stat-number" id="openTickets">
+                0
+            </div>
+
+            <div class="stat-label">
+                Open
+            </div>
+
+        </div>
 
 
-            <div class="card-title">
+        <div class="stat-card">
 
-                <span>
-                    01
-                </span>
+            <div class="stat-number" id="progressTickets">
+                0
+            </div>
 
-                <h2>
-                    รับแจ้งปัญหา
-                </h2>
+            <div class="stat-label">
+                In Progress
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-number" id="resolvedTickets">
+                0
+            </div>
+
+            <div class="stat-label">
+                Resolved
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         CREATE TICKET
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-title">
+
+            <span>
+                01
+            </span>
+
+            <h2>
+                🎫 Create Ticket
+            </h2>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+            <div>
+
+                <label for="userName">
+                    ผู้แจ้ง
+                </label>
+
+                <input
+                    type="text"
+                    id="userName"
+                    placeholder="ชื่อผู้แจ้ง"
+                >
 
             </div>
 
 
+            <div>
 
-            <!-- USER -->
+                <label for="systemType">
+                    ระบบ / อุปกรณ์
+                </label>
 
-            <label for="userName">
+                <select id="systemType">
 
-                ผู้แจ้ง
+                    <option value="Handheld + Web Application">
+                        Handheld + Web Application
+                    </option>
 
-            </label>
+                    <option value="Wi-Fi">
+                        Wi-Fi
+                    </option>
 
+                    <option value="Printer">
+                        Printer
+                    </option>
+
+                    <option value="PC / Windows">
+                        PC / Windows
+                    </option>
+
+                    <option value="Network">
+                        Network
+                    </option>
+
+                    <option value="Server">
+                        Server
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+        </div>
+
+
+        <label for="problem">
+            รายละเอียดปัญหา
+        </label>
+
+        <textarea
+            id="problem"
+            rows="4"
+            placeholder="อธิบายปัญหาที่พบ..."
+        ></textarea>
+
+
+        <div class="form-grid">
+
+
+            <div>
+
+                <label for="priority">
+                    Priority
+                </label>
+
+                <select id="priority">
+
+                    <option value="Low">
+                        Low
+                    </option>
+
+                    <option value="Medium" selected>
+                        Medium
+                    </option>
+
+                    <option value="High">
+                        High
+                    </option>
+
+                    <option value="Critical">
+                        Critical
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div style="display:flex;align-items:end;">
+
+                <button
+                    class="btn-primary"
+                    id="createTicketButton"
+                    onclick="createTicket()"
+                >
+                    🎫 Create Ticket
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         TICKET LIST
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-title">
+
+            <span>
+                02
+            </span>
+
+            <h2>
+                📋 Ticket List
+            </h2>
+
+        </div>
+
+
+        <div class="toolbar">
 
             <input
                 type="text"
-                id="userName"
-                value="สมชาย - สาขา A"
-                placeholder="ชื่อผู้แจ้ง"
+                id="searchTicket"
+                placeholder="🔎 Search Ticket / User / Problem..."
+                oninput="filterTickets()"
             >
 
 
+            <select
+                id="statusFilter"
+                onchange="filterTickets()"
+            >
 
-            <!-- SYSTEM -->
-
-            <label for="systemType">
-
-                ระบบ / อุปกรณ์
-
-            </label>
-
-
-            <select id="systemType">
-
-                <option value="Handheld + Web Application">
-
-                    Handheld + Web Application
-
+                <option value="All">
+                    All Status
                 </option>
 
-
-                <option value="Wi-Fi">
-
-                    Wi-Fi
-
+                <option value="Open">
+                    Open
                 </option>
 
-
-                <option value="Printer">
-
-                    Printer
-
+                <option value="In Progress">
+                    In Progress
                 </option>
 
-
-                <option value="PC / Windows">
-
-                    PC / Windows
-
+                <option value="Resolved">
+                    Resolved
                 </option>
 
-
-                <option value="Network">
-
-                    Network
-
-                </option>
-
-
-            </select>
-
-
-
-            <!-- PROBLEM -->
-
-            <label for="problem">
-
-                รายละเอียดปัญหา
-
-            </label>
-
-
-            <textarea
-                id="problem"
-                placeholder="อธิบายปัญหาที่ User พบ..."
-            >Handheld บันทึกข้อมูลช้ามาก กดบันทึก 1 รายการใช้เวลาประมาณ 5 นาที และถ้าบันทึกหลายรายการอาจใช้เวลาถึง 40 นาที แต่เกิดเฉพาะสาขา A</textarea>
-
-
-
-            <!-- PRIORITY -->
-
-            <label for="priority">
-
-                Priority
-
-            </label>
-
-
-            <select id="priority">
-
-                <option value="Low">
-
-                    Low
-
-                </option>
-
-
-                <option
-                    value="Medium"
-                    selected
-                >
-
-                    Medium
-
-                </option>
-
-
-                <option value="High">
-
-                    High
-
-                </option>
-
-
-                <option value="Critical">
-
-                    Critical
-
+                <option value="Closed">
+                    Closed
                 </option>
 
             </select>
 
-
-
-            <!-- BUTTON -->
 
             <button
-                class="btn-primary"
-                id="createTicketButton"
-                onclick="createTicket()"
+                class="btn-secondary"
+                onclick="loadTickets()"
             >
-
-                🎫 Create Ticket
-
+                🔄 Refresh
             </button>
 
-
-        </section>
-
+        </div>
 
 
-        <!-- =================================
-             RESULT
-        ================================== -->
+        <div
+            id="ticketList"
+            class="ticket-list"
+        >
 
-        <section class="card">
+            <div class="empty">
 
+                ⏳
 
-            <div class="card-title">
-
-                <span>
-                    02
-                </span>
-
-                <h2>
-                    Ticket Result
-                </h2>
+                <p>
+                    Loading tickets...
+                </p>
 
             </div>
 
+        </div>
 
-
-            <!-- PROGRESS -->
-
-            <div class="progress-container">
-
-                <div
-                    id="progressBar"
-                    class="progress-bar"
-                ></div>
-
-            </div>
+    </section>
 
 
 
-            <!-- STATUS -->
+    <!-- =================================================
+         TICKET DETAIL
+    ================================================== -->
 
-            <div
-                id="status"
-                class="status-box"
-            >
+    <section
+        class="card"
+        id="ticketDetailSection"
+        style="display:none;"
+    >
 
-                🟢 พร้อมสร้าง Ticket
+        <div class="card-title">
 
-            </div>
+            <span>
+                03
+            </span>
+
+            <h2>
+                📄 Ticket Detail
+            </h2>
+
+        </div>
 
 
+        <div id="ticketDetail"></div>
 
-            <!-- RESULT -->
 
-            <div
-                id="result"
-                class="result"
-            >
+        <!-- =============================================
+             TROUBLESHOOTING
+        ============================================== -->
 
-                <div class="empty">
+        <div id="solutionSection">
 
-                    🎫
+            <hr>
 
-                    <h3>
-                        Create Ticket
-                    </h3>
 
-                    <p>
-                        กรอกข้อมูลทางด้านซ้าย
-                        แล้วกด Create Ticket
-                    </p>
+            <h3>
+                🛠️ Troubleshooting / Solution
+            </h3>
+
+
+            <label for="rootCause">
+                Root Cause
+            </label>
+
+            <textarea
+                id="rootCause"
+                rows="3"
+                placeholder="สาเหตุที่ยืนยันแล้ว..."
+            ></textarea>
+
+
+            <label for="evidence">
+                Evidence
+            </label>
+
+            <textarea
+                id="evidence"
+                rows="3"
+                placeholder="หลักฐานที่ใช้ยืนยัน Root Cause..."
+            ></textarea>
+
+
+            <label for="solution">
+                Solution
+            </label>
+
+            <textarea
+                id="solution"
+                rows="3"
+                placeholder="วิธีแก้ไข..."
+            ></textarea>
+
+
+            <label for="verification">
+                Verification
+            </label>
+
+            <textarea
+                id="verification"
+                rows="3"
+                placeholder="วิธีตรวจสอบหลังแก้ไข..."
+            ></textarea>
+
+
+            <div class="form-grid">
+
+
+                <div>
+
+                    <label for="detailStatus">
+                        Ticket Status
+                    </label>
+
+                    <select id="detailStatus">
+
+                        <option value="Open">
+                            Open
+                        </option>
+
+                        <option value="In Progress">
+                            In Progress
+                        </option>
+
+                        <option value="Resolved">
+                            Resolved
+                        </option>
+
+                        <option value="Closed">
+                            Closed
+                        </option>
+
+                    </select>
 
                 </div>
 
+
+                <div style="display:flex;align-items:end;gap:10px;">
+
+                    <button
+                        class="btn-primary"
+                        onclick="saveSolution()"
+                    >
+                        💾 Save Solution
+                    </button>
+
+
+                    <button
+                        class="btn-secondary"
+                        onclick="saveToKnowledgeBase()"
+                    >
+                        🧠 Save to Knowledge Base
+                    </button>
+
+                </div>
+
+
             </div>
 
 
-        </section>
+            <div
+                id="detailStatusMessage"
+                class="status-box"
+            >
+                พร้อมแก้ไข Ticket
+            </div>
+
+        </div>
+
+    </section>
 
 
-    </main>
 
-
-
-    <!-- =====================================
+    <!-- =================================================
          WORKFLOW
-    ====================================== -->
+    ================================================== -->
 
     <section class="workflow">
 
-
         <h2>
-            🔄 Phase 2 Workflow
+            🔄 Phase 2.3 Workflow
         </h2>
 
 
@@ -327,27 +513,7 @@
 
             <div class="workflow-item">
 
-                <strong>
-                    1
-                </strong>
-
-                <span>
-                    User Problem
-                </span>
-
-            </div>
-
-
-            <div class="arrow">
-                →
-            </div>
-
-
-            <div class="workflow-item">
-
-                <strong>
-                    2
-                </strong>
+                <strong>1</strong>
 
                 <span>
                     Create Ticket
@@ -363,12 +529,10 @@
 
             <div class="workflow-item">
 
-                <strong>
-                    3
-                </strong>
+                <strong>2</strong>
 
                 <span>
-                    Supabase
+                    Ticket List
                 </span>
 
             </div>
@@ -381,12 +545,10 @@
 
             <div class="workflow-item">
 
-                <strong>
-                    4
-                </strong>
+                <strong>3</strong>
 
                 <span>
-                    PostgreSQL
+                    Troubleshoot
                 </span>
 
             </div>
@@ -399,19 +561,32 @@
 
             <div class="workflow-item">
 
-                <strong>
-                    5
-                </strong>
+                <strong>4</strong>
 
                 <span>
-                    Ticket Saved
+                    Verify
+                </span>
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div class="workflow-item">
+
+                <strong>5</strong>
+
+                <span>
+                    Knowledge Base
                 </span>
 
             </div>
 
 
         </div>
-
 
     </section>
 
@@ -420,19 +595,18 @@
 
 
 
-<!-- =====================================
-     SUPABASE JAVASCRIPT LIBRARY
-====================================== -->
+<!-- =====================================================
+     SUPABASE JS
+====================================================== -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
 ></script>
 
 
-
-<!-- =====================================
-     APPLICATION JAVASCRIPT
-====================================== -->
+<!-- =====================================================
+     APPLICATION JS
+====================================================== -->
 
 <script src="app.js"></script>
 
