@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI IT Support Copilot</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <h1>🤖 AI IT Support Copilot</h1>
+            <p>AI Native IT Support — Phase 1 Prototype</p>
+        </div>
+
+        <div class="status">
+            ● DEMO MODE
+        </div>
+    </header>
+
+
+    <!-- Main -->
+    <main class="container">
+
+        <!-- Ticket -->
+        <section class="card">
+
+            <div class="card-title">
+                <span>01</span>
+                <h2>รับแจ้งปัญหา</h2>
+            </div>
+
+            <label>ผู้แจ้ง</label>
+
+            <input
+                type="text"
+                id="userName"
+                value="สมชาย - สาขา A"
+            >
+
+
+            <label>ระบบ / อุปกรณ์</label>
+
+            <select id="systemType">
+
+                <option value="handheld">
+                    Handheld + Web Application
+                </option>
+
+                <option value="wifi">
+                    Wi-Fi
+                </option>
+
+                <option value="printer">
+                    Printer
+                </option>
+
+                <option value="pc">
+                    PC / Windows
+                </option>
+
+                <option value="network">
+                    Network
+                </option>
+
+            </select>
+
+
+            <label>รายละเอียดปัญหา</label>
+
+            <textarea id="problem">
+
+Handheld บันทึกข้อมูลช้ามาก
+กดบันทึก 1 รายการใช้เวลาประมาณ 5 นาที
+และถ้าบันทึกหลายรายการอาจใช้เวลาถึง 40 นาที
+แต่เกิดเฉพาะสาขา A
+
+            </textarea>
+
+
+            <button
+                class="btn-primary"
+                onclick="analyzeTicket()"
+            >
+                🚀 ให้ AI วิเคราะห์
+            </button>
+
+        </section>
+
+
+
+        <!-- AI Analysis -->
+        <section class="card">
+
+            <div class="card-title">
+
+                <span>02</span>
+
+                <h2>AI Analysis</h2>
+
+            </div>
+
+
+            <!-- Progress -->
+
+            <div class="progress-container">
+
+                <div
+                    id="progressBar"
+                    class="progress-bar"
+                ></div>
+
+            </div>
+
+
+            <div
+                id="status"
+                class="status-box"
+            >
+
+                รอรับ Ticket...
+
+            </div>
+
+
+            <!-- AI Result -->
+
+            <div
+                id="result"
+                class="result"
+            >
+
+                <div class="empty">
+
+                    🤖
+
+                    <h3>
+                        AI Copilot พร้อมทำงาน
+                    </h3>
+
+                    <p>
+                        กรอกปัญหาแล้วกด
+                        "ให้ AI วิเคราะห์"
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- Workflow -->
+
+    <section class="workflow">
+
+        <h2>
+            🔄 AI Native Workflow
+        </h2>
+
+
+        <div class="workflow-grid">
+
+            <div class="workflow-item">
+                <strong>1</strong>
+                <span>Ticket</span>
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="workflow-item">
+                <strong>2</strong>
+                <span>Analyze</span>
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="workflow-item">
+                <strong>3</strong>
+                <span>Evidence</span>
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="workflow-item">
+                <strong>4</strong>
+                <span>Root Cause</span>
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="workflow-item">
+                <strong>5</strong>
+                <span>Knowledge</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
