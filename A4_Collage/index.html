@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A4 Collage Maker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef1f5;font-family:Arial,Tahoma,sans-serif;color:#222}
+.toolbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.toolbar .group{display:flex;align-items:center;gap:5px}
+.toolbar label{font-size:13px;font-weight:700}
+select,input[type=number],input[type=color],button{height:36px;border:1px solid #bfc5cc;border-radius:6px;background:#fff;padding:0 10px;font:inherit}
+button{cursor:pointer;font-weight:700}
+button:hover{filter:brightness(.97)}
+.btn-blue{background:#0d6efd;color:#fff;border-color:#0d6efd}
+.btn-green{background:#198754;color:#fff;border-color:#198754}
+.btn-red{background:#dc3545;color:#fff;border-color:#dc3545}
+.file-btn{height:36px;display:flex;align-items:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+.file-btn input{display:none}
+
+.workspace{padding:24px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
+.paper-wrap{background:#d7dbe0;padding:16px;border-radius:8px;overflow:auto;max-width:calc(100vw - 260px)}
+.a4{position:relative;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.25);overflow:hidden}
+.portrait{width:794px;height:1123px}
+.landscape{width:1123px;height:794px}
+
+.collage{position:absolute;inset:0;display:grid;gap:var(--gap);padding:var(--margin);background:var(--bg)}
+.cell{
+ position:relative;overflow:hidden;background:#fff;
+ border:2px solid #888;border-radius:0;
+ cursor:grab;touch-action:none;user-select:none;
+ display:flex;flex-direction:column
+}
+.cell.selected{box-shadow:0 0 0 3px #0d6efd}
+.text-area{
+ flex:0 0 36px;height:36px;min-height:36px;
+ width:100%;border:0;border-bottom:1px solid #aaa;
+ padding:5px 9px;resize:none;outline:none;
+ overflow:hidden;white-space:nowrap;
+ font:14px/24px Arial,Tahoma,sans-serif;color:#222;
+ background:#fff
+}
+.text-area:focus{background:#fffdf0}
+.image-area{
+ position:relative;overflow:hidden;background:#f4f4f4;
+ flex:1;min-height:0
+}
+.image-area img{
+ position:absolute;left:50%;top:50%;
+ width:100%;height:100%;object-fit:contain;background:transparent;
+ transform-origin:center center;pointer-events:none;user-select:none;
+ display:block
+}
+.cell.empty .image-area:after{
+ content:attr(data-num);position:absolute;inset:0;
+ display:flex;align-items:center;justify-content:center;
+ color:#aaa;font-size:26px;font-weight:700;pointer-events:none
+}
+.cell .remove{
+ position:absolute;right:6px;top:41px;z-index:10;
+ width:30px;height:30px;padding:0;border:0;border-radius:50%;
+ background:#dc3545;color:#fff;font-size:20px;line-height:30px
+}
+.cell.empty .remove{display:none}
+
+.cell.selected{box-shadow:0 0 0 3px #0d6efd}
+.cell img{
+ position:absolute;left:50%;top:50%;
+ width:100%;height:100%;object-fit:contain;background:transparent;
+ transform-origin:center center;pointer-events:none;user-select:none;
+ display:block
+}
+.cell.empty img{display:none}
+.cell.empty:after{
+ content:attr(data-num);position:absolute;inset:0;
+ display:flex;align-items:center;justify-content:center;
+ color:#aaa;font-size:26px;font-weight:700;pointer-events:none
+}
+.cell .remove{
+ position:absolute;right:6px;top:6px;z-index:5;
+ width:30px;height:30px;padding:0;border:0;border-radius:50%;
+ background:#dc3545;color:#fff;font-size:20px;line-height:30px
+}
+.cell.empty .remove{display:none}
+
+.panel{
+ width:220px;min-width:220px;background:#fff;border:1px solid #cfd4da;
+ border-radius:8px;padding:13px
+}
+.panel h3{margin:0 0 10px;font-size:16px}
+.zoom-row{display:flex;align-items:center;gap:7px}
+.zoom-row button{width:42px;font-size:20px;padding:0}
+.zoom-value{flex:1;text-align:center;font-weight:700}
+.panel .wide{width:100%;margin-top:8px}
+.direction{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.direction button{height:40px;font-size:18px}
+.direction .up{grid-column:2}.direction .left{grid-column:1}.direction .center{grid-column:2}.direction .right{grid-column:3}.direction .down{grid-column:2}
+.panel .delete{background:#dc3545;color:#fff;border-color:#dc3545}
+
+.status{font-size:12px;color:#666;margin-top:10px;text-align:center}
+/* Tablet */
+@media(max-width:950px){
+ .workspace{
+   justify-content:center;
+   padding:16px;
+ }
+ .paper-wrap{
+   max-width:calc(100vw - 32px);
+ }
+ .panel{
+   position:static;
+ }
+}
+
+/* Mobile */
+@media(max-width:700px){
+ body{background:#eef1f5}
+
+ .toolbar{
+   position:static;
+   padding:8px;
+   gap:6px;
+   display:grid;
+   grid-template-columns:1fr 1fr;
+ }
+ .toolbar .group{
+   min-width:0;
+   width:100%;
+   display:grid;
+   grid-template-columns:auto 1fr;
+   gap:4px;
+ }
+ .toolbar .group label{
+   font-size:11px;
+   white-space:nowrap;
+   align-self:center;
+ }
+ .toolbar select,
+ .toolbar input[type=number],
+ .toolbar input[type=color],
+ .toolbar button,
+ .file-btn{
+   width:100%;
+   min-width:0;
+   height:38px;
+   font-size:13px;
+ }
+ .toolbar .file-btn{
+   justify-content:center;
+   grid-column:1 / -1;
+ }
+ .toolbar #resetView{grid-column:1}
+ .toolbar #clearAll{grid-column:2}
+ .toolbar #downloadPNG{grid-column:1}
+ .toolbar #print{grid-column:2}
+
+ .workspace{
+   display:flex;
+   flex-direction:column;
+   align-items:center;
+   gap:12px;
+   padding:10px 8px 20px;
+   width:100%;
+ }
+ .paper-wrap{
+   width:100%;
+   max-width:100%;
+   padding:6px;
+   border-radius:6px;
+   overflow:hidden;
+ }
+ .a4{
+   width:100%;
+   height:auto;
+   aspect-ratio:210 / 297;
+   box-shadow:0 2px 10px rgba(0,0,0,.22);
+ }
+ .a4.landscape{aspect-ratio:297 / 210}
+
+ .panel{
+   width:100%;
+   min-width:0;
+   padding:12px;
+ }
+ .panel h3{font-size:16px}
+ .zoom-row button{height:44px;width:48px}
+ .direction{
+   max-width:260px;
+   margin:12px auto 0;
+ }
+ .direction button{height:44px}
+ .panel .wide{height:42px;font-size:14px}
+
+ .text-area{
+   flex-basis:36px;
+   height:36px;
+   min-height:36px;
+   font-size:14px;
+   line-height:24px;
+ }
+ .cell .remove{
+   top:41px;
+   width:28px;
+   height:28px;
+   line-height:28px;
+ }
+}
+
+/* Very small phones */
+@media(max-width:380px){
+ .toolbar{grid-template-columns:1fr}
+ .toolbar .group{grid-column:1!important}
+ .toolbar .file-btn,
+ .toolbar #resetView,
+ .toolbar #clearAll,
+ .toolbar #downloadPNG,
+ .toolbar #print{grid-column:1!important}
+ .workspace{padding-left:4px;padding-right:4px}
+ .paper-wrap{padding:3px}
+}
+@media print{
+ @page{size:A4;margin:0}
+ body{background:#fff}
+ .toolbar,.panel{display:none!important}
+ .workspace{padding:0;display:block}
+ .paper-wrap{padding:0;background:#fff}
+ .a4{box-shadow:none}
+ .portrait{width:210mm;height:297mm}
+ .landscape{width:297mm;height:210mm}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+ <div class="group">
+  <label>กระดาษ</label>
+  <select id="orientation">
+   <option value="portrait">A4 แนวตั้ง</option>
+   <option value="landscape">A4 แนวนอน</option>
+  </select>
+ </div>
+
+ <div class="group">
+  <label>จำนวนช่อง</label>
+  <select id="count">
+   <option value="1">1 ช่อง</option>
+   <option value="2">2 ช่อง</option>
+   <option value="3">3 ช่อง</option>
+   <option value="4" selected>4 ช่อง</option>
+   <option value="5">5 ช่อง</option>
+   <option value="6">6 ช่อง</option>
+   <option value="7">7 ช่อง</option>
+   <option value="8">8 ช่อง</option>
+   <option value="9">9 ช่อง</option>
+   <option value="10">10 ช่อง</option>
+   <option value="11">11 ช่อง</option>
+   <option value="12">12 ช่อง</option>
+  </select>
+ </div>
+
+ <div class="group">
+  <label>ช่องว่าง</label>
+  <input id="gap" type="number" min="0" max="100" value="8">
+ </div>
+
+ <div class="group">
+  <label>ขอบ</label>
+  <input id="margin" type="number" min="0" max="100" value="20">
+ </div>
+
+ <div class="group">
+  <label>พื้นหลัง</label>
+  <input id="background" type="color" value="#ffffff">
+ </div>
+
+ <label class="file-btn">+ เลือกภาพ
+  <input id="files" type="file" accept="image/*" multiple>
+ </label>
+
+ <button id="resetView">รีเซ็ตทั้งหมด</button>
+ <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+ <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
+ <button id="print" class="btn-blue">พิมพ์</button>
+</div>
+
+<div class="workspace">
+ <div class="paper-wrap">
+  <div id="paper" class="a4 portrait">
+   <div id="collage" class="collage"></div>
+  </div>
+ </div>
+
+ <div class="panel">
+  <h3>ปรับรูปที่เลือก</h3>
+
+  <div class="zoom-row">
+   <button id="zoomOut" type="button">−</button>
+   <div id="zoomValue" class="zoom-value">100%</div>
+   <button id="zoomIn" type="button">+</button>
+  </div>
+
+  <div class="direction">
+   <button class="up" data-move="up" type="button">↑</button>
+   <button class="left" data-move="left" type="button">←</button>
+   <button class="center" data-move="center" type="button">○</button>
+   <button class="right" data-move="right" type="button">→</button>
+   <button class="down" data-move="down" type="button">↓</button>
+  </div>
+
+  <button id="resetSelected" class="wide" type="button">รีเซ็ตรูปที่เลือก</button>
+  <button id="deleteSelected" class="wide delete" type="button">ลบรูปที่เลือก</button>
+
+  <div class="status" id="status">ยังไม่ได้เลือกรูป</div>
+ </div>
+</div>
+
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const paper = $('paper');
+ const collage = $('collage');
+ let items = [];
+ let selected = -1;
+
+ const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
+
+ function getLayout(n){
+   if(n===1)return [1,1];
+   if(n===2)return [2,1];
+   if(n===3)return [3,1];
+   if(n===4)return [2,2];
+   if(n===5)return [3,2];
+   if(n===6)return [3,2];
+   if(n===7)return [4,2];
+   if(n===8)return [4,2];
+   if(n===9)return [3,3];
+   if(n===10)return [5,2];
+   if(n===11)return [4,3];
+   return [4,3];
+ }
+
+ function ensureItem(i){
+   if(!items[i]) items[i] = {src:null,scale:1,x:0,y:0,text:''};
+   return items[i];
+ }
+
+ function updateImage(cell,item){
+   const img = cell.querySelector('img');
+   img.style.transform =
+     `translate(calc(-50% + ${item.x}px), calc(-50% + ${item.y}px)) scale(${item.scale})`;
+ }
+
+ function updateSelectedUI(){
+   if(selected >= 0 && items[selected] && items[selected].src){
+     $('zoomValue').textContent = Math.round(items[selected].scale*100) + '%';
+     $('status').textContent = `เลือกภาพที่ ${selected+1}`;
+   }else{
+     $('zoomValue').textContent = '—';
+     $('status').textContent = 'ยังไม่ได้เลือกรูป';
+   }
+ }
+
+ function selectCell(index,cell){
+   selected = index;
+   document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected'));
+   cell.classList.add('selected');
+   updateSelectedUI();
+ }
+
+ function render(){
+   const n = Number($('count').value);
+   const [cols,rows] = getLayout(n);
+
+   if(items.length > n) items.length = n;
+
+   collage.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+   collage.style.gridTemplateRows = `repeat(${rows},1fr)`;
+   collage.style.setProperty('--gap', clamp(Number($('gap').value)||0,0,100)+'px');
+   collage.style.setProperty('--margin', clamp(Number($('margin').value)||0,0,100)+'px');
+   collage.style.setProperty('--bg', $('background').value);
+
+   paper.className = 'a4 ' + $('orientation').value;
+   collage.innerHTML = '';
+
+   for(let i=0;i<n;i++){
+     const item = ensureItem(i);
+     const cell = document.createElement('div');
+     cell.className = 'cell' + (item.src ? '' : ' empty');
+     cell.dataset.num = i+1;
+     cell.dataset.index = i;
+
+     const imageArea = document.createElement('div');
+     imageArea.className = 'image-area';
+          const img = document.createElement('img');
+     img.alt = '';
+     if(item.src) img.src = item.src;
+     imageArea.appendChild(img);
+
+     const textArea = document.createElement('textarea');
+     textArea.className = 'text-area';
+     textArea.placeholder = `ขั้นตอนที่ ${i+1}...`;
+     textArea.value = item.text || '';
+     textArea.addEventListener('input', () => {
+       item.text = textArea.value;
+     });
+
+     const remove = document.createElement('button');
+     remove.type = 'button';
+     remove.className = 'remove';
+     remove.textContent = '×';
+
+     remove.addEventListener('click',e=>{
+       e.stopPropagation();
+       items[i] = {src:null,scale:1,x:0,y:0,text:''};
+       if(selected===i) selected=-1;
+       render();
+     });
+
+     cell.appendChild(textArea);
+     cell.appendChild(imageArea);
+     cell.appendChild(remove);
+
+     cell.addEventListener('click',(e)=>{
+       if(e.target !== textArea && e.target !== remove) selectCell(i,cell);
+     });
+     textArea.addEventListener('pointerdown',e=>e.stopPropagation());
+
+     cell.addEventListener('wheel',e=>{
+       if(!item.src)return;
+       e.preventDefault();
+       selectCell(i,cell);
+       item.scale = clamp(item.scale + (e.deltaY < 0 ? .1 : -.1), .5, 4);
+       updateImage(cell,item);
+       updateSelectedUI();
+     },{passive:false});
+
+     cell.addEventListener('pointerdown',e=>{
+       if(!item.src)return;
+       if(e.target === remove)return;
+
+       selectCell(i,cell);
+       cell.setPointerCapture(e.pointerId);
+
+       const sx=e.clientX, sy=e.clientY;
+       const ox=item.x, oy=item.y;
+
+       const move=ev=>{
+         item.x = ox + ev.clientX - sx;
+         item.y = oy + ev.clientY - sy;
+         updateImage(cell,item);
+       };
+
+       const up=()=>{
+         cell.removeEventListener('pointermove',move);
+         cell.removeEventListener('pointerup',up);
+       };
+
+       cell.addEventListener('pointermove',move);
+       cell.addEventListener('pointerup',up);
+     });
+
+     collage.appendChild(cell);
+     updateImage(cell,item);
+   }
+
+   updateSelectedUI();
+ }
+
+ function zoom(delta){
+   if(selected<0 || !items[selected]?.src)return;
+   const item=items[selected];
+   item.scale=clamp(item.scale+delta,.5,4);
+   const cell=collage.querySelector(`[data-index="${selected}"]`);
+   if(cell)updateImage(cell,item);
+   updateSelectedUI();
+ }
+
+ $('zoomIn').addEventListener('click',()=>zoom(.1));
+ $('zoomOut').addEventListener('click',()=>zoom(-.1));
+
+ $('resetSelected').addEventListener('click',()=>{
+   if(selected<0 || !items[selected]?.src)return;
+   items[selected].scale=1;
+   items[selected].x=0;
+   items[selected].y=0;
+   render();
+ });
+
+ $('deleteSelected').addEventListener('click',()=>{
+   if(selected<0 || !items[selected]?.src)return;
+   items[selected]={src:null,scale:1,x:0,y:0};
+   selected=-1;
+   render();
+ });
+
+ document.querySelectorAll('[data-move]').forEach(btn=>{
+   btn.addEventListener('click',()=>{
+     if(selected<0 || !items[selected]?.src)return;
+     const item=items[selected];
+     const step=10;
+     const dir=btn.dataset.move;
+
+     if(dir==='up')item.y-=step;
+     if(dir==='down')item.y+=step;
+     if(dir==='left')item.x-=step;
+     if(dir==='right')item.x+=step;
+     if(dir==='center'){item.x=0;item.y=0}
+
+     const cell=collage.querySelector(`[data-index="${selected}"]`);
+     if(cell)updateImage(cell,item);
+   });
+ });
+
+ $('resetView').addEventListener('click',()=>{
+   selected=-1;
+   items.forEach(item=>{
+     if(item){
+       item.scale=1;
+       item.x=0;
+       item.y=0;
+     }
+   });
+   render();
+ });
+
+ $('clearAll').addEventListener('click',()=>{
+   if(confirm('ต้องการล้างรูปทั้งหมดหรือไม่?')){
+     items=[];
+     selected=-1;
+     render();
+   }
+ });
+
+ $('orientation').addEventListener('change',render);
+ $('count').addEventListener('change',render);
+ $('gap').addEventListener('input',render);
+ $('margin').addEventListener('input',render);
+ $('background').addEventListener('input',render);
+
+ $('files').addEventListener('change',()=>{
+   const selectedFiles=[...$('files').files];
+   let p=0;
+
+   for(let i=0;i<Number($('count').value) && p<selectedFiles.length;i++){
+     if(items[i]?.src)continue;
+
+     const file=selectedFiles[p++];
+     const index=i;
+     const reader=new FileReader();
+
+     reader.onload=e=>{
+       items[index]={src:e.target.result,scale:1,x:0,y:0,text:''};
+       render();
+     };
+
+     reader.readAsDataURL(file);
+   }
+
+   $('files').value='';
+ });
+
+ $('print').addEventListener('click',()=>window.print());
+
+ /*
+  PNG export:
+  ไม่ใช้ foreignObject แล้ว
+  วาดลง Canvas โดยตรง จึงทำงานใน Browser ได้เสถียรกว่า
+ */
+ $('downloadPNG').addEventListener('click',async()=>{
+   const btn=$('downloadPNG');
+   btn.disabled=true;
+   btn.textContent='กำลังสร้าง PNG...';
+
+   try{
+     await exportPNG();
+   }catch(err){
+     console.error(err);
+     alert('ไม่สามารถสร้าง PNG ได้ กรุณาลองใหม่อีกครั้ง');
+   }finally{
+     btn.disabled=false;
+     btn.textContent='บันทึก PNG';
+   }
+ });
+
+ async function loadImage(src){
+   return new Promise((resolve,reject)=>{
+     const img=new Image();
+     img.onload=()=>resolve(img);
+     img.onerror=reject;
+     img.src=src;
+   });
+ }
+
+ async function exportPNG(){
+   const W=2480;
+   const H=$('orientation').value==='portrait'
+     ? Math.round(W*297/210)
+     : Math.round(W*210/297);
+
+   const canvas=document.createElement('canvas');
+   canvas.width=W;
+   canvas.height=H;
+
+   const ctx=canvas.getContext('2d');
+   ctx.fillStyle=$('background').value;
+   ctx.fillRect(0,0,W,H);
+
+   const gapPx=clamp(Number($('gap').value)||0,0,100)*(W/794);
+   const marginPx=clamp(Number($('margin').value)||0,0,100)*(W/794);
+
+   const n=Number($('count').value);
+   const [cols,rows]=getLayout(n);
+
+   const usableW=W-marginPx*2;
+   const usableH=H-marginPx*2;
+   const cellW=(usableW-gapPx*(cols-1))/cols;
+   const cellH=(usableH-gapPx*(rows-1))/rows;
+
+   for(let i=0;i<n;i++){
+     const item=items[i];
+     const x=marginPx+(i%cols)*(cellW+gapPx);
+     const y=marginPx+Math.floor(i/cols)*(cellH+gapPx);
+
+     // PNG ต้องวางช่องข้อความไว้ด้านบน เหมือน Preview
+     const textH=Math.max(36*(W/794), cellH*0.085);
+     const imageH=cellH-textH;
+
+     ctx.save();
+
+     // กรอบทั้งการ์ด
+     ctx.fillStyle='#ffffff';
+     ctx.strokeStyle='#888888';
+     ctx.lineWidth=Math.max(3, W/794*1.5);
+     ctx.fillRect(x,y,cellW,cellH);
+     ctx.strokeRect(x,y,cellW,cellH);
+
+     // ช่องข้อความด้านบน
+     if(item?.text){
+       ctx.save();
+       ctx.beginPath();
+       ctx.rect(x+14,y+8,cellW-28,textH-14);
+       ctx.clip();
+       ctx.fillStyle='#222';
+       const fontSize=Math.max(34, Math.round(textH*0.58));
+       ctx.font=`${fontSize}px Arial`;
+       ctx.textBaseline='middle';
+
+       const maxWidth=cellW-28;
+       const rawText=(item.text||'').replace(/\s+/g,' ').trim();
+
+       // ข้อความ PNG เป็นบรรทัดเดียวและขยายให้ใหญ่เต็มพื้นที่
+       // ถ้ายาวเกินช่อง จะลดขนาดตัวอักษรลงอัตโนมัติ
+       let fittedSize=fontSize;
+       while(fittedSize>20 && ctx.measureText(rawText).width>maxWidth){
+         fittedSize-=1;
+         ctx.font=`${fittedSize}px Arial`;
+       }
+
+       if(rawText){
+         ctx.fillText(rawText,x+14,y+textH/2,maxWidth);
+       }
+       ctx.restore();
+     }
+
+     // เส้นแบ่งหัวข้อความกับรูป
+     ctx.strokeStyle='#888888';
+     ctx.lineWidth=Math.max(2, W/794*1.2);
+     ctx.beginPath();
+     ctx.moveTo(x,y+textH);
+     ctx.lineTo(x+cellW,y+textH);
+     ctx.stroke();
+
+     // พื้นที่ภาพอยู่ด้านล่าง
+     ctx.save();
+     ctx.beginPath();
+     ctx.rect(x,y+textH,cellW,imageH);
+     ctx.clip();
+
+     if(item?.src){
+       const img=await loadImage(item.src);
+       const scaleContain=Math.min(cellW/img.naturalWidth,imageH/img.naturalHeight);
+       const finalScale=scaleContain*item.scale;
+       const drawW=img.naturalWidth*finalScale;
+       const drawH=img.naturalHeight*finalScale;
+       const dx=x+(cellW-drawW)/2 + item.x*(W/794);
+       const dy=y+textH+(imageH-drawH)/2 + item.y*(W/794);
+       ctx.drawImage(img,dx,dy,drawW,drawH);
+     }else{
+       ctx.fillStyle='#f4f4f4';
+       ctx.fillRect(x,y+textH,cellW,imageH);
+     }
+     ctx.restore();
+
+     ctx.restore();
+   }
+
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png',1));
+   if(!blob)throw new Error('PNG blob failed');
+
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=url;
+   const stamp=new Date();
+   const pad=n=>String(n).padStart(2,'0');
+   const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
+   const filename=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.png`;
+   a.download=filename;
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+
+ render();
+})();
+</script>
+</body>
+</html>
