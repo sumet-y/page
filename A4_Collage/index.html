@@ -2,12 +2,20 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>A4 Collage Maker</title>
 <style>
 *{box-sizing:border-box}
+html,body{
+ -webkit-text-size-adjust:100%;
+ touch-action:manipulation;
+}
+button,select,input,.file-btn{
+ touch-action:manipulation;
+ -webkit-tap-highlight-color:transparent;
+}
 body{margin:0;background:#eef1f5;font-family:Arial,Tahoma,sans-serif;color:#222}
-.toolbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.toolbar{touch-action:manipulation;position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .toolbar .group{display:flex;align-items:center;gap:5px}
 .toolbar label{font-size:13px;font-weight:700}
 select,input[type=number],input[type=color],button{height:36px;border:1px solid #bfc5cc;border-radius:6px;background:#fff;padding:0 10px;font:inherit}
@@ -84,7 +92,7 @@ button:hover{filter:brightness(.97)}
 }
 .cell.empty .remove{display:none}
 
-.panel{
+.panel{touch-action:manipulation;
  width:220px;min-width:220px;background:#fff;border:1px solid #cfd4da;
  border-radius:8px;padding:13px
 }
@@ -150,10 +158,10 @@ button:hover{filter:brightness(.97)}
    justify-content:center;
    grid-column:1 / -1;
  }
- .toolbar #resetView{grid-column:1}
- .toolbar #clearAll{grid-column:2}
- .toolbar #downloadPNG{grid-column:1}
- .toolbar #print{grid-column:2}
+ .toolbar .resolution-group{grid-column:1 / -1}
+ .toolbar #clearAll{grid-column:1}
+ .toolbar #downloadPNG{grid-column:2}
+ .toolbar #copyPNG{grid-column:1 / -1}
 
  .workspace{
    display:flex;
@@ -212,22 +220,12 @@ button:hover{filter:brightness(.97)}
  .toolbar{grid-template-columns:1fr}
  .toolbar .group{grid-column:1!important}
  .toolbar .file-btn,
- .toolbar #resetView,
+ .toolbar .resolution-group,
  .toolbar #clearAll,
  .toolbar #downloadPNG,
- .toolbar #print{grid-column:1!important}
+ .toolbar #copyPNG{grid-column:1!important}
  .workspace{padding-left:4px;padding-right:4px}
  .paper-wrap{padding:3px}
-}
-@media print{
- @page{size:A4;margin:0}
- body{background:#fff}
- .toolbar,.panel{display:none!important}
- .workspace{padding:0;display:block}
- .paper-wrap{padding:0;background:#fff}
- .a4{box-shadow:none}
- .portrait{width:210mm;height:297mm}
- .landscape{width:297mm;height:210mm}
 }
 </style>
 </head>
@@ -278,11 +276,18 @@ button:hover{filter:brightness(.97)}
  <label class="file-btn">+ เลือกภาพ
   <input id="files" type="file" accept="image/*" multiple>
  </label>
-
- <button id="resetView">รีเซ็ตทั้งหมด</button>
  <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+ <div class="group resolution-group">
+  <label>ขนาดไฟล์</label>
+  <select id="fileSize" title="ขนาดไฟล์เป็นค่าประมาณ ขึ้นกับจำนวนและรายละเอียดของภาพ">
+   <option value="small">ประมาณ 300 KB</option>
+   <option value="medium" selected>ประมาณ 621 KB</option>
+   <option value="large">ประมาณ 1 MB</option>
+   <option value="xlarge">ประมาณ 2 MB</option>
+  </select>
+ </div>
  <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
- <button id="print" class="btn-blue">พิมพ์</button>
+ <button id="copyPNG" class="btn-blue">Copy PNG</button>
 </div>
 
 <div class="workspace">
@@ -513,18 +518,6 @@ button:hover{filter:brightness(.97)}
    });
  });
 
- $('resetView').addEventListener('click',()=>{
-   selected=-1;
-   items.forEach(item=>{
-     if(item){
-       item.scale=1;
-       item.x=0;
-       item.y=0;
-     }
-   });
-   render();
- });
-
  $('clearAll').addEventListener('click',()=>{
    if(confirm('ต้องการล้างรูปทั้งหมดหรือไม่?')){
      items=[];
@@ -560,10 +553,7 @@ button:hover{filter:brightness(.97)}
 
    $('files').value='';
  });
-
- $('print').addEventListener('click',()=>window.print());
-
- /*
+/*
   PNG export:
   ไม่ใช้ foreignObject แล้ว
   วาดลง Canvas โดยตรง จึงทำงานใน Browser ได้เสถียรกว่า
@@ -593,8 +583,17 @@ button:hover{filter:brightness(.97)}
    });
  }
 
- async function exportPNG(){
-   const W=2480;
+ async function exportPNG(shouldDownload=true){
+   const sizePreset=$('fileSize').value;
+   const presetScale={
+     small:1.0,
+     medium:1.35,
+     large:1.65,
+     xlarge:2.0
+   }[sizePreset] || 1.35;
+
+   // คงขนาด A4 แต่ปรับความละเอียดและคุณภาพตามขนาดไฟล์ที่เลือก
+   const W=Math.round(1654*presetScale);
    const H=$('orientation').value==='portrait'
      ? Math.round(W*297/210)
      : Math.round(W*210/297);
@@ -696,22 +695,27 @@ button:hover{filter:brightness(.97)}
      ctx.restore();
    }
 
-   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png',1));
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
    if(!blob)throw new Error('PNG blob failed');
 
    const url=URL.createObjectURL(blob);
    const a=document.createElement('a');
    a.href=url;
-   const stamp=new Date();
-   const pad=n=>String(n).padStart(2,'0');
-   const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
-   const filename=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.png`;
-   a.download=filename;
-   document.body.appendChild(a);
-   a.click();
-   a.remove();
+   if(shouldDownload){
+     const stamp=new Date();
+     const pad=n=>String(n).padStart(2,'0');
+     const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
+     const filename=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.png`;
+     a.download=filename;
+     document.body.appendChild(a);
+     a.click();
+     a.remove();
+     setTimeout(()=>URL.revokeObjectURL(url),1000);
+   }else{
+     URL.revokeObjectURL(url);
+   }
 
-   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   return blob;
  }
 
  render();
