@@ -26,6 +26,19 @@ button:hover{filter:brightness(.97)}
 .btn-red{background:#dc3545;color:#fff;border-color:#dc3545}
 .file-btn{height:36px;display:flex;align-items:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
 .file-btn input{display:none}
+.btn-row{display:flex;gap:9px}
+.btn-row button{flex:1;white-space:nowrap}
+.wide-btn{width:100%}
+
+.toast{
+ position:fixed;left:50%;top:16px;transform:translate(-50%,-140%);
+ background:#222;color:#fff;padding:10px 18px;border-radius:8px;
+ font-size:14px;font-weight:700;z-index:100;
+ box-shadow:0 4px 14px rgba(0,0,0,.25);
+ opacity:0;transition:transform .25s ease,opacity .25s ease;
+ pointer-events:none;white-space:nowrap
+}
+.toast.show{transform:translate(-50%,0);opacity:1}
 
 .workspace{padding:24px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
 .paper-wrap{background:#d7dbe0;padding:16px;border-radius:8px;overflow:auto;max-width:calc(100vw - 260px)}
@@ -33,7 +46,7 @@ button:hover{filter:brightness(.97)}
 .portrait{width:794px;height:1123px}
 .landscape{width:1123px;height:794px}
 
-.collage{position:absolute;inset:0;display:grid;gap:var(--gap);padding:var(--margin);background:var(--bg)}
+.collage{position:absolute;inset:0;display:grid;gap:var(--gap);padding:var(--margin);background:#fff}
 .cell{
  position:relative;overflow:hidden;background:#fff;
  border:2px solid #888;border-radius:0;
@@ -127,22 +140,23 @@ button:hover{filter:brightness(.97)}
 
  .toolbar{
    position:static;
-   padding:8px;
-   gap:6px;
-   display:grid;
-   grid-template-columns:1fr 1fr;
+   padding:10px;
+   gap:8px;
+   display:flex;
+   flex-direction:column;
+   align-items:stretch;
  }
  .toolbar .group{
    min-width:0;
    width:100%;
    display:grid;
-   grid-template-columns:auto 1fr;
-   gap:4px;
+   grid-template-columns:78px 1fr;
+   align-items:center;
+   gap:8px;
  }
  .toolbar .group label{
-   font-size:11px;
+   font-size:13px;
    white-space:nowrap;
-   align-self:center;
  }
  .toolbar select,
  .toolbar input[type=number],
@@ -151,17 +165,13 @@ button:hover{filter:brightness(.97)}
  .file-btn{
    width:100%;
    min-width:0;
-   height:38px;
-   font-size:13px;
+   height:44px;
+   font-size:14px;
  }
  .toolbar .file-btn{
    justify-content:center;
-   grid-column:1 / -1;
  }
- .toolbar .resolution-group{grid-column:1 / -1}
- .toolbar #clearAll{grid-column:1}
- .toolbar #downloadPNG{grid-column:2}
- .toolbar #copyPNG{grid-column:1 / -1}
+ .toolbar .btn-row{width:100%}
 
  .workspace{
    display:flex;
@@ -217,13 +227,9 @@ button:hover{filter:brightness(.97)}
 
 /* Very small phones */
 @media(max-width:380px){
- .toolbar{grid-template-columns:1fr}
- .toolbar .group{grid-column:1!important}
- .toolbar .file-btn,
- .toolbar .resolution-group,
- .toolbar #clearAll,
- .toolbar #downloadPNG,
- .toolbar #copyPNG{grid-column:1!important}
+ .toolbar .group{grid-template-columns:1fr}
+ .toolbar .group label{margin-bottom:2px}
+ .btn-row{flex-direction:column}
  .workspace{padding-left:4px;padding-right:4px}
  .paper-wrap{padding:3px}
 }
@@ -268,15 +274,15 @@ button:hover{filter:brightness(.97)}
   <input id="margin" type="number" min="0" max="100" value="20">
  </div>
 
- <div class="group">
-  <label>พื้นหลัง</label>
-  <input id="background" type="color" value="#ffffff">
- </div>
-
  <label class="file-btn">+ เลือกภาพ
   <input id="files" type="file" accept="image/*" multiple>
  </label>
- <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+
+ <div class="btn-row">
+  <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+  <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
+ </div>
+
  <div class="group resolution-group">
   <label>ขนาดไฟล์</label>
   <select id="fileSize" title="ขนาดไฟล์เป็นค่าประมาณ ขึ้นกับจำนวนและรายละเอียดของภาพ">
@@ -286,9 +292,11 @@ button:hover{filter:brightness(.97)}
    <option value="xlarge">ประมาณ 2 MB</option>
   </select>
  </div>
- <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
- <button id="copyPNG" class="btn-blue">Copy PNG</button>
+
+ <button id="copyPNG" class="btn-blue wide-btn">Copy PNG</button>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <div class="workspace">
  <div class="paper-wrap">
@@ -384,7 +392,6 @@ button:hover{filter:brightness(.97)}
    collage.style.gridTemplateRows = `repeat(${rows},1fr)`;
    collage.style.setProperty('--gap', clamp(Number($('gap').value)||0,0,100)+'px');
    collage.style.setProperty('--margin', clamp(Number($('margin').value)||0,0,100)+'px');
-   collage.style.setProperty('--bg', $('background').value);
 
    paper.className = 'a4 ' + $('orientation').value;
    collage.innerHTML = '';
@@ -441,30 +448,65 @@ button:hover{filter:brightness(.97)}
        updateSelectedUI();
      },{passive:false});
 
+     // รองรับทั้งลากด้วยนิ้วเดียว (ย้ายรูป) และบีบสองนิ้ว (ซูมรูป) บนมือถือ
+     const pointers = new Map();
+     let dragStart = null;
+     let pinchStartDist = 0;
+     let pinchStartScale = 1;
+
+     const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
      cell.addEventListener('pointerdown',e=>{
        if(!item.src)return;
        if(e.target === remove)return;
 
        selectCell(i,cell);
-       cell.setPointerCapture(e.pointerId);
+       try{ cell.setPointerCapture(e.pointerId); }catch(err){}
+       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
 
-       const sx=e.clientX, sy=e.clientY;
-       const ox=item.x, oy=item.y;
-
-       const move=ev=>{
-         item.x = ox + ev.clientX - sx;
-         item.y = oy + ev.clientY - sy;
-         updateImage(cell,item);
-       };
-
-       const up=()=>{
-         cell.removeEventListener('pointermove',move);
-         cell.removeEventListener('pointerup',up);
-       };
-
-       cell.addEventListener('pointermove',move);
-       cell.addEventListener('pointerup',up);
+       if(pointers.size===1){
+         dragStart={x:e.clientX,y:e.clientY,ox:item.x,oy:item.y};
+       }else if(pointers.size===2){
+         const pts=[...pointers.values()];
+         pinchStartDist=dist(pts[0],pts[1]);
+         pinchStartScale=item.scale;
+         dragStart=null;
+       }
      });
+
+     cell.addEventListener('pointermove',e=>{
+       if(!pointers.has(e.pointerId))return;
+       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+       if(pointers.size===2){
+         const pts=[...pointers.values()];
+         const d=dist(pts[0],pts[1]);
+         if(pinchStartDist>0){
+           item.scale=clamp(pinchStartScale*(d/pinchStartDist),.5,4);
+           updateImage(cell,item);
+           updateSelectedUI();
+         }
+       }else if(pointers.size===1 && dragStart){
+         item.x = dragStart.ox + e.clientX - dragStart.x;
+         item.y = dragStart.oy + e.clientY - dragStart.y;
+         updateImage(cell,item);
+       }
+     });
+
+     const endPointer=e=>{
+       pointers.delete(e.pointerId);
+       if(pointers.size<2)pinchStartDist=0;
+
+       if(pointers.size===1){
+         const [[,p]]=[...pointers.entries()];
+         dragStart={x:p.x,y:p.y,ox:item.x,oy:item.y};
+       }else if(pointers.size===0){
+         dragStart=null;
+       }
+     };
+
+     cell.addEventListener('pointerup',endPointer);
+     cell.addEventListener('pointercancel',endPointer);
 
      collage.appendChild(cell);
      updateImage(cell,item);
@@ -530,7 +572,6 @@ button:hover{filter:brightness(.97)}
  $('count').addEventListener('change',render);
  $('gap').addEventListener('input',render);
  $('margin').addEventListener('input',render);
- $('background').addEventListener('input',render);
 
  $('files').addEventListener('change',()=>{
    const selectedFiles=[...$('files').files];
@@ -553,6 +594,41 @@ button:hover{filter:brightness(.97)}
 
    $('files').value='';
  });
+ let toastTimer=null;
+ function showToast(text){
+   const el=$('toast');
+   el.textContent=text;
+   clearTimeout(toastTimer);
+   el.classList.add('show');
+   toastTimer=setTimeout(()=>el.classList.remove('show'),1800);
+ }
+
+ $('copyPNG').addEventListener('click',async()=>{
+   const btn=$('copyPNG');
+   if(!navigator.clipboard || !window.ClipboardItem){
+     alert('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการคัดลอกรูปภาพ กรุณาใช้ปุ่มบันทึก PNG แทน');
+     return;
+   }
+
+   btn.disabled=true;
+   const originalText=btn.textContent;
+   btn.textContent='กำลังคัดลอก...';
+
+   try{
+     // ส่ง Promise<Blob> เข้า ClipboardItem โดยตรง เพื่อให้ทำงานได้ใน Safari/iOS
+     // ซึ่งต้องสร้าง ClipboardItem แบบ synchronous ภายใน user gesture
+     const item=new ClipboardItem({'image/png':exportPNG(false)});
+     await navigator.clipboard.write([item]);
+     showToast('คัดลอกรูปแล้ว ✓');
+   }catch(err){
+     console.error(err);
+     alert('ไม่สามารถคัดลอกรูปได้ กรุณาลองใหม่ หรือใช้ปุ่มบันทึก PNG แทน');
+   }finally{
+     btn.disabled=false;
+     btn.textContent=originalText;
+   }
+ });
+
 /*
   PNG export:
   ไม่ใช้ foreignObject แล้ว
@@ -603,7 +679,7 @@ button:hover{filter:brightness(.97)}
    canvas.height=H;
 
    const ctx=canvas.getContext('2d');
-   ctx.fillStyle=$('background').value;
+   ctx.fillStyle='#ffffff';
    ctx.fillRect(0,0,W,H);
 
    const gapPx=clamp(Number($('gap').value)||0,0,100)*(W/794);
