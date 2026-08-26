@@ -15,20 +15,24 @@ button,select,input,.file-btn{
  -webkit-tap-highlight-color:transparent;
 }
 body{margin:0;background:#eef1f5;font-family:Arial,Tahoma,sans-serif;color:#222}
-.toolbar{touch-action:manipulation;position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
-.toolbar .group{display:flex;align-items:center;gap:5px}
-.toolbar label{font-size:13px;font-weight:700}
-select,input[type=number],input[type=color],button{height:36px;border:1px solid #bfc5cc;border-radius:6px;background:#fff;padding:0 10px;font:inherit}
+
+/* ===== Top bar: เลือกภาพ + Copy PNG (อยู่บนสุดเสมอ) ===== */
+.topbar{
+ position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;
+ padding:10px 14px;display:flex;gap:9px;align-items:center
+}
+.topbar .file-btn{flex:1}
+.topbar #copyPNG{flex:1}
+
+select,input[type=number],button{height:40px;border:1px solid #bfc5cc;border-radius:6px;background:#fff;padding:0 10px;font:inherit}
 button{cursor:pointer;font-weight:700}
 button:hover{filter:brightness(.97)}
+button:disabled{opacity:.6;cursor:default}
 .btn-blue{background:#0d6efd;color:#fff;border-color:#0d6efd}
 .btn-green{background:#198754;color:#fff;border-color:#198754}
 .btn-red{background:#dc3545;color:#fff;border-color:#dc3545}
-.file-btn{height:36px;display:flex;align-items:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+.file-btn{height:40px;display:flex;align-items:center;justify-content:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer}
 .file-btn input{display:none}
-.btn-row{display:flex;gap:9px}
-.btn-row button{flex:1;white-space:nowrap}
-.wide-btn{width:100%}
 
 .toast{
  position:fixed;left:50%;top:16px;transform:translate(-50%,-140%);
@@ -40,8 +44,9 @@ button:hover{filter:brightness(.97)}
 }
 .toast.show{transform:translate(-50%,0);opacity:1}
 
-.workspace{padding:24px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
-.paper-wrap{background:#d7dbe0;padding:16px;border-radius:8px;overflow:auto;max-width:calc(100vw - 260px)}
+/* ===== ส่วนแสดงรูป (อยู่ถัดจาก top bar) ===== */
+.workspace{padding:18px 14px;display:flex;justify-content:center}
+.paper-wrap{background:#d7dbe0;padding:16px;border-radius:8px;overflow:auto;max-width:100%}
 .a4{position:relative;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.25);overflow:hidden}
 .portrait{width:794px;height:1123px}
 .landscape{width:1123px;height:794px}
@@ -78,6 +83,7 @@ button:hover{filter:brightness(.97)}
  display:flex;align-items:center;justify-content:center;
  color:#aaa;font-size:26px;font-weight:700;pointer-events:none
 }
+.cell.empty img{display:none}
 .cell .remove{
  position:absolute;right:6px;top:41px;z-index:10;
  width:30px;height:30px;padding:0;border:0;border-radius:50%;
@@ -85,150 +91,65 @@ button:hover{filter:brightness(.97)}
 }
 .cell.empty .remove{display:none}
 
-.cell.selected{box-shadow:0 0 0 3px #0d6efd}
-.cell img{
- position:absolute;left:50%;top:50%;
- width:100%;height:100%;object-fit:contain;background:transparent;
- transform-origin:center center;pointer-events:none;user-select:none;
- display:block
+/* ===== ส่วนตั้งค่าอื่นๆ (อยู่ด้านล่างสุด) ===== */
+.settings{max-width:900px;margin:0 auto;padding:0 14px 28px;display:flex;flex-direction:column;gap:14px}
+.toolbar{
+ background:#fff;border:1px solid #cfd4da;border-radius:8px;
+ padding:12px;display:flex;flex-wrap:wrap;gap:9px;align-items:center
 }
-.cell.empty img{display:none}
-.cell.empty:after{
- content:attr(data-num);position:absolute;inset:0;
- display:flex;align-items:center;justify-content:center;
- color:#aaa;font-size:26px;font-weight:700;pointer-events:none
-}
-.cell .remove{
- position:absolute;right:6px;top:6px;z-index:5;
- width:30px;height:30px;padding:0;border:0;border-radius:50%;
- background:#dc3545;color:#fff;font-size:20px;line-height:30px
-}
-.cell.empty .remove{display:none}
+.toolbar .group{display:flex;align-items:center;gap:6px}
+.toolbar label{font-size:13px;font-weight:700;white-space:nowrap}
+.btn-row{display:flex;gap:9px}
+.btn-row button{white-space:nowrap}
 
 .panel{touch-action:manipulation;
- width:220px;min-width:220px;background:#fff;border:1px solid #cfd4da;
+ background:#fff;border:1px solid #cfd4da;
  border-radius:8px;padding:13px
 }
 .panel h3{margin:0 0 10px;font-size:16px}
-.zoom-row{display:flex;align-items:center;gap:7px}
+.zoom-row{display:flex;align-items:center;gap:7px;max-width:280px}
 .zoom-row button{width:42px;font-size:20px;padding:0}
 .zoom-value{flex:1;text-align:center;font-weight:700}
-.panel .wide{width:100%;margin-top:8px}
-.direction{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.panel .wide{width:100%;max-width:280px;margin-top:8px;display:block}
+.direction{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:220px}
 .direction button{height:40px;font-size:18px}
 .direction .up{grid-column:2}.direction .left{grid-column:1}.direction .center{grid-column:2}.direction .right{grid-column:3}.direction .down{grid-column:2}
 .panel .delete{background:#dc3545;color:#fff;border-color:#dc3545}
 
-.status{font-size:12px;color:#666;margin-top:10px;text-align:center}
-/* Tablet */
-@media(max-width:950px){
- .workspace{
-   justify-content:center;
-   padding:16px;
- }
- .paper-wrap{
-   max-width:calc(100vw - 32px);
- }
- .panel{
-   position:static;
- }
-}
+.status{font-size:12px;color:#666;margin-top:10px}
 
 /* Mobile */
 @media(max-width:700px){
- body{background:#eef1f5}
+ .topbar{padding:8px;gap:8px}
+ .file-btn,.topbar #copyPNG{height:46px;font-size:14px}
 
- .toolbar{
-   position:static;
-   padding:10px;
-   gap:8px;
-   display:flex;
-   flex-direction:column;
-   align-items:stretch;
- }
- .toolbar .group{
-   min-width:0;
-   width:100%;
-   display:grid;
-   grid-template-columns:78px 1fr;
-   align-items:center;
-   gap:8px;
- }
- .toolbar .group label{
-   font-size:13px;
-   white-space:nowrap;
- }
- .toolbar select,
- .toolbar input[type=number],
- .toolbar input[type=color],
- .toolbar button,
- .file-btn{
-   width:100%;
-   min-width:0;
-   height:44px;
-   font-size:14px;
- }
- .toolbar .file-btn{
-   justify-content:center;
- }
- .toolbar .btn-row{width:100%}
-
- .workspace{
-   display:flex;
-   flex-direction:column;
-   align-items:center;
-   gap:12px;
-   padding:10px 8px 20px;
-   width:100%;
- }
- .paper-wrap{
-   width:100%;
-   max-width:100%;
-   padding:6px;
-   border-radius:6px;
-   overflow:hidden;
- }
- .a4{
-   width:100%;
-   height:auto;
-   aspect-ratio:210 / 297;
-   box-shadow:0 2px 10px rgba(0,0,0,.22);
- }
+ .workspace{padding:10px 8px}
+ .paper-wrap{width:100%;max-width:100%;padding:6px;border-radius:6px;overflow:hidden}
+ .a4{width:100%;height:auto;aspect-ratio:210 / 297;box-shadow:0 2px 10px rgba(0,0,0,.22)}
  .a4.landscape{aspect-ratio:297 / 210}
 
- .panel{
-   width:100%;
-   min-width:0;
-   padding:12px;
- }
- .panel h3{font-size:16px}
- .zoom-row button{height:44px;width:48px}
- .direction{
-   max-width:260px;
-   margin:12px auto 0;
- }
- .direction button{height:44px}
- .panel .wide{height:42px;font-size:14px}
+ .settings{padding:0 8px 20px;gap:10px}
+ .toolbar{flex-direction:column;align-items:stretch;padding:10px}
+ .toolbar .group{width:100%;display:grid;grid-template-columns:78px 1fr;align-items:center;gap:8px}
+ .toolbar select,.toolbar button{width:100%;min-width:0;height:44px;font-size:14px}
+ .toolbar .btn-row{width:100%}
+ .toolbar .btn-row button{flex:1}
 
- .text-area{
-   flex-basis:36px;
-   height:36px;
-   min-height:36px;
-   font-size:14px;
-   line-height:24px;
- }
- .cell .remove{
-   top:41px;
-   width:28px;
-   height:28px;
-   line-height:28px;
- }
+ .panel{padding:12px}
+ .panel h3{font-size:16px}
+ .zoom-row{max-width:none}
+ .zoom-row button{height:44px;width:48px}
+ .direction{max-width:260px;margin:12px auto 0}
+ .direction button{height:44px}
+ .panel .wide{max-width:none;height:42px;font-size:14px}
+
+ .text-area{flex-basis:36px;height:36px;min-height:36px;font-size:14px;line-height:24px}
+ .cell .remove{top:41px;width:28px;height:28px;line-height:28px}
 }
 
 /* Very small phones */
 @media(max-width:380px){
  .toolbar .group{grid-template-columns:1fr}
- .toolbar .group label{margin-bottom:2px}
  .btn-row{flex-direction:column}
  .workspace{padding-left:4px;padding-right:4px}
  .paper-wrap{padding:3px}
@@ -237,71 +158,67 @@ button:hover{filter:brightness(.97)}
 </head>
 <body>
 
-<div class="toolbar">
- <div class="group">
-  <label>กระดาษ</label>
-  <select id="orientation">
-   <option value="portrait">A4 แนวตั้ง</option>
-   <option value="landscape">A4 แนวนอน</option>
-  </select>
- </div>
-
- <div class="group">
-  <label>จำนวนช่อง</label>
-  <select id="count">
-   <option value="1">1 ช่อง</option>
-   <option value="2">2 ช่อง</option>
-   <option value="3">3 ช่อง</option>
-   <option value="4" selected>4 ช่อง</option>
-   <option value="5">5 ช่อง</option>
-   <option value="6">6 ช่อง</option>
-   <option value="7">7 ช่อง</option>
-   <option value="8">8 ช่อง</option>
-   <option value="9">9 ช่อง</option>
-   <option value="10">10 ช่อง</option>
-   <option value="11">11 ช่อง</option>
-   <option value="12">12 ช่อง</option>
-  </select>
- </div>
-
- <div class="group">
-  <label>ช่องว่าง</label>
-  <input id="gap" type="number" min="0" max="100" value="8">
- </div>
-
- <div class="group">
-  <label>ขอบ</label>
-  <input id="margin" type="number" min="0" max="100" value="20">
- </div>
-
+<!-- แถวบนสุด: เลือกภาพ + Copy PNG -->
+<div class="topbar">
  <label class="file-btn">+ เลือกภาพ
   <input id="files" type="file" accept="image/*" multiple>
  </label>
-
- <div class="btn-row">
-  <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
-  <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
- </div>
-
- <div class="group resolution-group">
-  <label>ขนาดไฟล์</label>
-  <select id="fileSize" title="ขนาดไฟล์เป็นค่าประมาณ ขึ้นกับจำนวนและรายละเอียดของภาพ">
-   <option value="small">ประมาณ 300 KB</option>
-   <option value="medium" selected>ประมาณ 621 KB</option>
-   <option value="large">ประมาณ 1 MB</option>
-   <option value="xlarge">ประมาณ 2 MB</option>
-  </select>
- </div>
-
- <button id="copyPNG" class="btn-blue wide-btn">Copy PNG</button>
+ <button id="copyPNG" class="btn-blue">Copy PNG</button>
 </div>
 
 <div id="toast" class="toast"></div>
 
+<!-- ส่วนแสดงรูป -->
 <div class="workspace">
  <div class="paper-wrap">
   <div id="paper" class="a4 portrait">
    <div id="collage" class="collage"></div>
+  </div>
+ </div>
+</div>
+
+<!-- ตั้งค่าอื่นๆ อยู่ด้านล่าง -->
+<div class="settings">
+ <div class="toolbar">
+  <div class="group">
+   <label>กระดาษ</label>
+   <select id="orientation">
+    <option value="portrait">A4 แนวตั้ง</option>
+    <option value="landscape">A4 แนวนอน</option>
+   </select>
+  </div>
+
+  <div class="group">
+   <label>จำนวนช่อง</label>
+   <select id="count">
+    <option value="1">1 ช่อง</option>
+    <option value="2">2 ช่อง</option>
+    <option value="3">3 ช่อง</option>
+    <option value="4" selected>4 ช่อง</option>
+    <option value="5">5 ช่อง</option>
+    <option value="6">6 ช่อง</option>
+    <option value="7">7 ช่อง</option>
+    <option value="8">8 ช่อง</option>
+    <option value="9">9 ช่อง</option>
+    <option value="10">10 ช่อง</option>
+    <option value="11">11 ช่อง</option>
+    <option value="12">12 ช่อง</option>
+   </select>
+  </div>
+
+  <div class="btn-row">
+   <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+   <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
+  </div>
+
+  <div class="group resolution-group">
+   <label>ขนาดไฟล์</label>
+   <select id="fileSize" title="ขนาดไฟล์เป็นค่าประมาณ ขึ้นกับจำนวนและรายละเอียดของภาพ">
+    <option value="small">ประมาณ 300 KB</option>
+    <option value="medium" selected>ประมาณ 621 KB</option>
+    <option value="large">ประมาณ 1 MB</option>
+    <option value="xlarge">ประมาณ 2 MB</option>
+   </select>
   </div>
  </div>
 
@@ -337,6 +254,16 @@ button:hover{filter:brightness(.97)}
  let items = [];
  let selected = -1;
 
+ // ช่องว่างและขอบตั้งค่าคงที่ ไม่ต้องให้ผู้ใช้ปรับ
+ const GAP = 8;
+ const MARGIN = 8;
+
+ // หน่วยอ้างอิง (canonical) สำหรับตำแหน่งรูปที่ผู้ใช้ลาก/ขยับ
+ // ค่า item.x / item.y จะถูกเก็บโดยอิงจากความกว้างกระดาษ "มาตรฐาน" นี้เสมอ
+ // แล้วค่อยแปลงเป็นพิกเซลจริงตอนแสดงผล (preview) หรือตอนส่งออกไฟล์ (export)
+ // วิธีนี้ทำให้ตำแหน่ง/การครอปรูปตรงกันเป๊ะไม่ว่าจะดูบนจอขนาดไหน (มือถือ/เดสก์ท็อป)
+ const CANON_W = 794;
+
  const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
 
  function getLayout(n){
@@ -359,10 +286,18 @@ button:hover{filter:brightness(.97)}
    return items[i];
  }
 
+ function cellRectWidth(cell){
+   const w = cell.getBoundingClientRect().width;
+   return w || CANON_W;
+ }
+
  function updateImage(cell,item){
    const img = cell.querySelector('img');
+   const factor = cellRectWidth(cell) / CANON_W;
+   const px = item.x * factor;
+   const py = item.y * factor;
    img.style.transform =
-     `translate(calc(-50% + ${item.x}px), calc(-50% + ${item.y}px)) scale(${item.scale})`;
+     `translate(calc(-50% + ${px}px), calc(-50% + ${py}px)) scale(${item.scale})`;
  }
 
  function updateSelectedUI(){
@@ -390,8 +325,8 @@ button:hover{filter:brightness(.97)}
 
    collage.style.gridTemplateColumns = `repeat(${cols},1fr)`;
    collage.style.gridTemplateRows = `repeat(${rows},1fr)`;
-   collage.style.setProperty('--gap', clamp(Number($('gap').value)||0,0,100)+'px');
-   collage.style.setProperty('--margin', clamp(Number($('margin').value)||0,0,100)+'px');
+   collage.style.setProperty('--gap', GAP+'px');
+   collage.style.setProperty('--margin', MARGIN+'px');
 
    paper.className = 'a4 ' + $('orientation').value;
    collage.innerHTML = '';
@@ -405,7 +340,7 @@ button:hover{filter:brightness(.97)}
 
      const imageArea = document.createElement('div');
      imageArea.className = 'image-area';
-          const img = document.createElement('img');
+     const img = document.createElement('img');
      img.alt = '';
      if(item.src) img.src = item.src;
      imageArea.appendChild(img);
@@ -451,6 +386,7 @@ button:hover{filter:brightness(.97)}
      // รองรับทั้งลากด้วยนิ้วเดียว (ย้ายรูป) และบีบสองนิ้ว (ซูมรูป) บนมือถือ
      const pointers = new Map();
      let dragStart = null;
+     let dragFactor = 1;
      let pinchStartDist = 0;
      let pinchStartScale = 1;
 
@@ -465,6 +401,7 @@ button:hover{filter:brightness(.97)}
        pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
 
        if(pointers.size===1){
+         dragFactor = CANON_W / cellRectWidth(cell);
          dragStart={x:e.clientX,y:e.clientY,ox:item.x,oy:item.y};
        }else if(pointers.size===2){
          const pts=[...pointers.values()];
@@ -487,8 +424,10 @@ button:hover{filter:brightness(.97)}
            updateSelectedUI();
          }
        }else if(pointers.size===1 && dragStart){
-         item.x = dragStart.ox + e.clientX - dragStart.x;
-         item.y = dragStart.oy + e.clientY - dragStart.y;
+         // แปลง delta พิกเซลจริงบนจอ ให้เป็นหน่วยอ้างอิง CANON_W
+         // เพื่อให้ตำแหน่งรูปตรงกันทั้ง preview และตอนบันทึก/คัดลอกไฟล์
+         item.x = dragStart.ox + (e.clientX - dragStart.x) * dragFactor;
+         item.y = dragStart.oy + (e.clientY - dragStart.y) * dragFactor;
          updateImage(cell,item);
        }
      });
@@ -498,6 +437,7 @@ button:hover{filter:brightness(.97)}
        if(pointers.size<2)pinchStartDist=0;
 
        if(pointers.size===1){
+         dragFactor = CANON_W / cellRectWidth(cell);
          const [[,p]]=[...pointers.entries()];
          dragStart={x:p.x,y:p.y,ox:item.x,oy:item.y};
        }else if(pointers.size===0){
@@ -546,14 +486,20 @@ button:hover{filter:brightness(.97)}
    btn.addEventListener('click',()=>{
      if(selected<0 || !items[selected]?.src)return;
      const item=items[selected];
-     const step=10;
      const dir=btn.dataset.move;
 
-     if(dir==='up')item.y-=step;
-     if(dir==='down')item.y+=step;
-     if(dir==='left')item.x-=step;
-     if(dir==='right')item.x+=step;
-     if(dir==='center'){item.x=0;item.y=0}
+     if(dir==='center'){
+       item.x=0;item.y=0;
+     }else{
+       const cell=collage.querySelector(`[data-index="${selected}"]`);
+       const factor = cell ? CANON_W/cellRectWidth(cell) : 1;
+       const step=10*factor; // เลื่อนประมาณ 10px จริงบนหน้าจอไม่ว่าจอขนาดไหน
+
+       if(dir==='up')item.y-=step;
+       if(dir==='down')item.y+=step;
+       if(dir==='left')item.x-=step;
+       if(dir==='right')item.x+=step;
+     }
 
      const cell=collage.querySelector(`[data-index="${selected}"]`);
      if(cell)updateImage(cell,item);
@@ -570,8 +516,6 @@ button:hover{filter:brightness(.97)}
 
  $('orientation').addEventListener('change',render);
  $('count').addEventListener('change',render);
- $('gap').addEventListener('input',render);
- $('margin').addEventListener('input',render);
 
  $('files').addEventListener('change',()=>{
    const selectedFiles=[...$('files').files];
@@ -594,6 +538,7 @@ button:hover{filter:brightness(.97)}
 
    $('files').value='';
  });
+
  let toastTimer=null;
  function showToast(text){
    const el=$('toast');
@@ -682,8 +627,8 @@ button:hover{filter:brightness(.97)}
    ctx.fillStyle='#ffffff';
    ctx.fillRect(0,0,W,H);
 
-   const gapPx=clamp(Number($('gap').value)||0,0,100)*(W/794);
-   const marginPx=clamp(Number($('margin').value)||0,0,100)*(W/794);
+   const gapPx=GAP*(W/CANON_W);
+   const marginPx=MARGIN*(W/CANON_W);
 
    const n=Number($('count').value);
    const [cols,rows]=getLayout(n);
@@ -698,8 +643,9 @@ button:hover{filter:brightness(.97)}
      const x=marginPx+(i%cols)*(cellW+gapPx);
      const y=marginPx+Math.floor(i/cols)*(cellH+gapPx);
 
-     // PNG ต้องวางช่องข้อความไว้ด้านบน เหมือน Preview
-     const textH=Math.max(36*(W/794), cellH*0.085);
+     // ความสูงช่องข้อความต้องสัดส่วนเดียวกับ preview เป๊ะๆ (36px ที่อ้างอิงความกว้าง CANON_W)
+     // ไม่เช่นนั้นพื้นที่รูปใน PNG จะเตี้ยกว่าที่เห็นใน preview ทำให้รูปที่ซูม/เลื่อนแล้วโดนตัดขอบล่างหาย
+     const textH=36*(W/CANON_W);
      const imageH=cellH-textH;
 
      ctx.save();
@@ -707,7 +653,7 @@ button:hover{filter:brightness(.97)}
      // กรอบทั้งการ์ด
      ctx.fillStyle='#ffffff';
      ctx.strokeStyle='#888888';
-     ctx.lineWidth=Math.max(3, W/794*1.5);
+     ctx.lineWidth=Math.max(3, W/CANON_W*1.5);
      ctx.fillRect(x,y,cellW,cellH);
      ctx.strokeRect(x,y,cellW,cellH);
 
@@ -741,7 +687,7 @@ button:hover{filter:brightness(.97)}
 
      // เส้นแบ่งหัวข้อความกับรูป
      ctx.strokeStyle='#888888';
-     ctx.lineWidth=Math.max(2, W/794*1.2);
+     ctx.lineWidth=Math.max(2, W/CANON_W*1.2);
      ctx.beginPath();
      ctx.moveTo(x,y+textH);
      ctx.lineTo(x+cellW,y+textH);
@@ -759,8 +705,8 @@ button:hover{filter:brightness(.97)}
        const finalScale=scaleContain*item.scale;
        const drawW=img.naturalWidth*finalScale;
        const drawH=img.naturalHeight*finalScale;
-       const dx=x+(cellW-drawW)/2 + item.x*(W/794);
-       const dy=y+textH+(imageH-drawH)/2 + item.y*(W/794);
+       const dx=x+(cellW-drawW)/2 + item.x*(W/CANON_W);
+       const dy=y+textH+(imageH-drawH)/2 + item.y*(W/CANON_W);
        ctx.drawImage(img,dx,dy,drawW,drawH);
      }else{
        ctx.fillStyle='#f4f4f4';
