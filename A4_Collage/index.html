@@ -216,16 +216,16 @@ button:disabled{opacity:.6;cursor:default}
 
   <div class="btn-row">
    <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
-   <button id="downloadPNG" class="btn-green">บันทึก PNG</button>
+   <button id="downloadPNG" class="btn-green">บันทึกรูปภาพ</button>
   </div>
 
   <div class="group resolution-group">
    <label>ขนาดไฟล์</label>
-   <select id="fileSize" title="ขนาดไฟล์เป็นค่าประมาณ ขึ้นกับจำนวนและรายละเอียดของภาพ">
+   <select id="fileSize" title="ตอนบันทึกรูปภาพ (.jpg) ระบบจะปรับคุณภาพให้ได้ขนาดไฟล์ใกล้เคียงที่เลือกจริง ส่วนตอน Copy PNG จะใช้ความละเอียดตามที่เลือก แต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะ (PNG ไม่สูญเสียคุณภาพ ปรับขนาดไฟล์ไม่ได้)">
     <option value="small">ประมาณ 300 KB</option>
-    <option value="medium" selected>ประมาณ 621 KB</option>
-    <option value="large">ประมาณ 1 MB</option>
-    <option value="xlarge">ประมาณ 2 MB</option>
+    <option value="medium" selected>ประมาณ 650 KB</option>
+    <option value="large">ประมาณ 1.2 MB</option>
+    <option value="xlarge">ประมาณ 2.2 MB</option>
    </select>
   </div>
  </div>
@@ -567,7 +567,7 @@ button:disabled{opacity:.6;cursor:default}
  $('copyPNG').addEventListener('click',async()=>{
    const btn=$('copyPNG');
    if(!navigator.clipboard || !window.ClipboardItem){
-     alert('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการคัดลอกรูปภาพ กรุณาใช้ปุ่มบันทึก PNG แทน');
+     alert('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการคัดลอกรูปภาพ กรุณาใช้ปุ่มบันทึกรูปภาพแทน');
      return;
    }
 
@@ -578,12 +578,12 @@ button:disabled{opacity:.6;cursor:default}
    try{
      // ส่ง Promise<Blob> เข้า ClipboardItem โดยตรง เพื่อให้ทำงานได้ใน Safari/iOS
      // ซึ่งต้องสร้าง ClipboardItem แบบ synchronous ภายใน user gesture
-     const item=new ClipboardItem({'image/png':exportPNG(false)});
+     const item=new ClipboardItem({'image/png':exportForCopy()});
      await navigator.clipboard.write([item]);
      showToast('คัดลอกรูปแล้ว ✓');
    }catch(err){
      console.error(err);
-     alert('ไม่สามารถคัดลอกรูปได้ กรุณาลองใหม่ หรือใช้ปุ่มบันทึก PNG แทน');
+     alert('ไม่สามารถคัดลอกรูปได้ กรุณาลองใหม่ หรือใช้ปุ่มบันทึกรูปภาพแทน');
    }finally{
      btn.disabled=false;
      btn.textContent=originalText;
@@ -591,23 +591,25 @@ button:disabled{opacity:.6;cursor:default}
  });
 
 /*
-  PNG export:
+  บันทึกรูปภาพ:
   ไม่ใช้ foreignObject แล้ว
   วาดลง Canvas โดยตรง จึงทำงานใน Browser ได้เสถียรกว่า
+  บันทึกเป็น .jpg เพื่อให้ปรับคุณภาพควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
+  (PNG เป็น lossless ปรับขนาดไฟล์ตามที่เลือกไม่ได้)
  */
  $('downloadPNG').addEventListener('click',async()=>{
    const btn=$('downloadPNG');
    btn.disabled=true;
-   btn.textContent='กำลังสร้าง PNG...';
+   btn.textContent='กำลังสร้างไฟล์...';
 
    try{
-     await exportPNG();
+     await exportDownload();
    }catch(err){
      console.error(err);
-     alert('ไม่สามารถสร้าง PNG ได้ กรุณาลองใหม่อีกครั้ง');
+     alert('ไม่สามารถสร้างไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
    }finally{
      btn.disabled=false;
-     btn.textContent='บันทึก PNG';
+     btn.textContent='บันทึกรูปภาพ';
    }
  });
 
@@ -620,17 +622,8 @@ button:disabled{opacity:.6;cursor:default}
    });
  }
 
- async function exportPNG(shouldDownload=true){
-   const sizePreset=$('fileSize').value;
-   const presetScale={
-     small:1.0,
-     medium:1.35,
-     large:1.65,
-     xlarge:2.0
-   }[sizePreset] || 1.35;
-
-   // คงขนาด A4 แต่ปรับความละเอียดและคุณภาพตามขนาดไฟล์ที่เลือก
-   const W=Math.round(1654*presetScale);
+ async function buildCanvas(scale){
+   const W=Math.round(1654*scale);
    const H=$('orientation').value==='portrait'
      ? Math.round(W*297/210)
      : Math.round(W*210/297);
@@ -727,26 +720,86 @@ button:disabled{opacity:.6;cursor:default}
      ctx.restore();
    }
 
-   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-   if(!blob)throw new Error('PNG blob failed');
+   return canvas;
+ }
 
+ // พรีเซ็ตขนาดไฟล์: กำหนดทั้งความละเอียด (scale) และเป้าหมายขนาดไฟล์ (targetKB)
+ // หมายเหตุ: PNG เป็นไฟล์แบบไม่สูญเสียคุณภาพ (lossless) จึงไม่มีทางบีบให้ได้ขนาดไฟล์ตามที่ต้องการ
+ // (ไฟล์ PNG จะใหญ่/เล็กตามความซับซ้อนของภาพเท่านั้น ปรับ "คุณภาพ" ไม่ได้)
+ // ปุ่ม "บันทึกรูปภาพ" จึงบันทึกเป็น .jpg แทน ซึ่งสามารถปรับคุณภาพเพื่อควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
+ // ส่วนปุ่ม Copy PNG ยังคงใช้ PNG (คัดลอกรูปภาพผ่านคลิปบอร์ดต้องใช้ PNG เพื่อให้ใช้ได้ในทุกอุปกรณ์ รวมถึง iPhone)
+ // โดยจะอ้างอิงความละเอียดตามที่เลือกเช่นกัน เพียงแต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะเหมือนไฟล์ JPG
+ const SIZE_PRESETS={
+   small:  {scale:1.0, targetKB:300},
+   medium: {scale:1.3, targetKB:650},
+   large:  {scale:1.6, targetKB:1200},
+   xlarge: {scale:2.0, targetKB:2200},
+ };
+
+ function currentPreset(){
+   return SIZE_PRESETS[$('fileSize').value] || SIZE_PRESETS.medium;
+ }
+
+ async function encodeJpegToTarget(canvas, targetBytes){
+   let lo=0.05, hi=0.95, best=null;
+   for(let i=0;i<9;i++){
+     const q=(lo+hi)/2;
+     const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',q));
+     if(!blob) continue;
+     if(!best || Math.abs(blob.size-targetBytes) < Math.abs(best.size-targetBytes)) best=blob;
+     if(blob.size>targetBytes) hi=q; else lo=q;
+   }
+   return best;
+ }
+
+ // ปรับ "ความละเอียด" เป็นตัวช่วยอีกชั้น เผื่อกรณีที่ปรับแค่คุณภาพ (JPEG quality)
+ // อย่างเดียวไม่พอจะเข้าใกล้ขนาดไฟล์เป้าหมาย เช่น รูปเรียบๆ ที่บีบอัดง่ายมาก (ไฟล์เล็กกว่าเป้าแม้คุณภาพสูงสุด)
+ // หรือรูปที่มีรายละเอียด/สัญญาณรบกวนเยอะมาก (ไฟล์ใหญ่กว่าเป้าแม้คุณภาพต่ำสุด)
+ async function exportDownload(){
+   const preset=currentPreset();
+   const targetBytes=preset.targetKB*1024;
+
+   let scale=preset.scale;
+   let blob=null;
+
+   for(let attempt=0;attempt<3;attempt++){
+     const canvas=await buildCanvas(scale);
+     blob=await encodeJpegToTarget(canvas,targetBytes);
+     if(!blob)throw new Error('JPEG blob failed');
+
+     if(blob.size > targetBytes*1.4 && scale > 0.5){
+       scale *= 0.75; // ไฟล์ใหญ่เกินไปแม้คุณภาพต่ำสุดแล้ว ลดความละเอียดลงแล้วลองใหม่
+     }else if(blob.size < targetBytes*0.6 && scale < 3.2){
+       scale *= 1.3; // ไฟล์เล็กเกินไปแม้คุณภาพสูงสุดแล้ว (รูปเรียบมาก) เพิ่มความละเอียดแล้วลองใหม่
+     }else{
+       break;
+     }
+   }
+
+   triggerDownload(blob,'jpg');
+ }
+
+ function triggerDownload(blob,ext){
    const url=URL.createObjectURL(blob);
    const a=document.createElement('a');
    a.href=url;
-   if(shouldDownload){
-     const stamp=new Date();
-     const pad=n=>String(n).padStart(2,'0');
-     const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
-     const filename=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.png`;
-     a.download=filename;
-     document.body.appendChild(a);
-     a.click();
-     a.remove();
-     setTimeout(()=>URL.revokeObjectURL(url),1000);
-   }else{
-     URL.revokeObjectURL(url);
-   }
 
+   const stamp=new Date();
+   const pad=v=>String(v).padStart(2,'0');
+   const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
+   a.download=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.${ext}`;
+
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+
+ async function exportForCopy(){
+   const preset=currentPreset();
+   const canvas=await buildCanvas(preset.scale);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw new Error('PNG blob failed');
    return blob;
  }
 
