@@ -1,755 +1,866 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>หมากฮอสไทย — เล่นสูตร</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ไปให้ถึง — แต่อย่าทำเกิน</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
-:root{
-  --bg:#f5f0e8;--panel:#fff;--border:#c8b89a;
-  --accent:#c0392b;--gold:#b8860b;
-  --light-sq:#f0d9b5;--dark-sq:#b58863;
-  --text:#2c1810;--muted:#8a7060;--green:#27ae60;
-}
-body.dark{
-  --bg:#1c1c1c;--panel:#272727;--border:#3a3a3a;
-  --accent:#cf4444;--gold:#c49a1a;
-  --text:#d4cec8;--muted:#7a7470;--green:#3aaf63;
-  background:#1c1c1c;color:#d4cec8;
-}
-*{box-sizing:border-box;margin:0;padding:0;
-  -webkit-tap-highlight-color:transparent !important;
-  -webkit-touch-callout:none;outline:none;}
-html{overscroll-behavior:none;}
-body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);
-  min-height:100vh;padding-bottom:40px;touch-action:manipulation;
-  -webkit-user-select:none;user-select:none;}
-
-/* TOP BAR */
-.topbar{background:var(--panel);border:1px solid var(--border);
-  border-radius:10px;margin:6px 10px;padding:9px 14px;
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.rep-title{font-size:.95rem;font-weight:700;color:var(--text);flex:1;}
-.rep-step{font-size:.78rem;font-family:'IBM Plex Mono',monospace;
-  color:var(--muted);min-width:55px;text-align:right;}
-
-/* BOARD */
-#boardWrap{display:flex;justify-content:center;padding:4px 12px;position:relative;}
-#board{display:grid;grid-template-columns:repeat(8,1fr);
-  border:3px solid #8b5e3c;border-radius:3px;overflow:hidden;
-  box-shadow:0 4px 16px rgba(0,0,0,.25);margin:0 auto;box-sizing:content-box;}
-#arrowSvg{position:absolute;top:0;left:50%;transform:translateX(-50%);
-  pointer-events:none;z-index:20;overflow:visible;}
-#arrowSvg.drawing-mode{pointer-events:all;cursor:crosshair;}
-.square{position:relative;cursor:default;}
-.num{position:absolute;top:2px;right:3px;font-size:9px;
-  font-family:'IBM Plex Mono',monospace;pointer-events:none;font-weight:700;z-index:1;}
-.piece{width:76%;height:76%;border-radius:50%;position:absolute;
-  top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;}
-.white-p{
-  background:radial-gradient(circle at 38% 30%,#ffffff,#f8f0d8 35%,#d4aa60 80%,#b88a30);
-  border:3px solid #7a5c28;
-  box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 3px 6px rgba(255,255,255,1);}
-.black-p{
-  background:radial-gradient(circle at 35% 30%,#4a4a4a,#1a1a1a 45%,#050505);
-  border:3px solid #888;
-  box-shadow:0 4px 10px rgba(0,0,0,.8),inset 0 2px 4px rgba(180,180,180,.2);}
-.king::after{content:"♛";position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:center;font-size:130%;
-  color:#f5c842;text-shadow:0 0 6px #000,0 1px 4px #000;pointer-events:none;}
-.sq-last{outline:3px solid #27ae60;outline-offset:-3px;}
-.sq-cap{outline:3px solid #c0392b;outline-offset:-3px;}
-.sq-next-from{outline:3px solid #f5c842;outline-offset:-3px;
-  animation:pulseNext 1s ease-in-out infinite;}
-@keyframes pulseNext{0%,100%{outline-color:#f5c842;}50%{outline-color:#ff8c00;}}
-
-/* CONTROLS */
-.ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:6px 8px;}
-.btn{font-family:'Sarabun',sans-serif;font-size:.82rem;font-weight:600;
-  padding:7px 14px;border:none;border-radius:8px;cursor:pointer;outline:none;
-  -webkit-tap-highlight-color:transparent;-webkit-appearance:none;}
-.btn:disabled{opacity:.35;cursor:default;}
-.btn-rep{background:#e0d8cc;color:#1a6090;border:1px solid #b0a898;font-weight:700;}
-.btn-rep:disabled{opacity:.35;}
-body.dark .btn-rep{background:#333;color:#5aaedf;border-color:#484848;}
-.btn-sec{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
-body.dark .btn-sec{background:#333;color:#d4cec8;border-color:#484848;}
-.btn-arrow{background:#e0d8cc;color:var(--text);border:1px solid var(--border);}
-.btn-arrow.active{background:#c0392b;color:#fff;border-color:#c0392b;}
-body.dark .btn-arrow{background:#333;color:#d4cec8;border-color:#484848;}
-
-/* PREVIEW (ตาเทพ) */
-.btn-preview{background:#e8e0d0;color:#7a5010;border:1px solid #c8a860;font-weight:700;}
-.btn-preview.active{background:#c87010;color:#fff;border-color:#c87010;}
-body.dark .btn-preview{background:#2e2010;color:#d4a030;border-color:#6a5020;}
-body.dark .btn-preview.active{background:#906010;color:#fff;}
-.prev-step-wrap{display:flex;align-items:center;gap:4px;}
-.prev-step-wrap input[type=range]{width:56px;accent-color:#c87010;}
-.prev-step-wrap span{font-size:.75rem;font-family:'IBM Plex Mono',monospace;
-  color:var(--muted);min-width:16px;text-align:center;}
-
-/* STATUS */
-.status-bar{text-align:center;font-size:.82rem;font-weight:600;
-  color:var(--gold);padding:3px 12px 0;min-height:22px;}
-
-/* TOAST */
-#toast{position:fixed;top:28px;left:50%;transform:translateX(-50%);
-  background:#27ae60;color:#fff;font-family:'Sarabun',sans-serif;
-  font-size:.9rem;font-weight:700;padding:10px 24px;border-radius:20px;
-  box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none;
-  transition:opacity .2s;z-index:9999;}
-
-/* V3 RECURSIVE TREE */
-#formulaView{display:block;padding:8px 10px 26px}
-.formula-header{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px}
-.formula-header-title{font-size:1.05rem;font-weight:700}.formula-header-sub{font-size:.76rem;color:var(--muted);margin-top:2px}
-.tree-root{display:flex;flex-direction:column;gap:7px}
-.tree-node{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.tree-row{display:flex;align-items:center;min-height:48px}
-.tree-toggle{width:42px;height:48px;border:0;background:transparent;color:var(--text);font-size:16px;cursor:pointer;flex:0 0 42px}
-.tree-label{flex:1;min-width:0;border:0;background:transparent;color:var(--text);text-align:left;font-family:inherit;padding:10px 6px;font-size:.92rem;cursor:pointer}
-.tree-label strong{font-weight:700}.tree-meta{font-size:.70rem;color:var(--muted);margin-left:7px;white-space:nowrap}
-.tree-play{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;margin:5px 7px;padding:6px 9px;font-family:inherit;cursor:pointer}
-.tree-children{display:none;border-top:1px solid var(--border);padding:4px 7px 7px 13px;margin-left:16px}
-.tree-children.open{display:flex;flex-direction:column;gap:5px}
-.tree-child-wrap{position:relative}.tree-child-wrap:before{content:"";position:absolute;left:-7px;top:0;bottom:0;border-left:2px solid var(--border)}
-.tree-kind{font-size:.68rem;color:var(--gold);margin-left:8px}
-.tree-empty{padding:18px;text-align:center;color:var(--muted);font-size:.8rem}
-.formula-back{display:flex;align-items:center;gap:7px;margin:3px 10px 8px}
-.formula-back button{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 11px;font-family:inherit;font-weight:600;cursor:pointer}
-.formula-current{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#trainerView{display:none}
-
+*{box-sizing:border-box}
+body{margin:0;background:#0e1320;color:#e8edf7;font-family:"Noto Sans Thai","Segoe UI",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1060px;margin:0 auto;padding:14px 14px 40px}
+.screen{display:none}.screen.active{display:block}
+h1,h2,h3{margin:0 0 8px}
+.muted{color:#93a1bd}.small{font-size:12px}.tiny{font-size:11px}
+button{font-family:inherit;cursor:pointer}
+.btn{background:#1e2941;color:#e8edf7;border:1px solid #2c3a5c;border-radius:10px;padding:10px 14px;font-size:14px;transition:.15s}
+.btn:hover{background:#27334f}.btn.primary{background:#2f7dd1;border-color:#3d8ee0}.btn.primary:hover{background:#3a8ade}
+.btn.warn{background:#4a2f2f;border-color:#6b4040}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.card{background:#141c2c;border:1px solid #243149;border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.hero{text-align:center;padding:26px 14px}
+.hero h1{font-size:clamp(24px,6vw,40px);letter-spacing:.5px}
+.tag{color:#4cc2ff;font-weight:600}
+.grid-levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.lv{background:#172033;border:1px solid #26324c;border-radius:12px;padding:10px 8px;text-align:center;color:#e8edf7;font-size:13px}
+.lv b{display:block;font-size:18px;margin-bottom:2px}
+.lv:hover{background:#1f2a42}
+.lv.locked{opacity:.35;cursor:not-allowed}
+.badge{display:inline-block;min-width:22px;padding:1px 6px;border-radius:6px;font-weight:700;font-size:12px}
+.r-S{background:#ffd166;color:#25200c}.r-A{background:#3ddc97;color:#08281c}.r-B{background:#4cc2ff;color:#05202e}
+.r-C{background:#b8a4ff;color:#1b1235}.r-D{background:#ffa07a;color:#331608}.r-FAIL{background:#5a2a2a;color:#ffc9c9}
+.game-grid{display:grid;grid-template-columns:1fr 300px;gap:14px}
+@media(max-width:820px){.game-grid{grid-template-columns:1fr}}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
+.hud div{background:#131b2a;border:1px solid #22304a;border-radius:10px;padding:8px;text-align:center}
+.hud span{display:block;font-size:11px;color:#8d9cbb}
+.hud b{font-size:17px}
+.board{display:grid;gap:4px;grid-template-columns:repeat(var(--cols),1fr);width:100%;max-width:520px;margin:0 auto}
+.cell{aspect-ratio:1/1;background:#1a2438;border:1px solid #223050;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:clamp(13px,4.4vw,25px);user-select:none;position:relative}
+.cell.wall{background:#080d17;border-color:#0b1220}
+.cell.mud{background:#3a2f21;border-color:#57452e}
+.cell.goal{background:#123425;border-color:#2a6b4d}
+.cell.start{background:#1c2b47}
+.cell.player{outline:2px solid #4cc2ff;outline-offset:-2px;background:#22334f}
+.cell.locked{box-shadow:inset 0 0 0 2px #c05a3c}
+.cell.open{opacity:.55}
+.cell.taken{opacity:.25}
+.cell.hit{outline:2px solid #ffd166;outline-offset:-2px}
+.pad{display:grid;grid-template-columns:repeat(3,54px);gap:6px;justify-content:center;margin-top:12px}
+.pad button{height:48px;font-size:19px;background:#1e2941;border:1px solid #2c3a5c;color:#e8edf7;border-radius:10px}
+.pad button.act{grid-column:2;background:#2f7dd1;border-color:#3d8ee0;font-size:14px}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed #222f49;font-size:13px}
+.list li:last-child{border-bottom:0}
+.pill{display:inline-block;background:#1c2740;border:1px solid #2b3a5b;border-radius:999px;padding:2px 9px;font-size:11px;margin:2px 4px 2px 0}
+.pill.ok{border-color:#2f6b52;color:#8ef0c3}.pill.no{border-color:#6b3a2f;color:#ffb3a0}
+.modal{position:fixed;inset:0;background:rgba(6,9,16,.82);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;z-index:50}
+.modal.active{display:flex}
+.modal .box{background:#121a29;border:1px solid #26324c;border-radius:16px;max-width:620px;width:100%;padding:18px}
+.bar{height:8px;background:#1d2740;border-radius:6px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#4cc2ff,#3ddc97)}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #222f49;font-size:14px}
+.rank-big{font-size:56px;font-weight:800;text-align:center;line-height:1}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1d2740;border:1px solid #35456b;padding:9px 15px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:6px 4px;border-bottom:1px dashed #222f49}
+td:last-child{text-align:right;font-weight:600}
 </style>
 </head>
 <body>
+<div class="wrap">
 
+<!-- ===== HOME ===== -->
+<section id="s-home" class="screen active">
+  <div class="hero">
+    <h1>ไปให้ถึง — <span class="tag">แต่อย่าทำเกิน</span></h1>
+    <p class="muted">เกมฝึกคิดแก้ปัญหา: ทุกทางไปถึงเป้าหมายได้ แต่มีเพียงไม่กี่ทางที่ “ไม่ทำสิ่งที่ไม่จำเป็น”</p>
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn primary" onclick="startPlay()">▶ เริ่มเล่น</button>
+      <button class="btn" onclick="show('s-levels');renderLevels()">🗺️ เลือกด่าน</button>
+      <button class="btn" onclick="show('s-stats');renderStats()">📊 สถิติ</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>วิธีเล่น</h3>
+    <p class="small muted" style="margin:0 0 8px">เดินด้วยปุ่มลูกศร / WASD / D-Pad / แตะช่องข้าง ๆ ตัวละคร &nbsp;•&nbsp; กด <b>Space</b> หรือปุ่ม <b>ใช้</b> เพื่อโต้ตอบกับสิ่งที่ยืนอยู่ &nbsp;•&nbsp; <b>U</b>=Undo, <b>R</b>=Reset, <b>H</b>=Hint</p>
+    <ul class="list small">
+      <li>⏱️ <span>เวลาเริ่มนับ <b>เมื่อคุณลงมือทำ Action แรก</b> — คุณมีเวลาสังเกตกระดานฟรีก่อนเสมอ</span></li>
+      <li>🛣️ <span>พื้นโคลน 🟫 นับเป็น <b>2 Steps</b> ต่อช่อง</span></li>
+      <li>🗑️ <span>Action ที่ไม่จำเป็นต่อวิธีที่ดีที่สุด จะถูกนับและหักคะแนน (แต่ไม่ถือว่า “ผิด”)</span></li>
+      <li>🎯 <span>อ่าน <b>เงื่อนไขประตูเป้าหมาย</b> ในแผงขวาก่อนออกเดินทุกครั้ง</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>หลักคิดของเกมนี้</h3>
+    <p class="small muted" style="margin:0">Observe → Understand → Eliminate → Optimize → Execute<br>
+    ถามตัวเองก่อนลงมือ: “สิ่งนี้จำเป็นจริงหรือไม่?” • “มีทางที่ตรงกว่านี้ไหม?” • “ตัดอะไรออกได้บ้าง?”</p></div>
+</section>
+
+<!-- ===== LEVEL SELECT ===== -->
+<section id="s-levels" class="screen">
+  <div class="row"><button class="btn ghost" onclick="show('s-home')">← เมนู</button><div class="spacer"></div>
+  <button class="btn" onclick="show('s-stats');renderStats()">📊 สถิติ</button></div>
+  <h2 style="margin-top:12px">เลือกด่าน</h2>
+  <p class="muted small" id="lvSub"></p>
+  <div id="lvGrid" class="grid-levels"></div>
+</section>
+
+<!-- ===== GAME ===== -->
+<section id="s-game" class="screen">
+  <div class="row"><button class="btn ghost" onclick="quitToMenu()">← ออก</button>
+    <b id="gTitle"></b><div class="spacer"></div><span class="small muted" id="gFocus"></span></div>
+  <div class="hud" style="margin-top:10px">
+    <div><span>ด่าน</span><b id="hLevel">1</b></div>
+    <div><span>⏱️ เวลา</span><b id="hTime">0.0</b></div>
+    <div><span>🛣️ Steps</span><b id="hSteps">0</b></div>
+    <div><span>🗑️ ไม่จำเป็น</span><b id="hUn">0</b></div>
+    <div><span>🏆 Score</span><b id="hScore">1000</b></div>
+  </div>
+  <div class="game-grid">
+    <div>
+      <div class="card" style="padding:12px"><div id="board" class="board"></div>
+        <div class="pad">
+          <div></div><button onclick="act('up')">▲</button><div></div>
+          <button onclick="act('left')">◀</button><button onclick="act('down')">▼</button><button onclick="act('right')">▶</button>
+          <button class="act" onclick="act('use')">ใช้ / โต้ตอบ</button>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="resetLevel()">🔄 Reset</button>
+        <button class="btn" onclick="undo()">↩️ Undo</button>
+        <button class="btn warn" onclick="useHint()">💡 Hint</button>
+        <div class="spacer"></div><span class="small muted" id="hintCount"></span>
+      </div>
+      <div class="card" id="hintBox" style="display:none;margin-top:10px"></div>
+    </div>
+    <div>
+      <div class="card"><h3 style="font-size:15px">🎯 เป้าหมาย</h3>
+        <p class="small" id="gGoal" style="margin:0 0 6px"></p>
+        <div id="gNeed" class="small"></div>
+        <div id="gCons" style="margin-top:8px"></div>
+      </div>
+      <div class="card"><h3 style="font-size:15px">🎒 ของที่ถืออยู่</h3><div id="gInv" class="small muted">— ว่าง —</div></div>
+      <div class="card"><h3 style="font-size:15px">🧩 สิ่งที่อยู่บนกระดาน</h3><ul class="list small" id="gObjs"></ul></div>
+      <div class="card"><h3 style="font-size:15px">📜 บันทึก Action</h3><ul class="list tiny" id="gLog"><li class="muted">ยังไม่ได้ลงมือ</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section id="s-stats" class="screen">
+  <div class="row"><button class="btn ghost" onclick="show('s-home')">← เมนู</button><div class="spacer"></div>
+  <button class="btn warn" onclick="wipe()">ล้างข้อมูล</button></div>
+  <h2 style="margin-top:12px">📊 สถิติผู้เล่น</h2>
+  <div class="card"><table id="statTable"></table></div>
+  <div class="card"><h3 style="font-size:15px">ผลรายด่าน</h3><table id="statLevels"></table></div>
+</section>
+</div>
+
+<!-- ===== RESULT MODAL ===== -->
+<div id="mResult" class="modal"><div class="box" id="resultBox"></div></div>
+<!-- ===== REPLAY MODAL ===== -->
+<div id="mReplay" class="modal"><div class="box">
+  <div class="row"><b>🎬 วิธีที่ดีที่สุด (Optimal Solution)</b><div class="spacer"></div>
+  <button class="btn ghost" onclick="closeReplay()">✕</button></div>
+  <div id="rBoard" class="board" style="margin:12px auto"></div>
+  <p id="rCaption" class="small" style="text-align:center;min-height:34px"></p>
+  <div id="rCompare" class="card small" style="background:#0f1726"></div>
+  <div class="row" style="justify-content:center"><button class="btn" onclick="playReplay()">▶ เล่นซ้ำ</button>
+  <button class="btn primary" onclick="closeReplay()">เข้าใจแล้ว</button></div>
+</div></div>
 <div id="toast"></div>
 
-<!-- ════════════════════════════════════
-     วางสูตรของคุณที่นี่
-     ════════════════════════════════════ -->
 <script>
-/* V3: timeline data is loaded from recursive JSON */
+'use strict';
+/* =========================================================
+   1. LEVEL DATA (20 levels)
+   ค่า optimal ทั้งหมดคำนวณอัตโนมัติด้วย solver ตอนโหลด
+   ========================================================= */
+const IT=(id,name,icon)=>({t:'item',id:id,name:name,icon:icon});
+const SW=(id,name)=>({t:'switch',id:id,name:name,icon:'🎚️'});
+const BX=(id,name,needs,gives)=>({t:'box',id:id,name:name,icon:'📦',needs:needs,gives:gives});
+const DR=(id,name,needs)=>({t:'door',id:id,name:name,icon:'🚪',needs:needs});
+const PT=(id,pair)=>({t:'portal',id:id,pair:pair,name:'ช่องวาร์ป '+id.toUpperCase(),icon:'🌀'});
 
-</script>
-<!-- ════════════════════════════════════ -->
+const LEVELS=[
+{n:1,title:'ประตูที่ไม่ได้ล็อก',focus:'เห็นอะไร ≠ ต้องทำทุกอย่าง',
+ map:['#########','#..k....#','#S.....G#','#########'],
+ legend:{k:IT('key1','กุญแจทองเหลือง','🔑')},goalNeeds:null,
+ hints:['ก่อนเดิน ลองอ่าน “เงื่อนไขประตูเป้าหมาย” ในแผงด้านขวาก่อน',
+        'ประตูบานนี้ไม่ต้องการอะไรเลย แล้วกุญแจถูกวางไว้ทำไม?',
+        'เดินขวา 6 ช่องแล้วกด “ใช้” ที่ประตูได้เลย ไม่ต้องแตะกุญแจ'],
+ lesson:'ของที่วางเด่นที่สุด ไม่ได้แปลว่าจำเป็นที่สุด — อ่านเงื่อนไขก่อนลงมือเสมอ'},
 
+{n:2,title:'ทางสวยกับทางตรง',focus:'เลือกเส้นทางก่อนออกเดิน',
+ map:['#########','#...c...#','#S#####.#','#......G#','#########'],
+ legend:{c:IT('coin','เหรียญทอง','🪙')},goalNeeds:null,
+ hints:['มี 2 เส้นทางไปประตู ลองนับความยาวในหัวก่อนเลือก',
+        'เหรียญไม่มีผลต่อประตูเลย และทางบนยาวกว่าทางล่าง',
+        'ลงล่าง 1 ช่อง แล้ววิ่งขวาไปเปิดประตู'],
+ lesson:'“ทางที่มีของให้เก็บ” มักยาวกว่า — ถ้าของนั้นไม่ถูกใช้ มันคือทางอ้อม'},
 
-<div id="formulaView">
-  <div class="formula-header">
-    <div class="formula-header-title">สูตรหมากฮอส</div>
-    <div class="formula-header-sub">เลือกจุดในสูตร → ขยายทางแยก → กดเล่นสูตร</div>
-  </div>
-  <div id="treeRoot" class="tree-root"></div>
-</div>
+{n:3,title:'สวิตช์หรือคีย์การ์ด',focus:'มีหลายวิธีสำเร็จ แต่ต้นทุนไม่เท่ากัน',
+ map:['#########','#k..#...#','#.#.#.b.#','#S..s..G#','#.......#','#########'],
+ legend:{k:IT('key1','กุญแจ','🔑'),s:SW('sw1','สวิตช์พลังงาน'),
+   b:BX('box1','ตู้เก็บบัตร',{item:'key1'},{id:'card',name:'คีย์การ์ด',icon:'💳'})},
+ goalNeeds:{any:[{flag:'sw1'},{item:'card'}]},
+ hints:['ประตูรับได้ 2 อย่าง — ดูให้ครบว่ามีอะไรบ้าง',
+        'สวิตช์อยู่บนเส้นทางตรงอยู่แล้ว ส่วนการ์ดต้องอ้อมไปหากุญแจก่อน',
+        'เดินขวา 3 ช่อง กดสวิตช์ แล้วเดินขวาต่อไปเปิดประตู'],
+ lesson:'สองวิธีที่ “สำเร็จเหมือนกัน” อาจต่างกัน 7 Steps — เลือกวิธีที่อยู่บนเส้นทางเดิม'},
 
-<div id="trainerView">
-  <div class="formula-back">
-    <button type="button" onclick="showFormulaTree()">‹ สูตรทั้งหมด</button>
-    <span id="formulaCurrent" class="formula-current">สูตร › จุดเดิน</span>
-  </div>
+{n:4,title:'ไม่ต้องกดทุกปุ่ม',focus:'เลิกนิสัย “ตรวจให้ครบทุกอย่าง”',
+ map:['#########','#a.....c#','#.......#','#S..b..G#','#########'],
+ legend:{a:SW('f1','สวิตช์ A'),b:SW('f2','สวิตช์ B'),c:SW('f3','สวิตช์ C')},
+ goalNeeds:{any:[{flag:'f1'},{flag:'f2'},{flag:'f3'}]},
+ hints:['ประตูต้องการพลังงาน แต่ไม่ได้ต้องการจากทุกสวิตช์',
+        'สวิตช์เพียงตัวเดียวก็พอ — เลือกตัวที่อยู่บนทางเดินของคุณ',
+        'กดสวิตช์ B กลางแถวล่าง แล้วเดินต่อไปเปิดประตู'],
+ lesson:'“ทำให้ครบ” ไม่เท่ากับ “ทำให้พอ” — เงื่อนไขแบบ อย่างใดอย่างหนึ่ง ต้องการแค่ตัวเดียว'},
 
-  <div class="topbar">
-    <span class="rep-title" id="repTitle">สูตร</span>
-    <div style="display:flex;align-items:center;gap:4px;">
-      <span>🐢</span>
-      <input type="range" id="speedSlider" min="1" max="5" value="3" oninput="setSpeed(this.value)" style="width:58px;accent-color:var(--accent);">
-      <span>🐇</span>
-      <span id="speedVal" style="font-size:.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:42px;">กลาง</span>
-    </div>
-    <span id="stepLabel" class="rep-step">0 / 0</span>
-    <button onclick="toggleOrient()" class="btn btn-sec" style="padding:5px 8px;font-size:.75rem;">↕ หมุน</button>
-    <button id="darkBtn" onclick="toggleDark()" class="btn btn-sec" style="padding:5px 8px;font-size:.8rem;">🌙</button>
-  </div>
+{n:5,title:'กุญแจผิดดอก',focus:'แยกสิ่งจำเป็นออกจากสิ่งที่น่าสนใจ',
+ map:['#########','#..b...t#','#..###D.#','#S.r...G#','#########'],
+ legend:{b:IT('bkey','กุญแจน้ำเงิน','🗝️'),r:IT('rkey','กุญแจแดง','🔑'),
+   t:IT('tres','ถ้วยรางวัล','🏆'),D:DR('d1','ประตูคลัง',{item:'bkey'})},
+ goalNeeds:{item:'rkey'},
+ hints:['ดูให้ชัดว่าประตูเป้าหมายขอ “กุญแจสีอะไร”',
+        'กุญแจน้ำเงิน ประตูคลัง และถ้วยรางวัล ไม่เกี่ยวกับเป้าหมายเลย',
+        'หยิบกุญแจแดงที่อยู่ระหว่างทาง แล้วเดินตรงไปเปิดประตู'],
+ lesson:'ของรางวัลที่ไม่ถูกนับ = ต้นทุนล้วน ๆ'},
 
-  <div id="boardWrap">
-    <div id="board"></div>
-    <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <marker id="ah-red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e02020"/></marker>
-        <marker id="ah-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#20c020"/></marker>
-        <marker id="ah-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f0c000"/></marker>
-        <marker id="ah-p0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d47000"/></marker>
-        <marker id="ah-p1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc"/></marker>
-        <marker id="ah-p2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a7acc"/></marker>
-      </defs>
-    </svg>
-  </div>
+{n:6,title:'ช่องวาร์ปที่มองข้าม',focus:'มองหา Shortcut ก่อนเดินยาว',
+ map:['#########','#S....#G#','#.a...#b#','#.....#.#','#.......#','#########'],
+ legend:{a:PT('pa','pb'),b:PT('pb','pa')},goalNeeds:null,
+ hints:['มีบางช่องที่ย้ายคุณข้ามกำแพงได้ทันที',
+        '🌀 สองช่องเชื่อมถึงกัน และช่องหนึ่งอยู่ติดประตูเป้าหมาย',
+        'ลง 1 ช่อง เดินขวาเข้า 🌀 แล้วขึ้นไปเปิดประตู (4 Steps)'],
+ lesson:'ทางอ้อม 13 Steps กับทางลัด 4 Steps ต่างกันแค่ “การสังเกตก่อนออกเดิน”'},
 
-  <div class="status-bar" id="statusBar"></div>
-  <div style="display:flex;align-items:center;gap:10px;padding:4px 16px 2px;">
-    <input id="slider" type="range" min="0" max="0" value="0" oninput="sliderMove(this.value)" style="flex:1;accent-color:var(--accent);">
-  </div>
+{n:7,title:'ลงทุน 1 Action เพื่อประหยัด 4',focus:'คำนวณต้นทุน–ผลตอบแทน',
+ map:['#########','#S..s#.G#','#....D..#','#k...#..#','#.......#','#########'],
+ legend:{s:SW('sw1','สวิตช์ประตูกล'),D:DR('d1','ประตูกล',{flag:'sw1'}),k:IT('key1','กุญแจสนิม','🔑')},
+ goalNeeds:null,
+ hints:['เทียบกัน: กดสวิตช์แล้วลัดผ่านประตูกล กับเดินอ้อมแถวล่าง',
+        'ทางอ้อมใช้ 13 Steps ส่วนทางสวิตช์ใช้ 10 Steps',
+        'ขวา 3 กดสวิตช์ → ลง 1 → ขวา 2 → ขึ้น 1 → ขวา 1 → เปิดประตู'],
+ lesson:'Action ที่ “เพิ่มขั้นตอน” บางครั้งลดขั้นตอนรวม — ต้องคิดเป็นยอดรวม ไม่ใช่ทีละก้าว'},
 
-  <div class="ctrl-row">
-    <button class="btn btn-rep" onclick="prev()">◀ Prev</button>
-    <button class="btn btn-rep" id="rPlay" onclick="togglePlay()">▶ Play</button>
-    <button class="btn btn-rep" onclick="next()">Next ▶</button>
-    <button class="btn btn-rep" onclick="stop()">■ Stop</button>
-    <button class="btn btn-rep" onclick="resetToStart()">↺ Reset</button>
-  </div>
+{n:8,title:'ทางตรงที่แพงกว่า',focus:'สั้นที่สุด ≠ ถูกที่สุด',
+ map:['#########','#S~~~~~G#','#.#####.#','#.......#','#########'],
+ legend:{},goalNeeds:null,
+ hints:['พื้นโคลน 🟫 นับเป็น 2 Steps ต่อช่อง',
+        'ทางตรงมี 5 ช่องโคลน = 11 Steps ส่วนทางล่างเดินไกลกว่าแต่ 10 Steps',
+        'ใช้ทางล่างที่ไม่มีโคลน แม้จะดูอ้อมกว่า'],
+ lesson:'“ระยะทาง” กับ “ต้นทุน” เป็นคนละเรื่อง — วัดสิ่งที่เกมนับจริง'},
 
-  <div class="ctrl-row">
-    <button class="btn btn-arrow" id="btnRed" onclick="toggleArrow('red')">🔴 แพ้</button>
-    <button class="btn btn-arrow" id="btnYellow" onclick="toggleArrow('yellow')" style="color:#8a6000;">🟡 เสมอ</button>
-    <button class="btn btn-arrow" id="btnGreen" onclick="toggleArrow('green')" style="color:#1a6e1a;">🟢 ชนะ</button>
-    <button class="btn btn-sec" onclick="clearArrows()">🗑 ลบลูกศร</button>
-  </div>
+{n:9,title:'ประตูที่เปิดค้างไว้',focus:'สังเกตรายละเอียดบนกำแพง',
+ map:['#########','#S..#k..#','#...O..b#','#...#..G#','#...#...#','#.......#','#########'],
+ legend:{O:DR('d0','ประตูที่เปิดค้างไว้',null),k:IT('key9','กุญแจเงิน','🔑'),
+   b:BX('box9','หีบสมบัติ',{item:'key9'},{id:'tro',name:'ถ้วยรางวัล',icon:'🏆'})},
+ goalNeeds:null,
+ hints:['กำแพงกลางแผนที่มีอยู่ 1 ช่องที่ไม่ใช่กำแพง',
+        'ประตูสีจางคือประตูที่เปิดค้างไว้ เดินผ่านได้เลยโดยไม่ต้องกดอะไร',
+        'ลง 1 → เดินขวาผ่านประตูที่เปิดอยู่ → ลง 1 → เข้าเป้าหมาย (9 Steps)'],
+ lesson:'ทางลัดส่วนใหญ่ไม่ได้ถูกซ่อน แต่ถูกมองข้าม'},
 
-  <div class="ctrl-row" style="padding:2px 8px 6px;">
-    <button class="btn btn-preview active" id="previewBtn" onclick="togglePreview()">👁 ตาเทพ</button>
-    <div class="prev-step-wrap">
-      <button class="btn btn-sec" onclick="changeSteps(-1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">−</button>
-      <input type="range" id="stepsSlider" min="1" max="8" value="3" oninput="setSteps(this.value)">
-      <button class="btn btn-sec" onclick="changeSteps(1)" style="padding:3px 8px;font-size:.85rem;min-width:28px;">+</button>
-      <span id="stepsLabel">3</span>
-    </div>
-  </div>
-</div>
-<script>
-document.addEventListener("dblclick",e=>e.preventDefault());
+{n:10,title:'วาร์ปที่ไม่ได้ช่วย',focus:'Constraint Mode เริ่มแล้ว',
+ map:['#########','#S..a..b#','#.#####.#','#......G#','#c.....d#','#########'],
+ legend:{a:PT('p1','p2'),c:PT('p2','p1'),b:PT('p3','p4'),d:PT('p4','p3')},
+ goalNeeds:null,cons:{stepSlack:1,timed:true},
+ hints:['🌀 ไม่ได้แปลว่าเร็วกว่าเสมอไป',
+        'ลองนับ Steps ของทางเดินธรรมดาก่อนตัดสินใจใช้ Portal',
+        'ลง 2 ช่อง แล้ววิ่งขวาไปเปิดประตู โดยไม่แตะ Portal เลย (9 Steps)'],
+ lesson:'เครื่องมือที่ดู “ไฮเทค” ไม่ได้เหมาะกับทุกงาน — วัดผลก่อนใช้'},
 
-/* ══ SQUARE MAP ══ */
-const RC={
-  1:[0,1],2:[0,3],3:[0,5],4:[0,7],
-  5:[1,0],6:[1,2],7:[1,4],8:[1,6],
-  9:[2,1],10:[2,3],11:[2,5],12:[2,7],
-  13:[3,0],14:[3,2],15:[3,4],16:[3,6],
-  17:[4,1],18:[4,3],19:[4,5],20:[4,7],
-  21:[5,0],22:[5,2],23:[5,4],24:[5,6],
-  25:[6,1],26:[6,3],27:[6,5],28:[6,7],
-  29:[7,0],30:[7,2],31:[7,4],32:[7,6]
-};
-function sqAt(r,c){for(let k in RC)if(RC[k][0]===r&&RC[k][1]===c)return+k;return null;}
+{n:11,title:'เก็บระหว่างทาง',focus:'วางแผนล่วงหน้า / ห้ามย้อนกลับ',
+ map:['#########','#S.....G#','#.#####.#','#..k....#','#########'],
+ legend:{k:IT('key11','กุญแจประตู','🔑')},goalNeeds:{item:'key11'},
+ cons:{stepSlack:2,backSlack:0},
+ hints:['ประตูต้องใช้กุญแจ — ออกแบบเส้นทางให้ผ่านกุญแจเพียงครั้งเดียว',
+        'ถ้าเดินทางบนก่อน คุณจะต้องเดินย้อนกลับ ซึ่งด่านนี้ห้าม',
+        'ลงล่าง → เก็บกุญแจ → วิ่งขวา → ขึ้นไปเปิดประตู (12 Steps)'],
+ lesson:'การย้อนกลับเกิดจากการเริ่มเดินก่อนอ่านเงื่อนไข'},
 
-/* ══ STATE ══ */
-let blackBottom=true, step=0, speed=700, timer=null;
-let data={start:{white:[],black:[]},moves:[]};
-let lastMoveSqs=[],capSqs=[];
-let previewOn=true, previewSteps=3;
+{n:12,title:'ลำดับมีราคา',focus:'ลำดับการเก็บของมีผลต่อระยะทาง',
+ map:['#######','#k...c#','#.###.#','#..S..#','#.###.#','#..G..#','#######'],
+ legend:{k:IT('pA','ชิ้นส่วน A','🔺'),c:IT('pB','ชิ้นส่วน B','🔷')},
+ goalNeeds:{all:[{item:'pA'},{item:'pB'}]},cons:{stepSlack:3,timed:true},
+ hints:['ต้องได้ทั้ง 2 ชิ้น แต่ “ลำดับ” ทำให้ระยะทางต่างกันมาก',
+        'อย่ากลับมาที่จุดเริ่มต้น — เก็บชิ้นหนึ่ง วิ่งข้ามไปเก็บอีกชิ้น แล้วลงเป้าหมายจากฝั่งนั้นเลย',
+        'ซ้าย 2 ขึ้น 2 เก็บ A → ลง 2 ขวา 4 ขึ้น 2 เก็บ B → ลง 4 ซ้าย 2 เข้าเป้าหมาย'],
+ lesson:'ปัญหาหลายเป้าหมาย ให้วางลำดับทั้งชุดก่อน ไม่ใช่ตัดสินใจทีละชิ้น'},
 
-/* ══ PARSE TIMELINE ══ */
-function parseTimeline(txt){
-  let lines=txt.split(/\n/).map(x=>x.trim()).filter(x=>x);
-  data.start.white=[]; data.start.black=[]; data.moves=[];
-  let firstName=null;
-  for(let line of lines){
-    if(line.startsWith("@name:")){
-      firstName=line.replace("@name:","").trim();
-    } else if(line.startsWith("@white:")){
-      line.replace("@white:","").split(",").forEach(t=>{
-        t=t.trim();if(!t)return;
-        let king=t.endsWith("K"),sq=parseInt(king?t.slice(0,-1):t);
-        if(sq) data.start.white.push({square:sq,king});
-      });
-    } else if(line.startsWith("@black:")){
-      line.replace("@black:","").split(",").forEach(t=>{
-        t=t.trim();if(!t)return;
-        let king=t.endsWith("K"),sq=parseInt(king?t.slice(0,-1):t);
-        if(sq) data.start.black.push({square:sq,king});
-      });
-    } else if(!line.startsWith("@")){
-      let m=line.match(/^(white|black)\s+(.+)$/i);
-      if(m) data.moves.push({color:m[1].toLowerCase(),move:m[2].trim()});
-    }
-  }
-  if(!data.start.white.length&&!data.start.black.length){
-    for(let i=1;i<=8;i++)  data.start.white.push({square:i,king:false});
-    for(let i=25;i<=32;i++) data.start.black.push({square:i,king:false});
-  }
-  if(firstName) document.getElementById("repTitle").innerText=firstName;
-  document.getElementById("slider").max=data.moves.length;
-  step=0;
-  render();
-}
+{n:13,title:'ทางลัดที่พาไปตายกลางทาง',focus:'อ่านเงื่อนไขก่อนเลือกเส้นทาง',
+ map:['#########','#S..#..G#','#.#.#.#.#','#.#...#.#','#.#####.#','#...s...#','#########'],
+ legend:{s:SW('sw13','สวิตช์จ่ายไฟ')},goalNeeds:{flag:'sw13'},
+ cons:{stepSlack:4,backSlack:3},
+ hints:['อ่านเงื่อนไขประตูเป้าหมายให้จบก่อนออกเดิน',
+        'ทางลัดกลางแผนที่พาไปถึงประตูจริง แต่ประตูจะยังเปิดไม่ได้ และกลับออกมายาก',
+        'ลงซ้ายสุด → กดสวิตช์แถวล่าง → วิ่งขวา → ขึ้นไปเปิดประตู (16 Steps)'],
+ lesson:'ทางที่ถึงเป้าหมาย “ทางกายภาพ” อาจไม่ใช่ทางที่ถึง “เงื่อนไข”'},
 
-/* ══ BOARD DRAW ══ */
-function drawBoard(){
-  let board=document.getElementById("board");
-  board.innerHTML="";
-  let nums=[...Array(32).keys()].map(i=>i+1);
-  if(!blackBottom) nums.reverse();
-  let idx=0;
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
-      let sq=document.createElement("div");
-      let dark=(r+c)%2===1;
-      sq.className="square "+(dark?"dark":"light");
-      if(dark){
-        let pos=nums[idx++];
-        sq.dataset.pos=pos;
-        let n=document.createElement("div");n.className="num";n.innerText=pos;
-        sq.appendChild(n);
+{n:14,title:'กุญแจ กล่อง และทางที่สั้นกว่า',focus:'ตัดขั้นตอนที่คุ้นชิน',
+ map:['#########','#S.k...b#','#.#####.#','#..s...G#','#.#####.#','#.......#','#########'],
+ legend:{k:IT('key14','กุญแจกล่อง','🔑'),
+   b:BX('box14','ตู้เก็บบัตร',{item:'key14'},{id:'card14',name:'คีย์การ์ด',icon:'💳'}),
+   s:SW('sw14','สวิตช์ประตู')},
+ goalNeeds:{any:[{item:'card14'},{flag:'sw14'}]},cons:{stepSlack:2},
+ hints:['ประตูเปิดได้ 2 แบบ — ลองนับต้นทุนของทั้งสองแบบ',
+        'กุญแจ+กล่อง ใช้ Action มากกว่าการกดสวิตช์เพียงครั้งเดียว',
+        'ลง 2 → ขวา 2 กดสวิตช์ → วิ่งขวาไปเปิดประตู (10 Steps)'],
+ lesson:'ลำดับ “กุญแจ→กล่อง→ประตู” เป็นนิสัยจากเกมอื่น ไม่ใช่กติกาของด่านนี้'},
+
+{n:15,title:'เก็บเฉพาะที่อยู่ในรายการ',focus:'กวาดครั้งเดียว ไม่ย้อนกลับ',
+ map:['#########','#S.A.C.B#','#.#####.#','#G......#','#########'],
+ legend:{A:IT('pA','ชิ้นส่วน A','🔺'),C:IT('pC','ชิ้นส่วน C','🔶'),B:IT('pB','ชิ้นส่วน B','🔷')},
+ goalNeeds:{all:[{item:'pA'},{item:'pB'}]},cons:{stepSlack:1,backSlack:0,maxUnnec:0},
+ hints:['อ่านให้ชัดว่าเป้าหมายขอชิ้นส่วนอะไรบ้าง',
+        'ชิ้นส่วน C ไม่อยู่ในรายการ — เดินผ่านได้โดยไม่ต้องหยิบ',
+        'เก็บ A และ B ในการเดินขวาเที่ยวเดียว แล้ววนลงขวาไปเป้าหมาย (17 Steps)'],
+ lesson:'เดินผ่านของโดยไม่หยิบ = ฟรี, หยิบของที่ไม่ใช้ = จ่ายทั้ง Step และคะแนน'},
+
+{n:16,title:'วาร์ปสองเที่ยว',focus:'Optimization ภายใต้ข้อจำกัด',
+ map:['#########','#S.p#...#','#.#.#.#.#','#.#.#.#G#','#.#...#q#','#...s...#','#########'],
+ legend:{p:PT('q1','q2'),q:PT('q2','q1'),s:SW('sw16','สวิตช์จ่ายไฟ')},
+ goalNeeds:{flag:'sw16'},cons:{stepSlack:1,timed:true},
+ hints:['🌀 พาคุณไปฝั่งเป้าหมายได้ตั้งแต่ต้น แต่ประตูยังไม่มีไฟ',
+        'ใช้ 🌀 ข้ามไปฝั่งขวาก่อน เดินไปกดสวิตช์แถวล่าง แล้วกลับมาใช้ 🌀 อีกครั้ง',
+        'ขวา 2 เข้า 🌀 → ลง 1 ซ้าย 3 กดสวิตช์ → ซ้าย 1 ขึ้น 4 เข้า 🌀 → ขึ้น 1 เปิดประตู (14 Steps)'],
+ lesson:'ใช้เครื่องมือเดิมซ้ำสองครั้ง มักถูกกว่าเดินอ้อมหนึ่งครั้ง'},
+
+{n:17,title:'ประตูกลที่ไม่ต้องใช้',focus:'ห้ามมี Action ที่ไม่จำเป็น',
+ map:['#########','#..s....#','#.#####.#','#S..D..G#','#~~~~~~~#','#########'],
+ legend:{s:SW('sw17','สวิตช์ประตูกล'),D:DR('d17','ประตูกล',{flag:'sw17'})},
+ goalNeeds:null,cons:{stepSlack:1,maxUnnec:0},
+ hints:['ประตูกลกลางแถวไม่ใช่ทางเดียวที่ไปถึงเป้าหมาย',
+        'แถวบนโล่งอยู่แล้ว และด่านนี้ห้ามมี Action ที่ไม่จำเป็นแม้แต่ครั้งเดียว',
+        'ขึ้น 2 → วิ่งขวาสุด → ลง 2 → เปิดประตู โดยไม่กดสวิตช์เลย (11 Steps)'],
+ lesson:'อุปสรรคที่เดินอ้อมได้ ไม่จำเป็นต้องแก้'},
+
+{n:18,title:'คราวนี้ของมันจำเป็นจริง',focus:'อย่าตัดทิ้งโดยไม่คิด',
+ map:['#########','#S..k..b#','#.#####.#','#..a...G#','#.#####.#','#c..s...#','#########'],
+ legend:{k:IT('key18','กุญแจตู้','🔑'),
+   b:BX('box18','ตู้เก็บบัตร',{item:'key18'},{id:'card18',name:'คีย์การ์ด',icon:'💳'}),
+   a:PT('r1','r2'),c:PT('r2','r1'),s:SW('sw18','สวิตช์ประตู')},
+ goalNeeds:{any:[{item:'card18'},{flag:'sw18'}]},cons:{stepSlack:1,maxUnnec:1},
+ hints:['ด่านนี้กลับด้าน: ของที่วางไว้ไม่ได้เป็นของหลอกทั้งหมด',
+        'ลองนับดู — เส้นทางกุญแจ+กล่อง สั้นกว่าเส้นทางสวิตช์+วาร์ป',
+        'เก็บกุญแจแถวบน → เปิดตู้ขวาสุด → ลง 2 → เปิดประตู (11 Steps)'],
+ lesson:'การ “ข้ามทุกอย่าง” ก็เป็นนิสัยเหมือนกัน — ตัดสินด้วยตัวเลข ไม่ใช่ความเคยชิน'},
+
+{n:19,title:'สองทางที่ดีเท่ากัน',focus:'หลาย Optimal Solution',
+ map:['#########','#S..#d.G#','#.#.#.#.#','#.#a#.#b#','#.#.#.#.#','#c..~...#','#########'],
+ legend:{a:PT('a19','b19'),b:PT('b19','a19'),c:PT('c19','d19'),d:PT('d19','c19')},
+ goalNeeds:null,cons:{stepSlack:1,maxUnnec:0,timed:true},
+ hints:['มี 🌀 สองคู่ ลองดูว่าปลายทางของแต่ละคู่อยู่ตรงไหน',
+        'มีวิธีที่ดีที่สุดมากกว่าหนึ่งวิธี และทั้งคู่ใช้ 7 Steps เท่ากัน',
+        'ขวา 2 ลง 2 เข้า 🌀 → ขึ้น 2 เปิดประตู (หรือ ลง 4 เข้า 🌀 ล่างซ้าย → ขวา 2 เปิดประตู)'],
+ lesson:'Optimal ไม่จำเป็นต้องมีหนึ่งเดียว — แต่มันมี “ราคาต่ำสุด” เดียว'},
+
+{n:20,title:'บททดสอบสุดท้าย',focus:'รวมทุกทักษะ',
+ map:['#########','#S..#b.G#','#.#.#.#.#','#.#k#.#t#','#.#.#.#.#','#p..#..q#','#########'],
+ legend:{k:IT('key20','กุญแจตู้','🔑'),
+   b:BX('box20','ตู้เก็บบัตร',{item:'key20'},{id:'card20',name:'คีย์การ์ด',icon:'💳'}),
+   t:IT('tres20','ถ้วยรางวัล','🏆'),p:PT('p20','q20'),q:PT('q20','p20')},
+ goalNeeds:{item:'card20'},cons:{stepSlack:2,timed:true,maxUnnec:1},
+ hints:['ประตูต้องการคีย์การ์ด ซึ่งอยู่ในตู้อีกฝั่งของกำแพง',
+        'กำแพงกลางข้ามไม่ได้เลย ยกเว้น 🌀 — และต้องหยิบกุญแจฝั่งซ้ายก่อนวาร์ป',
+        'ขวา 2 ลง 2 เก็บกุญแจ → ลง 2 ซ้าย 2 เข้า 🌀 → ซ้าย 2 ขึ้น 4 เปิดตู้ → ขวา 2 เปิดประตู (19 Steps)'],
+ lesson:'ปัญหาใหญ่ = ลำดับของการตัดสินใจเล็ก ๆ ที่ถูกวางไว้ล่วงหน้า'}
+];
+
+/* =========================================================
+   2. ENGINE
+   ========================================================= */
+const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+const DIRTH={up:'ขึ้น',down:'ลง',left:'ซ้าย',right:'ขวา'};
+
+function buildLevel(def){
+  const h=def.map.length,w=def.map[0].length,cells=[],ents=[],names={};
+  let start=null,goalPos=null;
+  for(let y=0;y<h;y++){
+    if(def.map[y].length!==w) throw new Error('ความกว้างแถวไม่เท่ากัน ด่าน '+def.n);
+    const row=[];
+    for(let x=0;x<w;x++){
+      const ch=def.map[y][x],c={x:x,y:y,wall:false,mud:false,goal:false,start:false,ent:null};
+      if(ch==='#')c.wall=true;
+      else if(ch==='~')c.mud=true;
+      else if(ch==='S'){start={x:x,y:y};c.start=true;}
+      else if(ch==='G'){c.goal=true;goalPos={x:x,y:y};}
+      else if(ch!=='.'){
+        const d=def.legend[ch];
+        if(!d)throw new Error('ไม่พบ legend "'+ch+'" ด่าน '+def.n);
+        const e={};for(const k in d)e[k]=d[k];e.x=x;e.y=y;
+        c.ent=e;ents.push(e);
       }
-      board.appendChild(sq);
+      row.push(c);
     }
+    cells.push(row);
   }
-  resizeBoard();
-}
-
-function resizeBoard(){
-  let avail=Math.min(window.innerWidth-40,480);
-  if(avail<80)avail=80;
-  let cell=Math.floor(avail/8), size=cell*8;
-  let board=document.getElementById("board");
-  board.style.width=size+"px";board.style.height=size+"px";
-  board.style.gridTemplateColumns="repeat(8,"+cell+"px)";
-  board.style.gridTemplateRows="repeat(8,"+cell+"px)";
-  let isDark=document.body.classList.contains("dark");
-  let lc=isDark?"#3d3730":"#f0d9b5", dc=isDark?"#252018":"#b58863";
-  let ndc=isDark?"rgba(255,220,160,.85)":"rgba(0,0,0,.55)";
-  let nlc=isDark?"rgba(220,195,140,.7)":"rgba(139,90,43,.5)";
-  board.querySelectorAll(".square").forEach(sq=>{
-    sq.style.width=cell+"px";sq.style.height=cell+"px";
-    sq.style.background=sq.classList.contains("light")?lc:dc;
-    let num=sq.querySelector(".num");
-    if(num) num.style.color=sq.classList.contains("light")?nlc:ndc;
+  const bitIds=[];
+  const add=id=>{if(id&&bitIds.indexOf(id)<0)bitIds.push(id);};
+  ents.forEach(e=>{
+    if(e.t==='item'){add(e.id);names[e.id]={name:e.name,icon:e.icon};}
+    if(e.t==='switch'){add(e.id);names[e.id]={name:e.name,icon:e.icon};}
+    if(e.t==='box'){add(e.id);if(e.gives){add(e.gives.id);names[e.gives.id]={name:e.gives.name,icon:e.gives.icon};}}
   });
-  let svg=document.getElementById("arrowSvg");
-  svg.style.width=size+"px";svg.style.height=size+"px";
-  svg.setAttribute("width",size);svg.setAttribute("height",size);
-  renderArrows();
+  const bitIndex={};bitIds.forEach((id,i)=>bitIndex[id]=i);
+  ents.forEach(e=>{if(e.t==='portal'){const o=ents.filter(z=>z.t==='portal'&&z.id===e.pair)[0];
+    if(!o)throw new Error('portal คู่หาย '+e.id);e.px=o.x;e.py=o.y;}});
+  return {def:def,n:def.n,w:w,h:h,cells:cells,ents:ents,start:start,goalPos:goalPos,
+    bitIndex:bitIndex,names:names,goalNeeds:def.goalNeeds||null};
 }
-window.addEventListener("resize",resizeBoard);
-
-/* ══ BUILD POSITION ══ */
-function squaresInPath(from,to){
-  let [r1,c1]=RC[from],[r2,c2]=RC[to];
-  let dr=Math.sign(r2-r1),dc=Math.sign(c2-c1);
-  let sqs=[],r=r1+dr,c=c1+dc;
-  while(r!==r2||c!==c2){let s=sqAt(r,c);if(s)sqs.push(s);r+=dr;c+=dc;}
-  return sqs;
+function hasBit(L,bits,id){const i=L.bitIndex[id];return i===undefined?false:!!(bits&(1<<i));}
+function setBit(L,bits,id){const i=L.bitIndex[id];return i===undefined?bits:(bits|(1<<i));}
+function needsOK(L,cond,bits){
+  if(!cond)return true;
+  if(cond.any)return cond.any.some(c=>needsOK(L,c,bits));
+  if(cond.all)return cond.all.every(c=>needsOK(L,c,bits));
+  if(cond.item)return hasBit(L,bits,cond.item);
+  if(cond.flag)return hasBit(L,bits,cond.flag);
+  return true;
 }
-
-function buildPosition(upTo){
-  let white=data.start.white.map(p=>({...p,color:"white"}));
-  let black=data.start.black.map(p=>({...p,color:"black"}));
-  lastMoveSqs=[]; capSqs=[];
-  for(let i=0;i<upTo;i++){
-    let entry=data.moves[i];
-    let moveStr=entry.move||entry;
-    let isCapture=moveStr.includes("x");
-    let parts=isCapture?moveStr.split("x"):moveStr.split("-");
-    let squares=parts.map(Number);
-    let arr=white.find(p=>p.square===squares[0])?white:black;
-    let enemy=arr===white?black:white;
-    let piece=arr.find(p=>p.square===squares[0]);
-    if(!piece) continue;
-    if(i===upTo-1) lastMoveSqs=[squares[0],squares[squares.length-1]];
-    for(let s=0;s<squares.length-1;s++){
-      let from=squares[s],to=squares[s+1];
-      piece.square=to;
-      if(isCapture){
-        squaresInPath(from,to).forEach(ps=>{
-          let idx=enemy.findIndex(p=>p.square===ps);
-          if(idx>-1){if(i===upTo-1)capSqs.push(ps);enemy.splice(idx,1);}
-        });
-      }
-    }
-    if(piece.color==="black"&&piece.square<=4) piece.king=true;
-    if(piece.color==="white"&&piece.square>=29) piece.king=true;
+function needsText(L,cond){
+  if(!cond)return '<span class="pill ok">ไม่ได้ล็อก — เดินไปเปิดได้เลย</span>';
+  if(cond.any)return 'อย่างใดอย่างหนึ่ง: '+cond.any.map(c=>needsText(L,c)).join(' หรือ ');
+  if(cond.all)return 'ต้องครบทั้งหมด: '+cond.all.map(c=>needsText(L,c)).join(' และ ');
+  const id=cond.item||cond.flag,nm=L.names[id]||{name:id,icon:'❔'};
+  return '<span class="pill">'+nm.icon+' '+nm.name+(cond.flag?' (เปิดแล้ว)':'')+'</span>';
+}
+function doMove(L,st,dir){
+  const d=DIRS[dir],nx=st.x+d[0],ny=st.y+d[1];
+  if(nx<0||ny<0||nx>=L.w||ny>=L.h)return{ok:false,why:'สุดขอบกระดาน'};
+  const c=L.cells[ny][nx];
+  if(c.wall)return{ok:false,why:'มีกำแพงขวางอยู่'};
+  if(c.ent&&c.ent.t==='door'&&!needsOK(L,c.ent.needs,st.bits))return{ok:false,why:c.ent.name+' ยังล็อกอยู่'};
+  let fx=nx,fy=ny,tp=false;
+  if(c.ent&&c.ent.t==='portal'){fx=c.ent.px;fy=c.ent.py;tp=true;}
+  return{ok:true,st:{x:fx,y:fy,bits:st.bits},cost:c.mud?2:1,tp:tp,
+    label:'เดิน'+DIRTH[dir]+(tp?' → 🌀 วาร์ป':'')+(c.mud?' (โคลน 2 Steps)':'')};
+}
+function doAct(L,st){
+  const c=L.cells[st.y][st.x];
+  if(c.goal){
+    if(needsOK(L,L.goalNeeds,st.bits))
+      return{ok:true,kind:'win',cost:1,st:{x:st.x,y:st.y,bits:st.bits},label:'🏁 เปิดประตูเป้าหมาย'};
+    return{ok:false,kind:'fail',cost:1,label:'ประตูเป้าหมายยังเปิดไม่ได้ (เงื่อนไขไม่ครบ)'};
   }
-  return[...white,...black];
+  const e=c.ent;
+  if(!e)return{ok:false,kind:'none',cost:1,label:'ไม่มีอะไรให้ทำตรงนี้'};
+  if(e.t==='item'){
+    if(hasBit(L,st.bits,e.id))return{ok:false,kind:'none',cost:1,label:'หยิบไปแล้ว'};
+    return{ok:true,kind:'item',cost:1,ent:e,st:{x:st.x,y:st.y,bits:setBit(L,st.bits,e.id)},label:'หยิบ '+e.icon+' '+e.name};
+  }
+  if(e.t==='switch'){
+    if(hasBit(L,st.bits,e.id))return{ok:false,kind:'none',cost:1,label:'สวิตช์นี้ถูกกดไปแล้ว'};
+    return{ok:true,kind:'switch',cost:1,ent:e,st:{x:st.x,y:st.y,bits:setBit(L,st.bits,e.id)},label:'กด '+e.name};
+  }
+  if(e.t==='box'){
+    if(hasBit(L,st.bits,e.id))return{ok:false,kind:'none',cost:1,label:'กล่องถูกเปิดแล้ว'};
+    if(!needsOK(L,e.needs,st.bits))return{ok:false,kind:'fail',cost:1,label:e.name+' ยังเปิดไม่ได้'};
+    let b=setBit(L,st.bits,e.id);if(e.gives)b=setBit(L,b,e.gives.id);
+    return{ok:true,kind:'box',cost:1,ent:e,st:{x:st.x,y:st.y,bits:b},
+      label:'เปิด '+e.name+(e.gives?' ได้ '+e.gives.icon+' '+e.gives.name:'')};
+  }
+  if(e.t==='door')return{ok:false,kind:'none',cost:1,label:'ประตูนี้ใช้วิธีเดินผ่าน ไม่ต้องกดใช้'};
+  if(e.t==='portal')return{ok:false,kind:'none',cost:1,label:'🌀 ใช้งานด้วยการเดินเข้าไป'};
+  return{ok:false,kind:'none',cost:1,label:'ทำอะไรไม่ได้'};
+}
+/* ---- Dijkstra solver ---- */
+function MinHeap(){this.a=[];}
+MinHeap.prototype.push=function(k,v){this.a.push({k:k,v:v});let i=this.a.length-1;
+  while(i>0){const p=(i-1)>>1;if(this.a[p].k<=this.a[i].k)break;const t=this.a[p];this.a[p]=this.a[i];this.a[i]=t;i=p;}};
+MinHeap.prototype.pop=function(){const a=this.a,top=a[0],last=a.pop();
+  if(a.length){a[0]=last;let i=0;for(;;){const l=2*i+1,r=l+1;let m=i;
+    if(l<a.length&&a[l].k<a[m].k)m=l;if(r<a.length&&a[r].k<a[m].k)m=r;
+    if(m===i)break;const t=a[m];a[m]=a[i];a[i]=t;i=m;}}return top;};
+MinHeap.prototype.size=function(){return this.a.length;};
+
+function solve(L){
+  const enc=s=>s.x+','+s.y+','+s.bits;
+  const start={x:L.start.x,y:L.start.y,bits:0};
+  const dist=new Map(),prev=new Map(),h=new MinHeap();
+  dist.set(enc(start),0);h.push(0,start);
+  let winKey=null,winCost=Infinity,guard=0;
+  while(h.size()>0){
+    const it=h.pop(),s=it.v,d=it.k,sk=enc(s);
+    if(d>(dist.has(sk)?dist.get(sk):Infinity))continue;
+    if(++guard>500000)break;
+    const a=doAct(L,s);
+    if(a.ok&&a.kind==='win'){winKey=sk;winCost=d+1;break;}
+    const relax=(ns,nd,act)=>{const nk=enc(ns);
+      if(nd<(dist.has(nk)?dist.get(nk):Infinity)){dist.set(nk,nd);prev.set(nk,{p:sk,a:act});h.push(nd,ns);}};
+    if(a.ok)relax(a.st,d+a.cost,'use');
+    for(const dir in DIRS){const m=doMove(L,s,dir);if(m.ok)relax(m.st,d+m.cost,dir);}
+  }
+  if(winKey===null)return null;
+  const acts=[];let cur=winKey;
+  while(prev.has(cur)){const p=prev.get(cur);acts.push(p.a);cur=p.p;}
+  acts.reverse();acts.push('use');
+  const sim=simulate(L,acts);
+  return {steps:winCost,actions:acts,back:sim.back,used:sim.used,trace:sim.trace,
+    time:Math.round((winCost*1.2+3)*10)/10};
+}
+function simulate(L,actions){
+  let st={x:L.start.x,y:L.start.y,bits:0};
+  const vis={},used={},trace=[{x:st.x,y:st.y,bits:st.bits,label:'จุดเริ่มต้น'}];
+  vis[st.x+','+st.y]=1;let steps=0,back=0;
+  for(let i=0;i<actions.length;i++){
+    const a=actions[i];
+    if(a==='use'){const r=doAct(L,st);if(!r.ok)continue;steps+=r.cost;
+      if(r.ent)used[r.ent.id]=1;st=r.st;
+      trace.push({x:st.x,y:st.y,bits:st.bits,label:r.label});
+      if(r.kind==='win')break;
+    }else{const m=doMove(L,st,a);if(!m.ok)continue;steps+=m.cost;st=m.st;
+      const k=st.x+','+st.y;if(vis[k])back++;vis[k]=1;
+      trace.push({x:st.x,y:st.y,bits:st.bits,label:m.label});}
+  }
+  return {steps:steps,back:back,used:used,trace:trace};
 }
 
-/* ══ RENDER ══ */
-function render(){
-  clearHL();
-  let pos=buildPosition(step);
-  lastMoveSqs.forEach(s=>mark(s,"sq-last"));
-  capSqs.forEach(s=>mark(s,"sq-cap"));
-  drawPieces(pos);
-  let entry=data.moves[step-1];
-  let ms=entry?((entry.color?entry.color+" ":"")+(entry.move||entry)):"";
-  document.getElementById("statusBar").innerText=step>0?"▶ "+ms:"⬤ Start Position";
-  document.getElementById("slider").value=step;
-  document.getElementById("stepLabel").innerText=step+" / "+data.moves.length;
-  highlightNext();
-  drawPreviewArrows();
-}
+/* =========================================================
+   3. STORAGE
+   ========================================================= */
+const SKEY='giathai_v1';
+function defStore(){return{bests:{},unlocked:1,
+  totals:{runs:0,completes:0,steps:0,optSteps:0,timeMs:0,unnec:0,back:0,hints:0}};}
+let STORE=(function(){try{const s=JSON.parse(localStorage.getItem(SKEY));
+  if(s&&s.bests&&s.totals)return s;}catch(e){}return defStore();})();
+function saveStore(){try{localStorage.setItem(SKEY,JSON.stringify(STORE));}catch(e){}}
+function wipe(){if(confirm('ล้างความคืบหน้าทั้งหมด?')){STORE=defStore();saveStore();renderStats();toast('ล้างข้อมูลแล้ว');}}
 
-function drawPieces(pieces){
-  document.querySelectorAll(".piece").forEach(e=>e.remove());
-  pieces.forEach(p=>{
-    let cell=document.querySelector("[data-pos='"+p.square+"']");
-    if(!cell)return;
-    let div=document.createElement("div");
-    div.className="piece "+(p.color==="white"?"white-p":"black-p");
-    if(p.king)div.classList.add("king");
-    cell.appendChild(div);
+/* =========================================================
+   4. GAME RUNTIME
+   ========================================================= */
+const BUILT=[],OPT=[];
+(function boot(){
+  for(let i=0;i<LEVELS.length;i++){
+    const L=buildLevel(LEVELS[i]);BUILT.push(L);
+    const o=solve(L);OPT.push(o);
+    if(!o)console.error('ด่าน '+L.n+' แก้ไม่ได้!');
+  }
+  console.log('%cตรวจสอบ 20 ด่านสำเร็จ','color:#3ddc97',
+    OPT.map((o,i)=>({level:i+1,optimalSteps:o.steps,optimalTime:o.time,backtrack:o.back})));
+})();
+function consOf(i){
+  const L=BUILT[i],o=OPT[i],c=(L.def.cons)||null;if(!c)return null;
+  const r={};
+  if(c.stepSlack!==undefined)r.maxSteps=o.steps+c.stepSlack;
+  if(c.backSlack!==undefined)r.maxBack=o.back+c.backSlack;
+  if(c.maxUnnec!==undefined)r.maxUnnec=c.maxUnnec;
+  if(c.timed)r.maxTime=Math.round(o.time*2.2+8);
+  return r;
+}
+const G={i:0,L:null,o:null,st:null,m:null,hist:[],t0:0,timer:null,hint:0,undos:0,done:false,cons:null};
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1700);}
+function startPlay(){const n=Math.min(STORE.unlocked,20);loadLevel(n-1);}
+function renderLevels(){
+  const g=document.getElementById('lvGrid');g.innerHTML='';
+  document.getElementById('lvSub').textContent='ปลดล็อกแล้ว '+Math.min(STORE.unlocked,20)+' / 20 ด่าน';
+  for(let i=0;i<20;i++){
+    const b=STORE.bests[i+1],locked=(i+1)>STORE.unlocked;
+    const el=document.createElement('button');
+    el.className='lv btn'+(locked?' locked':'');
+    el.innerHTML='<b>'+(i+1)+'</b><span class="tiny muted">'+LEVELS[i].title+'</span><br>'+
+      (b?'<span class="badge r-'+b.rank+'">'+b.rank+'</span>':(locked?'🔒':'—'));
+    if(!locked)el.onclick=()=>loadLevel(i);
+    g.appendChild(el);
+  }
+}
+function loadLevel(i){
+  G.i=i;G.L=BUILT[i];G.o=OPT[i];G.cons=consOf(i);
+  G.st={x:G.L.start.x,y:G.L.start.y,bits:0};
+  G.m={steps:0,back:0,unnec:0,acts:0,log:[],vis:[G.L.start.x+','+G.L.start.y]};
+  G.hist=[];G.t0=0;G.undos=0;G.hint=0;G.done=false;
+  if(G.timer)clearInterval(G.timer);G.timer=null;
+  document.getElementById('hintBox').style.display='none';
+  show('s-game');renderGame();
+}
+function resetLevel(){
+  const h=G.hint,u=G.undos;loadLevel(G.i);G.hint=h;G.undos=u;
+  if(h>0)showHints();renderGame();toast('รีเซ็ตด่านแล้ว (Hint ที่ใช้ไปยังถูกนับอยู่)');
+}
+function quitToMenu(){if(G.timer)clearInterval(G.timer);show('s-levels');renderLevels();}
+function elapsed(){return G.t0?(Date.now()-G.t0)/1000:0;}
+function startTimer(){if(G.t0)return;G.t0=Date.now();
+  G.timer=setInterval(()=>{document.getElementById('hTime').textContent=elapsed().toFixed(1);
+    if(G.cons&&G.cons.maxTime&&elapsed()>G.cons.maxTime&&!G.done)
+      finish(false,'⏱ ใช้เวลาเกินที่กำหนด ('+G.cons.maxTime+' วินาที)');
+    updScore();},100);}
+function pushHist(){G.hist.push({st:{x:G.st.x,y:G.st.y,bits:G.st.bits},
+  m:{steps:G.m.steps,back:G.m.back,unnec:G.m.unnec,acts:G.m.acts,log:G.m.log.slice(),vis:G.m.vis.slice()}});
+  if(G.hist.length>200)G.hist.shift();}
+function undo(){
+  if(G.done)return;
+  if(!G.hist.length){toast('ยังไม่มี Action ให้ย้อนกลับ');return;}
+  const h=G.hist.pop();G.st=h.st;G.m=h.m;G.undos++;renderGame();
+  toast('Undo (−8 คะแนน/ครั้ง)');
+}
+function act(a){
+  if(G.done)return;
+  startTimer();
+  if(a==='use'){
+    const r=doAct(G.L,G.st);
+    pushHist();
+    G.m.steps+=r.cost;G.m.acts++;
+    if(r.ok){
+      G.st=r.st;
+      const necessary=(r.kind==='win')||(r.ent&&G.o.used[r.ent.id]);
+      if(!necessary)G.m.unnec++;
+      G.m.log.push({txt:r.label,bad:!necessary});
+      if(r.kind==='win'){renderGame();finish(true,'');return;}
+      toast(r.label);
+    }else{
+      G.m.unnec++;G.m.log.push({txt:r.label+' (นับเป็น Action ไม่จำเป็น)',bad:true});
+      toast(r.label);
+    }
+  }else{
+    const m=doMove(G.L,G.st,a);
+    if(!m.ok){toast(m.why);return;}
+    pushHist();
+    G.m.steps+=m.cost;G.m.acts++;G.st=m.st;
+    const k=G.st.x+','+G.st.y;
+    let bad=false;
+    if(G.m.vis.indexOf(k)>=0){G.m.back++;bad=true;}else G.m.vis.push(k);
+    G.m.log.push({txt:m.label+(bad?' ↩️ (ย้อนที่เดิม)':''),bad:false});
+  }
+  if(!checkCons())renderGame();
+}
+function checkCons(){
+  const c=G.cons;if(!c)return false;
+  if(c.maxSteps!==undefined&&G.m.steps>c.maxSteps){finish(false,'🛣️ ใช้ Steps เกินที่กำหนด (≤ '+c.maxSteps+')');return true;}
+  if(c.maxBack!==undefined&&G.m.back>c.maxBack){finish(false,'↩️ ย้อนกลับเกินที่กำหนด (≤ '+c.maxBack+')');return true;}
+  if(c.maxUnnec!==undefined&&G.m.unnec>c.maxUnnec){finish(false,'🗑️ มี Action ไม่จำเป็นเกินที่กำหนด (≤ '+c.maxUnnec+')');return true;}
+  return false;
+}
+/* ---- scoring ---- */
+function calcScore(){
+  const o=G.o,m=G.m,t=elapsed();
+  const eS=Math.max(0,m.steps-o.steps),eT=Math.max(0,t-o.time),eB=Math.max(0,m.back-o.back);
+  let s=1000;
+  s-=eS*45;s-=Math.min(200,eT*4);s-=eB*25;s-=m.unnec*60;
+  s-=[0,60,140,280][G.hint];s-=G.undos*8;
+  return {score:Math.max(0,Math.min(1000,Math.round(s))),eS:eS,eT:eT,eB:eB};
+}
+function rankOf(sc,unnec,ok){
+  if(!ok)return'FAIL';
+  if(sc>=900&&unnec===0)return'S';
+  if(sc>=780)return'A';
+  if(sc>=600)return'B';
+  if(sc>=400)return'C';
+  return'D';
+}
+function updScore(){document.getElementById('hScore').textContent=calcScore().score;}
+
+/* ---- rendering ---- */
+function cellHTML(L,st,c,extraCls){
+  let cls='cell',txt='';
+  if(c.wall)cls+=' wall';
+  else{
+    if(c.mud)cls+=' mud';
+    if(c.start)cls+=' start';
+    if(c.goal){cls+=' goal';const ok=needsOK(L,L.goalNeeds,st.bits);txt=ok?'🏁':'🔒';if(!ok)cls+=' locked';}
+    const e=c.ent;
+    if(e){
+      if(e.t==='item'){txt=e.icon;if(hasBit(L,st.bits,e.id)){cls+=' taken';txt='·';}}
+      else if(e.t==='switch'){txt=hasBit(L,st.bits,e.id)?'💡':'🎚️';}
+      else if(e.t==='box'){txt=hasBit(L,st.bits,e.id)?'📭':'📦';}
+      else if(e.t==='door'){txt='🚪';if(needsOK(L,e.needs,st.bits))cls+=' open';else cls+=' locked';}
+      else if(e.t==='portal'){txt='🌀';}
+    }
+  }
+  if(st.x===c.x&&st.y===c.y){cls+=' player';txt='🧑';}
+  if(extraCls)cls+=' '+extraCls;
+  return '<div class="'+cls+'" data-x="'+c.x+'" data-y="'+c.y+'">'+txt+'</div>';
+}
+function drawBoard(el,L,st){
+  el.style.setProperty('--cols',L.w);
+  let h='';for(let y=0;y<L.h;y++)for(let x=0;x<L.w;x++)h+=cellHTML(L,st,L.cells[y][x],'');
+  el.innerHTML=h;
+}
+function renderGame(){
+  const L=G.L,st=G.st,d=L.def;
+  document.getElementById('gTitle').textContent='ด่าน '+d.n+' — '+d.title;
+  document.getElementById('gFocus').textContent='โฟกัส: '+d.focus;
+  document.getElementById('hLevel').textContent=d.n;
+  document.getElementById('hSteps').textContent=G.m.steps;
+  document.getElementById('hUn').textContent=G.m.unnec;
+  document.getElementById('hTime').textContent=elapsed().toFixed(1);
+  updScore();
+  drawBoard(document.getElementById('board'),L,st);
+  document.getElementById('gGoal').innerHTML='เดินไปที่ 🏁 แล้วกด <b>ใช้</b> เพื่อเปิดประตูเป้าหมาย';
+  document.getElementById('gNeed').innerHTML='<b>เงื่อนไขประตู:</b> '+needsText(L,L.goalNeeds);
+  const c=G.cons,cc=document.getElementById('gCons');
+  if(c){let h='<b class="small">⚠️ ข้อจำกัดของด่านนี้</b><br>';
+    if(c.maxSteps!==undefined)h+='<span class="pill'+(G.m.steps>c.maxSteps?' no':'')+'">🛣️ Steps ≤ '+c.maxSteps+'</span>';
+    if(c.maxTime!==undefined)h+='<span class="pill">⏱️ เวลา ≤ '+c.maxTime+' วิ</span>';
+    if(c.maxBack!==undefined)h+='<span class="pill'+(G.m.back>c.maxBack?' no':'')+'">↩️ ย้อนกลับ ≤ '+c.maxBack+'</span>';
+    if(c.maxUnnec!==undefined)h+='<span class="pill'+(G.m.unnec>c.maxUnnec?' no':'')+'">🗑️ ไม่จำเป็น ≤ '+c.maxUnnec+'</span>';
+    cc.innerHTML=h;}else cc.innerHTML='<span class="small muted">ด่านนี้ไม่มีข้อจำกัดพิเศษ</span>';
+  const inv=[];for(const id in L.bitIndex)if(hasBit(L,st.bits,id)&&L.names[id])
+    inv.push('<span class="pill ok">'+L.names[id].icon+' '+L.names[id].name+'</span>');
+  document.getElementById('gInv').innerHTML=inv.length?inv.join(''):'— ว่าง —';
+  const ul=document.getElementById('gObjs');ul.innerHTML='';
+  L.ents.forEach(e=>{
+    let s='';
+    if(e.t==='item')s=hasBit(L,st.bits,e.id)?'เก็บแล้ว':'ยังอยู่บนกระดาน';
+    else if(e.t==='switch')s=hasBit(L,st.bits,e.id)?'เปิดอยู่ 💡':'ยังไม่ได้กด';
+    else if(e.t==='box')s=hasBit(L,st.bits,e.id)?'เปิดแล้ว':'ต้องใช้ '+plainNeed(L,e.needs);
+    else if(e.t==='door')s=needsOK(L,e.needs,st.bits)?'เปิดอยู่ (เดินผ่านได้)':'ล็อก — ต้องใช้ '+plainNeed(L,e.needs);
+    else if(e.t==='portal')s='เดินเข้าไปเพื่อวาร์ป';
+    ul.innerHTML+='<li><span>'+(e.icon||'❔')+'</span><span><b>'+e.name+'</b><br><span class="muted tiny">'+s+'</span></span></li>';
   });
+  if(!L.ents.length)ul.innerHTML='<li class="muted">ไม่มีวัตถุใด ๆ บนกระดาน</li>';
+  const lg=document.getElementById('gLog');
+  if(!G.m.log.length)lg.innerHTML='<li class="muted">ยังไม่ได้ลงมือ — ใช้เวลาสังเกตก่อนได้ (นาฬิกายังไม่เดิน)</li>';
+  else lg.innerHTML=G.m.log.slice(-9).map((x,i)=>'<li><span>'+(x.bad?'🗑️':'•')+'</span><span'+(x.bad?' style="color:#ffb3a0"':'')+'>'+x.txt+'</span></li>').join('');
+  document.getElementById('hintCount').textContent=G.hint?'ใช้ Hint แล้ว '+G.hint+'/3':'';
 }
-function clearHL(){
-  document.querySelectorAll(".piece").forEach(e=>e.remove());
-  document.querySelectorAll(".square").forEach(e=>
-    e.classList.remove("sq-last","sq-cap","sq-next-from"));
+function plainNeed(L,cond){
+  if(!cond)return'ไม่ต้องการอะไร';
+  if(cond.any)return cond.any.map(c=>plainNeed(L,c)).join(' หรือ ');
+  if(cond.all)return cond.all.map(c=>plainNeed(L,c)).join(' และ ');
+  const id=cond.item||cond.flag,n=L.names[id];return n?(n.icon+' '+n.name):id;
 }
-function mark(s,cls){
-  let c=document.querySelector("[data-pos='"+s+"']");if(c)c.classList.add(cls);
+/* ---- hints ---- */
+function useHint(){
+  if(G.hint>=3){toast('ใช้ Hint ครบ 3 ระดับแล้ว');return;}
+  G.hint++;showHints();
+  toast('Hint ระดับ '+G.hint+' (หัก '+[0,60,80,140][G.hint]+' คะแนน)');
+  updScore();renderGame();
 }
-
-function highlightNext(){
-  if(step>=data.moves.length) return;
-  let entry=data.moves[step];
-  let moveStr=entry.move||entry;
-  let parts=moveStr.includes("x")?moveStr.split("x"):moveStr.split("-");
-  let fromSq=parseInt(parts[0]);
-  if(fromSq) mark(fromSq,"sq-next-from");
+function showHints(){
+  const b=document.getElementById('hintBox'),h=G.L.def.hints;
+  let s='<b>💡 คำใบ้</b>';
+  for(let i=0;i<G.hint;i++)s+='<p class="small" style="margin:8px 0 0"><b>ระดับ '+(i+1)+':</b> '+h[i]+'</p>';
+  s+='<p class="tiny muted" style="margin:8px 0 0">หักคะแนนรวม '+[0,60,140,280][G.hint]+' คะแนน</p>';
+  b.innerHTML=s;b.style.display='block';
 }
-
-/* ══ PLAYBACK ══ */
-const speedMap={1:1800,2:1100,3:700,4:380,5:160};
-const speedLbl={1:"ช้ามาก",2:"ช้า",3:"กลาง",4:"เร็ว",5:"เร็วมาก"};
-function setSpeed(v){
-  v=parseInt(v); speed=speedMap[v]||700;
-  document.getElementById("speedVal").innerText=speedLbl[v]||"กลาง";
-  if(timer){stop();play();document.getElementById("rPlay").innerText="⏸ Pause";}
-}
-function sliderMove(v){step=parseInt(v);render();}
-function togglePlay(){
-  let btn=document.getElementById("rPlay");
-  if(timer){stop();}else{play();if(btn)btn.innerText="⏸ Pause";}
-}
-function play(){
-  if(timer)return;
-  timer=setInterval(()=>{
-    if(step<data.moves.length){step++;render();}else{stop();}
-  },speed);
-}
-function stop(){
-  clearInterval(timer);timer=null;
-  let pb=document.getElementById("rPlay");
-  if(pb&&!pb.disabled)pb.innerText="▶ Play";
-}
-function resetToStart(){stop();step=0;render();}
-function next(){if(step<data.moves.length){step++;render();}}
-function prev(){if(step>0){step--;render();}}
-
-/* ══ ORIENT + DARK ══ */
-function toggleOrient(){
-  blackBottom=!blackBottom;
-  drawBoard();render();
-}
-function toggleDark(){
-  document.body.classList.toggle("dark");
-  let isDark=document.body.classList.contains("dark");
-  document.getElementById("darkBtn").innerText=isDark?"☀️":"🌙";
-  resizeBoard();
-}
-
-/* ══ TOAST ══ */
-function showToast(msg){
-  let t=document.getElementById("toast");
-  t.innerText=msg;t.style.opacity="1";
-  setTimeout(()=>t.style.opacity="0",2000);
-}
-
-/* ══ PREVIEW (ตาเทพ) ══ */
-function togglePreview(){
-  previewOn=!previewOn;
-  let btn=document.getElementById("previewBtn");
-  btn.classList.toggle("active",previewOn);
-  btn.innerText=previewOn?"👁 ตาเทพ":"👁 ซ่อน";
-  render();
-}
-function setSteps(v){
-  previewSteps=parseInt(v);
-  document.getElementById("stepsLabel").innerText=v;
-  render();
-}
-function changeSteps(d){
-  let sl=document.getElementById("stepsSlider");
-  let v=Math.min(8,Math.max(1,(parseInt(sl.value)||3)+d));
-  sl.value=v; setSteps(v);
-}
-
-function getBoardSize(){
-  let b=document.getElementById("board");
-  return parseInt(b.style.width)||Math.min(Math.floor(window.innerWidth*0.95),480);
-}
-function sqCenter(sq){
-  let nums=[...Array(32).keys()].map(i=>i+1);
-  if(!blackBottom)nums.reverse();
-  let di=0,vr=-1,vc=-1;
-  for(let row=0;row<8;row++)for(let col=0;col<8;col++){
-    if((row+col)%2===1){if(nums[di]===sq){vr=row;vc=col;}di++;}
-  }
-  if(vr===-1)return null;
-  let size=getBoardSize(),cell=size/8;
-  return[(vc+0.5)*cell,(vr+0.5)*cell];
-}
-
-function drawPreviewArrows(){
-  let svg=document.getElementById("arrowSvg");
-  svg.querySelectorAll(".preview-arrow").forEach(e=>e.remove());
-  if(!previewOn||!data.moves.length)return;
-  let cellSize=getBoardSize()/8;
-  let opacities=[0.95,0.80,0.62,0.46,0.32,0.20,0.13,0.08];
-  for(let i=0;i<previewSteps;i++){
-    let idx=step+i;
-    if(idx>=data.moves.length)break;
-    let entry=data.moves[idx];
-    let moveStr=entry.move||entry;
-    let isCapture=moveStr.includes("x");
-    let parts=isCapture?moveStr.split("x"):moveStr.split("-");
-    if(parts.length<2)continue;
-    let fromSq=parseInt(parts[0]),nextSq=parseInt(parts[1]);
-    if(!fromSq||!nextSq||fromSq===nextSq)continue;
-    let fc=sqCenter(fromSq),nc=sqCenter(nextSq);
-    if(!fc||!nc)continue;
-    let dx=nc[0]-fc[0],dy=nc[1]-fc[1],len=Math.sqrt(dx*dx+dy*dy);
-    if(len<4)continue;
-    let ux=dx/len,uy=dy/len,op=opacities[i]||0.08,half=cellSize*0.5,margin=cellSize*0.04;
-    let triS=cellSize*0.22;
-    let fsize=Math.round(cellSize*0.38);
-    // ตัวเลข
-    let txt=document.createElementNS("http://www.w3.org/2000/svg","text");
-    txt.setAttribute("x",fc[0]);txt.setAttribute("y",fc[1]);
-    txt.setAttribute("text-anchor","middle");txt.setAttribute("dominant-baseline","central");
-    txt.setAttribute("font-size",fsize);txt.setAttribute("font-weight","700");
-    txt.setAttribute("font-family","'IBM Plex Mono',monospace");
-    txt.setAttribute("fill","#fff");txt.setAttribute("stroke","#c0392b");
-    txt.setAttribute("stroke-width","3");txt.setAttribute("paint-order","stroke");
-    txt.setAttribute("opacity",op);txt.setAttribute("class","preview-arrow");
-    txt.setAttribute("pointer-events","none");txt.textContent=String(i+1);
-    svg.appendChild(txt);
-    // สามเหลี่ยม
-    let mx,my,b1x,b1y,b2x,b2y;
-    if(ux>=0&&uy<=0){mx=fc[0]+half-margin;my=fc[1]-half+margin;b1x=mx-triS;b1y=my;b2x=mx;b2y=my+triS;}
-    else if(ux>=0&&uy>0){mx=fc[0]+half-margin;my=fc[1]+half-margin;b1x=mx-triS;b1y=my;b2x=mx;b2y=my-triS;}
-    else if(ux<0&&uy<=0){mx=fc[0]-half+margin;my=fc[1]-half+margin;b1x=mx+triS;b1y=my;b2x=mx;b2y=my+triS;}
-    else{mx=fc[0]-half+margin;my=fc[1]+half-margin;b1x=mx+triS;b1y=my;b2x=mx;b2y=my-triS;}
-    let tri=document.createElementNS("http://www.w3.org/2000/svg","polygon");
-    tri.setAttribute("points",mx+","+my+" "+b1x+","+b1y+" "+b2x+","+b2y);
-    tri.setAttribute("fill","#fff");tri.setAttribute("stroke","#c0392b");
-    tri.setAttribute("stroke-width","1.5");tri.setAttribute("opacity",op);
-    tri.setAttribute("class","preview-arrow");svg.appendChild(tri);
-  }
-}
-
-/* ══ ARROW SYSTEM ══ */
-let arrowMode=false,arrowColor="red",arrowDrag={active:false,fromSq:null,toSq:null},arrows=[];
-
-function toggleArrow(color){
-  if(arrowMode&&arrowColor===color){arrowOff();return;}
-  arrowColor=color;arrowMode=true;
-  updateArrowBtns();
-  document.getElementById("arrowSvg").classList.add("drawing-mode");
-}
-function arrowOff(){
-  arrowMode=false;updateArrowBtns();
-  document.getElementById("arrowSvg").classList.remove("drawing-mode");
-  arrowDrag={active:false,fromSq:null,toSq:null};
-  let g=document.getElementById("arrowGhost");if(g)g.remove();
-}
-function updateArrowBtns(){
-  let map={red:"btnRed",yellow:"btnYellow",green:"btnGreen"};
-  let lbl={red:"🔴 แพ้",yellow:"🟡 เสมอ",green:"🟢 ชนะ"};
-  let act={red:"🔴 วาดอยู่",yellow:"🟡 วาดอยู่",green:"🟢 วาดอยู่"};
-  for(let c in map){
-    let b=document.getElementById(map[c]);if(!b)continue;
-    let on=arrowMode&&arrowColor===c;
-    b.classList.toggle("active",on);
-    b.innerText=on?act[c]:lbl[c];
-  }
-}
-function clearArrows(){arrows=[];renderArrows();}
-
-function sqFromPoint(x,y){
-  let size=getBoardSize(),cell=size/8;
-  let col=Math.floor(x/cell),row=Math.floor(y/cell);
-  if(col<0||col>7||row<0||row>7)return null;
-  let nums=[...Array(32).keys()].map(i=>i+1);
-  if(!blackBottom)nums.reverse();
-  if((row+col)%2!==1)return null;
-  let di=0;
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-    if((r+c)%2===1){if(r===row&&c===col)return nums[di];di++;}
-  }
-  return null;
-}
-function getXY(e){
-  let svg=document.getElementById("arrowSvg"),rect=svg.getBoundingClientRect();
-  let src=e.touches?e.touches[0]:e;
-  return[src.clientX-rect.left,src.clientY-rect.top];
-}
-let svgEl=document.getElementById("arrowSvg");
-svgEl.addEventListener("mousedown",svgDown);
-svgEl.addEventListener("touchstart",svgDown,{passive:false});
-svgEl.addEventListener("mousemove",svgMove);
-svgEl.addEventListener("touchmove",svgMove,{passive:false});
-svgEl.addEventListener("mouseup",svgUp);
-svgEl.addEventListener("touchend",svgUp);
-function svgDown(e){
-  if(!arrowMode)return;e.preventDefault();
-  let [x,y]=getXY(e),sq=sqFromPoint(x,y);if(!sq)return;
-  arrowDrag={active:true,fromSq:sq,toSq:sq};
-}
-function svgMove(e){
-  if(!arrowMode||!arrowDrag.active)return;e.preventDefault();
-  let [x,y]=getXY(e);arrowDrag.toSq=sqFromPoint(x,y);renderArrows(x,y);
-}
-function svgUp(e){
-  if(!arrowMode||!arrowDrag.active)return;e.preventDefault();
-  let from=arrowDrag.fromSq,to=arrowDrag.toSq;
-  arrowDrag={active:false,fromSq:null,toSq:null};
-  if(!from||!to||from===to){renderArrows();return;}
-  let ex=arrows.findIndex(a=>a.from===from&&a.to===to&&a.color===arrowColor);
-  if(ex>-1)arrows.splice(ex,1);else arrows.push({from,to,color:arrowColor});
-  renderArrows();
-}
-function renderArrows(ghostX,ghostY){
-  let svg=document.getElementById("arrowSvg");
-  svg.querySelectorAll(".arrow-line,#arrowGhost").forEach(e=>e.remove());
-  for(let a of arrows){
-    let fc=sqCenter(a.from),tc=sqCenter(a.to);
-    if(fc&&tc)drawArrowLine(svg,fc[0],fc[1],tc[0],tc[1],a.color,false);
-  }
-  if(arrowDrag.active&&arrowDrag.fromSq&&ghostX!==undefined){
-    let fc=sqCenter(arrowDrag.fromSq);
-    if(fc)drawArrowLine(svg,fc[0],fc[1],ghostX,ghostY,arrowColor,true);
-  }
-  drawPreviewArrows();
-}
-function drawArrowLine(svg,x1,y1,x2,y2,color,isGhost){
-  let dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
-  if(len<5)return;
-  let ux=dx/len,uy=dy/len;
-  let sx=x1+ux*len*0.18,sy=y1+uy*len*0.18;
-  let ex=x2-ux*len*0.12,ey=y2-uy*len*0.12;
-  let clr=color==="green"?"#20c020":color==="yellow"?"#e0b000":"#e02020";
-  let mid=color==="green"?"ah-green":color==="yellow"?"ah-yellow":"ah-red";
-  let line=document.createElementNS("http://www.w3.org/2000/svg","line");
-  line.setAttribute("x1",sx);line.setAttribute("y1",sy);
-  line.setAttribute("x2",ex);line.setAttribute("y2",ey);
-  line.setAttribute("stroke",clr);line.setAttribute("stroke-width","4.5");
-  line.setAttribute("stroke-linecap","round");
-  line.setAttribute("opacity",isGhost?"0.45":"0.85");
-  line.setAttribute("marker-end","url(#"+mid+")");
-  line.setAttribute("class",isGhost?"":"arrow-line");
-  if(isGhost)line.id="arrowGhost";
-  svg.appendChild(line);
-}
-
-
-/* V3 RECURSIVE TREE + JSON */
-let TREE_DATA=null;
-let CURRENT_NODE_ID=null;
-
-async function loadTreeData(){
-  const indexUrl=new URL("./formulas/index.json",document.baseURI).href;
-  try{
-    const r=await fetch(indexUrl,{cache:"no-store"});
-    if(!r.ok) throw new Error("โหลด formulas/index.json ไม่สำเร็จ HTTP "+r.status+" : "+indexUrl);
-    const index=await r.json();
-    const rootNodes=[];
-    for(const item of index){
-      const url=new URL(item.file,indexUrl).href;
-      const rr=await fetch(url,{cache:"no-store"});
-      if(!rr.ok) throw new Error("โหลดสูตรไม่สำเร็จ HTTP "+rr.status+" : "+url);
-      rootNodes.push(await rr.json());
-    }
-    TREE_DATA=rootNodes;
-    renderRecursiveTree();
-  }catch(err){
-    console.error(err);
-    document.getElementById("treeRoot").innerHTML='<div class="tree-empty"><b>โหลดโครงสร้างสูตรไม่สำเร็จ</b><br>'+escapeHtml(err.message||err)+'</div>';
-  }
-}
-function escapeHtml(v){
-  return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
-function renderRecursiveTree(){
-  const root=document.getElementById("treeRoot");
-  if(!TREE_DATA||!TREE_DATA.length){root.innerHTML='<div class="tree-empty">ยังไม่มีสูตร</div>';return;}
-  root.innerHTML=TREE_DATA.map((n,i)=>renderNode(n,0,i)).join("");
-}
-function renderNode(node,depth,index){
-  const hasChildren=Array.isArray(node.children)&&node.children.length>0;
-  const open=depth===0 || !!node.defaultOpen;
-  const label=escapeHtml(node.name||"");
-  const kind=node.type?'<span class="tree-kind">'+escapeHtml(node.type)+'</span>':"";
-  const meta=node.timeline?.moves?.length?'<span class="tree-meta">'+node.timeline.moves.length+' เดิน</span>':"";
-  let children="";
-  if(hasChildren){
-    children=node.children.map((c,i)=>'<div class="tree-child-wrap">'+renderNode(c,depth+1,i)+'</div>').join("");
-  }
-  const play=node.timeline?'<button type="button" class="tree-play" data-node="'+escapeHtml(node.id)+'">▶ เล่น</button>':"";
-  return '<div class="tree-node"><div class="tree-row">'+
-    '<button type="button" class="tree-toggle" '+(hasChildren?'':'disabled')+'>'+ (hasChildren?(open?"▼":"▶"):"•") +'</button>'+
-    '<button type="button" class="tree-label" data-node="'+escapeHtml(node.id)+'"><strong>'+label+'</strong>'+kind+meta+'</button>'+
-    play+
+/* ---- finish + result ---- */
+function finish(ok,reason){
+  if(G.done)return;G.done=true;
+  if(G.timer)clearInterval(G.timer);
+  const t=elapsed(),c=calcScore(),o=G.o,m=G.m;
+  const score=ok?c.score:0,rank=rankOf(score,m.unnec,ok);
+  const T=STORE.totals;T.runs++;T.steps+=m.steps;T.optSteps+=o.steps;T.timeMs+=t*1000;
+  T.unnec+=m.unnec;T.back+=m.back;T.hints+=G.hint;
+  if(ok){T.completes++;
+    const prev=STORE.bests[G.L.n];
+    if(!prev||score>prev.score)STORE.bests[G.L.n]={score:score,rank:rank,steps:m.steps,time:Math.round(t*10)/10,back:m.back,unnec:m.unnec,opt:o.steps};
+    if(G.L.n+1>STORE.unlocked)STORE.unlocked=Math.min(20,G.L.n+1);}
+  saveStore();
+  const obs=Math.max(0,100-m.unnec*25),
+        plan=Math.max(0,100-c.eS*10-c.eB*12),
+        sc=Math.round(100*o.steps/Math.max(1,m.steps)),
+        cut=Math.max(0,100-m.unnec*22-c.eB*8),
+        spd=Math.round(100*Math.min(1,o.time/Math.max(o.time,t)));
+  const lbl=v=>v>=90?'ดีเยี่ยม':v>=75?'ดี':v>=55?'ปานกลาง':'ต้องฝึกเพิ่ม';
+  const bar=(name,v)=>'<div style="margin:6px 0"><div class="small">'+name+' <span class="muted">— '+lbl(v)+'</span></div><div class="bar"><i style="width:'+Math.max(3,Math.min(100,v))+'%"></i></div></div>';
+  const extras=m.log.filter(x=>x.bad);
+  let over='';
+  if(extras.length)over+=extras.map((x,i)=>'<li><span>'+(i+1)+'.</span><span>'+x.txt.replace(' (นับเป็น Action ไม่จำเป็น)','')+'</span></li>').join('');
+  if(c.eS>0)over+='<li><span>•</span><span>เดินเกินวิธีที่ดีที่สุด '+c.eS+' Steps</span></li>';
+  if(c.eB>0)over+='<li><span>•</span><span>ย้อนกลับที่เดิมเกินมา '+c.eB+' ครั้ง</span></li>';
+  if(!over)over='<li><span>✅</span><span>ไม่มีขั้นตอนส่วนเกินเลย — ยอดเยี่ยม</span></li>';
+  const msg=!ok?(reason||'ยังไปไม่ถึงเป้าหมายในเงื่อนไขที่กำหนด'):
+    rank==='S'?'เกือบหรือเท่ากับวิธีที่ดีที่สุดแล้ว — คุณตัดสิ่งไม่จำเป็นออกได้ครบ':
+    rank==='A'?'ดีมาก เหลือส่วนเกินอีกนิดเดียว':
+    rank==='B'?'คุณไปถึงเป้าหมายได้ แต่ยังมีทางที่สั้นและตรงกว่านี้':
+    rank==='C'?'สำเร็จแล้ว แต่วิธีนี้ใช้ขั้นตอนเกินไปพอสมควร':
+    'สำเร็จแบบอ้อมมาก ลองดู “วิธีที่ดีที่สุด” แล้วเล่นซ้ำอีกครั้ง';
+  const nxt=G.L.n<20&&ok;
+  document.getElementById('resultBox').innerHTML=
+    '<div class="rank-big"><span class="badge r-'+rank+'" style="font-size:34px;padding:6px 18px">'+rank+'</span></div>'+
+    '<p style="text-align:center;margin:10px 0 4px"><b>'+(ok?'🎯 เป้าหมาย: สำเร็จ':'🎯 เป้าหมาย: ยังไม่สำเร็จ')+'</b></p>'+
+    '<p class="small" style="text-align:center;color:#9fb2d6;margin:0 0 12px">“'+msg+'”</p>'+
+    '<div class="card" style="background:#0f1726">'+
+      '<div class="kv"><span>🏆 คะแนน</span><span>'+score+' / 1000</span></div>'+
+      '<div class="kv"><span>🛣️ Steps ของคุณ</span><span>'+m.steps+' <span class="muted small">(ดีที่สุด '+o.steps+')</span></span></div>'+
+      '<div class="kv"><span>⚡ เวลา</span><span>'+t.toFixed(1)+' วิ <span class="muted small">(par '+o.time+' วิ)</span></span></div>'+
+      '<div class="kv"><span>↩️ ย้อนกลับ</span><span>'+m.back+' ครั้ง <span class="muted small">(ดีที่สุด '+o.back+')</span></span></div>'+
+      '<div class="kv"><span>🗑️ Action ไม่จำเป็น</span><span>'+m.unnec+'</span></div>'+
+      '<div class="kv"><span>💡 Hint / ↩️ Undo</span><span>'+G.hint+' / '+G.undos+'</span></div>'+
     '</div>'+
-    (hasChildren?'<div class="tree-children '+(open?"open":"")+'">'+children+'</div>':"")+
-    '</div>';
+    '<div class="card" style="background:#0f1726"><b class="small">🧠 วิเคราะห์วิธีคิด</b>'+
+      bar('🔍 การสังเกต',obs)+bar('🧠 การวางแผน',plan)+bar('🛣️ การหาเส้นทางลัด',sc)+
+      bar('🗑️ การตัดสิ่งไม่จำเป็น',cut)+bar('⚡ ความเร็ว',spd)+'</div>'+
+    '<div class="card" style="background:#0f1726"><b class="small">สิ่งที่คุณทำเกิน</b><ul class="list small">'+over+'</ul></div>'+
+    '<div class="card" style="background:#12251c;border-color:#27543f"><b class="small">📘 บทเรียนของด่านนี้</b><p class="small" style="margin:6px 0 0">'+G.L.def.lesson+'</p></div>'+
+    '<div class="row" style="justify-content:center">'+
+      '<button class="btn" onclick="openReplay()">🎬 ดูวิธีที่ดีที่สุด</button>'+
+      '<button class="btn" onclick="closeResult();resetLevel()">🔁 เล่นด่านนี้ใหม่</button>'+
+      (nxt?'<button class="btn primary" onclick="closeResult();loadLevel('+(G.i+1)+')">➡️ ด่านถัดไป</button>':'')+
+      '<button class="btn ghost" onclick="closeResult();quitToMenu()">🏠 เมนู</button></div>';
+  document.getElementById('mResult').classList.add('active');
 }
-document.addEventListener("click",function(e){
-  const toggle=e.target.closest(".tree-toggle");
-  if(toggle && !toggle.disabled){
-    const box=toggle.closest(".tree-row").nextElementSibling;
-    if(box){const open=box.classList.toggle("open");toggle.textContent=open?"▼":"▶";}
-    return;
-  }
-  const play=e.target.closest(".tree-play");
-  if(play){playTreeNode(play.dataset.node);return;}
-  const label=e.target.closest(".tree-label");
-  if(label){
-    const node=findNodeById(label.dataset.node);
-    if(node&&node.timeline) playTreeNode(node.id);
-  }
+function closeResult(){document.getElementById('mResult').classList.remove('active');}
+/* ---- replay ---- */
+let rTimer=null;
+function openReplay(){
+  document.getElementById('mReplay').classList.add('active');
+  const o=G.o,m=G.m;
+  document.getElementById('rCompare').innerHTML=
+    'คุณใช้ <b>'+m.steps+'</b> Steps &nbsp;•&nbsp; วิธีที่ดีที่สุดใช้ <b>'+o.steps+'</b> Steps &nbsp;•&nbsp; ขั้นตอนที่เกินมา: <b>'+Math.max(0,m.steps-o.steps)+'</b>'+
+    (Object.keys(o.used).length?'<br><span class="muted tiny">วัตถุที่วิธีที่ดีที่สุดใช้จริง: '+Object.keys(o.used).map(id=>(G.L.names[id]?G.L.names[id].name:id)).join(', ')+'</span>':'<br><span class="muted tiny">วิธีที่ดีที่สุดไม่ใช้วัตถุใดบนกระดานเลย</span>');
+  playReplay();
+}
+function playReplay(){
+  if(rTimer)clearInterval(rTimer);
+  const L=G.L,tr=G.o.trace,el=document.getElementById('rBoard'),cap=document.getElementById('rCaption');
+  let i=0;
+  const step=()=>{
+    const f=tr[i];drawBoard(el,L,{x:f.x,y:f.y,bits:f.bits});
+    cap.innerHTML='<b>ขั้นที่ '+i+' / '+(tr.length-1)+'</b> — '+f.label;
+    i++;if(i>=tr.length){clearInterval(rTimer);rTimer=null;
+      cap.innerHTML+='<br><span class="muted small">รวม '+G.o.steps+' Steps — นี่คือต้นทุนต่ำสุดของด่านนี้</span>';}
+  };
+  step();rTimer=setInterval(step,600);
+}
+function closeReplay(){if(rTimer)clearInterval(rTimer);rTimer=null;
+  document.getElementById('mReplay').classList.remove('active');}
+/* ---- stats ---- */
+function renderStats(){
+  const b=STORE.bests,ks=Object.keys(b),T=STORE.totals;
+  let sc={S:0,A:0,B:0,C:0,D:0},aS=0,aO=0,aT=0;
+  ks.forEach(k=>{const r=b[k];if(sc[r.rank]!==undefined)sc[r.rank]++;aS+=r.steps;aO+=r.opt;aT+=r.time;});
+  const n=ks.length||1;
+  document.getElementById('statTable').innerHTML=
+    row('TOTAL LEVELS','20')+row('COMPLETED',ks.length)+row('S RANK',sc.S)+row('A RANK',sc.A)+
+    row('B RANK',sc.B)+row('C RANK',sc.C)+row('D RANK',sc.D)+
+    row('AVG STEPS (สถิติดีที่สุด)',(aS/n).toFixed(1))+row('OPTIMAL STEPS',(aO/n).toFixed(1))+
+    row('AVG TIME',(aT/n).toFixed(1)+' sec')+
+    row('UNNECESSARY ACTIONS (รวมทุกครั้งที่เล่น)',T.unnec)+
+    row('BACKTRACKING (รวมทุกครั้งที่เล่น)',T.back)+
+    row('รอบที่เล่นทั้งหมด',T.runs)+row('HINT ที่ใช้ทั้งหมด',T.hints);
+  let h='';
+  for(let i=1;i<=20;i++){const r=b[i];
+    h+='<tr><td>'+i+'. '+LEVELS[i-1].title+'</td><td>'+(r?('<span class="badge r-'+r.rank+'">'+r.rank+'</span> '+r.steps+'/'+r.opt+' Steps • '+r.score):'<span class="muted">ยังไม่ผ่าน</span>')+'</td></tr>';}
+  document.getElementById('statLevels').innerHTML=h;
+}
+function row(a,b){return'<tr><td>'+a+'</td><td>'+b+'</td></tr>';}
+/* ---- input ---- */
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('s-game').classList.contains('active'))return;
+  if(document.getElementById('mResult').classList.contains('active'))return;
+  const k=e.key.toLowerCase();
+  const map={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'};
+  if(map[k]){e.preventDefault();act(map[k]);}
+  else if(k===' '||k==='enter'){e.preventDefault();act('use');}
+  else if(k==='u'){undo();}else if(k==='r'){resetLevel();}else if(k==='h'){useHint();}
 });
-function findNodeById(id,nodes=TREE_DATA){
-  for(const n of nodes||[]){
-    if(n.id===id) return n;
-    const f=findNodeById(id,n.children||[]);
-    if(f) return f;
-  }
-  return null;
-}
-function timelineToText(t){
-  return ["@name:"+t.name,"@white:"+t.white.join(","),"@black:"+t.black.join(","),"@first:"+(t.first||"black"),...(t.moves||[])].join("\n");
-}
-function playTreeNode(id){
-  const node=findNodeById(id);
-  if(!node||!node.timeline){showToast("จุดนี้ยังไม่มี Timeline");return;}
-  stop();
-  CURRENT_NODE_ID=id;
-  document.getElementById("formulaView").style.display="none";
-  document.getElementById("trainerView").style.display="block";
-  document.getElementById("formulaCurrent").textContent=breadcrumb(id);
-  parseTimeline(timelineToText(node.timeline));
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-function breadcrumb(id){
-  const path=[];
-  function walk(nodes){
-    for(const n of nodes||[]){
-      path.push(n.name);
-      if(n.id===id)return true;
-      if(walk(n.children||[]))return true;
-      path.pop();
-    }
-    return false;
-  }
-  walk(TREE_DATA);
-  return path.join(" › ");
-}
-function showFormulaTree(){
-  stop();
-  document.getElementById("trainerView").style.display="none";
-  document.getElementById("formulaView").style.display="block";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-/* ══ INIT ══ */
-document.getElementById("formulaView").style.display="block";
-document.getElementById("trainerView").style.display="none";
-drawBoard();
-resizeBoard();
-render();
-loadTreeData();
+document.getElementById('board').addEventListener('click',e=>{
+  const c=e.target.closest('.cell');if(!c||G.done)return;
+  const x=+c.dataset.x,y=+c.dataset.y,dx=x-G.st.x,dy=y-G.st.y;
+  if(dx===0&&dy===0)act('use');
+  else if(Math.abs(dx)+Math.abs(dy)===1)act(dx===1?'right':dx===-1?'left':dy===1?'down':'up');
+});
+renderLevels();
 </script>
 </body>
 </html>
