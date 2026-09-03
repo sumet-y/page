@@ -301,16 +301,23 @@ button:disabled{opacity:.6;cursor:default}
    return items[i];
  }
 
- function cellRectWidth(cell){
-   const w = cell.getBoundingClientRect().width;
-   return w || CANON_W;
+ // ตำแหน่งรูปที่ลาก/เลื่อน (item.x, item.y) เก็บเป็น "สัดส่วน" เทียบกับขนาดจริงของ
+ // image-area ในช่องนั้นๆ (ไม่ใช่พิกเซลตายตัว และไม่ใช่สัดส่วนเทียบความกว้างกระดาษ)
+ // เพราะ margin/gap เป็นพิกเซลคงที่ ทำให้สัดส่วนช่องต่อกระดาษบนมือถือ (จอเล็ก)
+ // ไม่เท่ากับสัดส่วนตอนส่งออกไฟล์ (คำนวณแบบ proportional) — ถ้าอิงความกว้างกระดาษจะ
+ // ทำให้ตำแหน่ง/การครอปรูปตอนบันทึกหรือคัดลอกไม่ตรงกับที่เห็นในหน้าโปรแกรม
+ // การอิงกับขนาดจริงของ image-area โดยตรงจึงถูกต้องเสมอไม่ว่าอุปกรณ์หรือเค้าโครงจะเป็นแบบใด
+ function imageAreaRect(cell){
+   const el = cell.querySelector('.image-area');
+   const r = el.getBoundingClientRect();
+   return {width:r.width||1, height:r.height||1};
  }
 
  function updateImage(cell,item){
    const img = cell.querySelector('img');
-   const factor = cellRectWidth(cell) / CANON_W;
-   const px = item.x * factor;
-   const py = item.y * factor;
+   const rect = imageAreaRect(cell);
+   const px = item.x * rect.width;
+   const py = item.y * rect.height;
    img.style.transform =
      `translate(calc(-50% + ${px}px), calc(-50% + ${py}px)) scale(${item.scale})`;
  }
@@ -401,7 +408,8 @@ button:disabled{opacity:.6;cursor:default}
      // รองรับทั้งลากด้วยนิ้วเดียว (ย้ายรูป) และบีบสองนิ้ว (ซูมรูป) บนมือถือ
      const pointers = new Map();
      let dragStart = null;
-     let dragFactor = 1;
+     let dragFactorX = 1;
+     let dragFactorY = 1;
      let pinchStartDist = 0;
      let pinchStartScale = 1;
 
@@ -416,7 +424,9 @@ button:disabled{opacity:.6;cursor:default}
        pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
 
        if(pointers.size===1){
-         dragFactor = CANON_W / cellRectWidth(cell);
+         const rect=imageAreaRect(cell);
+         dragFactorX = 1/rect.width;
+         dragFactorY = 1/rect.height;
          dragStart={x:e.clientX,y:e.clientY,ox:item.x,oy:item.y};
        }else if(pointers.size===2){
          const pts=[...pointers.values()];
@@ -439,10 +449,10 @@ button:disabled{opacity:.6;cursor:default}
            updateSelectedUI();
          }
        }else if(pointers.size===1 && dragStart){
-         // แปลง delta พิกเซลจริงบนจอ ให้เป็นหน่วยอ้างอิง CANON_W
-         // เพื่อให้ตำแหน่งรูปตรงกันทั้ง preview และตอนบันทึก/คัดลอกไฟล์
-         item.x = dragStart.ox + (e.clientX - dragStart.x) * dragFactor;
-         item.y = dragStart.oy + (e.clientY - dragStart.y) * dragFactor;
+         // แปลง delta พิกเซลจริงบนจอ ให้เป็น "สัดส่วน" เทียบขนาดจริงของ image-area
+         // เพื่อให้ตำแหน่งรูปตรงกันทั้ง preview และตอนบันทึก/คัดลอกไฟล์ ไม่ว่าอุปกรณ์ไหน
+         item.x = dragStart.ox + (e.clientX - dragStart.x) * dragFactorX;
+         item.y = dragStart.oy + (e.clientY - dragStart.y) * dragFactorY;
          updateImage(cell,item);
        }
      });
@@ -452,7 +462,9 @@ button:disabled{opacity:.6;cursor:default}
        if(pointers.size<2)pinchStartDist=0;
 
        if(pointers.size===1){
-         dragFactor = CANON_W / cellRectWidth(cell);
+         const rect=imageAreaRect(cell);
+         dragFactorX = 1/rect.width;
+         dragFactorY = 1/rect.height;
          const [[,p]]=[...pointers.entries()];
          dragStart={x:p.x,y:p.y,ox:item.x,oy:item.y};
        }else if(pointers.size===0){
@@ -502,21 +514,21 @@ button:disabled{opacity:.6;cursor:default}
      if(selected<0 || !items[selected]?.src)return;
      const item=items[selected];
      const dir=btn.dataset.move;
+     const cell=collage.querySelector(`[data-index="${selected}"]`);
 
      if(dir==='center'){
        item.x=0;item.y=0;
      }else{
-       const cell=collage.querySelector(`[data-index="${selected}"]`);
-       const factor = cell ? CANON_W/cellRectWidth(cell) : 1;
-       const step=10*factor; // เลื่อนประมาณ 10px จริงบนหน้าจอไม่ว่าจอขนาดไหน
+       const rect = cell ? imageAreaRect(cell) : {width:200,height:200};
+       const stepX = 10/rect.width;  // เลื่อนประมาณ 10px จริงบนหน้าจอไม่ว่าจอขนาดไหน
+       const stepY = 10/rect.height;
 
-       if(dir==='up')item.y-=step;
-       if(dir==='down')item.y+=step;
-       if(dir==='left')item.x-=step;
-       if(dir==='right')item.x+=step;
+       if(dir==='up')item.y-=stepY;
+       if(dir==='down')item.y+=stepY;
+       if(dir==='left')item.x-=stepX;
+       if(dir==='right')item.x+=stepX;
      }
 
-     const cell=collage.querySelector(`[data-index="${selected}"]`);
      if(cell)updateImage(cell,item);
    });
  });
@@ -708,8 +720,12 @@ button:disabled{opacity:.6;cursor:default}
        const finalScale=scaleContain*item.scale;
        const drawW=img.naturalWidth*finalScale;
        const drawH=img.naturalHeight*finalScale;
-       const dx=x+(cellW-drawW)/2 + item.x*(W/CANON_W);
-       const dy=y+textH+(imageH-drawH)/2 + item.y*(W/CANON_W);
+       // item.x/item.y เป็น "สัดส่วน" เทียบขนาดจริงของ image-area (ดู updateImage ใน preview)
+       // จึงต้องคูณด้วยขนาด image-area ของช่องนี้ในไฟล์ที่ export (cellW, imageH) โดยตรง
+       // ไม่ใช่คูณกับสัดส่วนความกว้างกระดาษ (W/CANON_W) แบบเดิม ซึ่งทำให้ตำแหน่ง/การครอป
+       // ไม่ตรงกับ preview โดยเฉพาะเมื่อ margin/gap เป็นพิกเซลคงที่บนอุปกรณ์จอเล็ก
+       const dx=x+(cellW-drawW)/2 + item.x*cellW;
+       const dy=y+textH+(imageH-drawH)/2 + item.y*imageH;
        ctx.drawImage(img,dx,dy,drawW,drawH);
      }else{
        ctx.fillStyle='#f4f4f4';
