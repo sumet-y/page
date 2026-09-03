@@ -90,6 +90,9 @@ button:disabled{opacity:.6;cursor:default}
  background:#dc3545;color:#fff;font-size:20px;line-height:30px
 }
 .cell.empty .remove{display:none}
+.cell.no-caption .remove{top:6px}
+
+.btn-outline{background:#fff;color:#0d6efd;border-color:#0d6efd}
 
 /* ===== ส่วนตั้งค่าอื่นๆ (อยู่ด้านล่างสุด) ===== */
 .settings{max-width:900px;margin:0 auto;padding:0 14px 28px;display:flex;flex-direction:column;gap:14px}
@@ -214,6 +217,8 @@ button:disabled{opacity:.6;cursor:default}
    </select>
   </div>
 
+  <button id="toggleCaption" type="button" class="btn-outline">+ เพิ่มช่องคำอธิบาย</button>
+
   <div class="btn-row">
    <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
    <button id="downloadPNG" class="btn-green">บันทึกรูปภาพ</button>
@@ -261,15 +266,15 @@ button:disabled{opacity:.6;cursor:default}
  const collage = $('collage');
  let items = [];
  let selected = -1;
+ let showCaption = false; // ค่าเริ่มต้น: ไม่แสดงช่องคำอธิบาย (กรอบใส่รูปอย่างเดียว)
 
  // ช่องว่างและขอบตั้งค่าคงที่ ไม่ต้องให้ผู้ใช้ปรับ
  const GAP = 8;
  const MARGIN = 8;
 
- // หน่วยอ้างอิง (canonical) สำหรับตำแหน่งรูปที่ผู้ใช้ลาก/ขยับ
- // ค่า item.x / item.y จะถูกเก็บโดยอิงจากความกว้างกระดาษ "มาตรฐาน" นี้เสมอ
- // แล้วค่อยแปลงเป็นพิกเซลจริงตอนแสดงผล (preview) หรือตอนส่งออกไฟล์ (export)
- // วิธีนี้ทำให้ตำแหน่ง/การครอปรูปตรงกันเป๊ะไม่ว่าจะดูบนจอขนาดไหน (มือถือ/เดสก์ท็อป)
+ // ความกว้างกระดาษ "มาตรฐาน" อ้างอิงสำหรับปรับสัดส่วนของ margin/gap/ขนาดตัวอักษร
+ // ให้เท่ากันระหว่าง preview กับไฟล์ที่ส่งออก (ไม่เกี่ยวกับตำแหน่งรูปที่ลาก/ซูม
+ // ซึ่งตอนนี้อ้างอิงกับขนาดจริงของแต่ละ image-area โดยตรงแล้ว ดู imageAreaRect ด้านล่าง)
  const CANON_W = 794;
 
  const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
@@ -356,7 +361,7 @@ button:disabled{opacity:.6;cursor:default}
    for(let i=0;i<n;i++){
      const item = ensureItem(i);
      const cell = document.createElement('div');
-     cell.className = 'cell' + (item.src ? '' : ' empty');
+     cell.className = 'cell' + (item.src ? '' : ' empty') + (showCaption ? '' : ' no-caption');
      cell.dataset.num = i+1;
      cell.dataset.index = i;
 
@@ -367,13 +372,16 @@ button:disabled{opacity:.6;cursor:default}
      if(item.src) img.src = item.src;
      imageArea.appendChild(img);
 
-     const textArea = document.createElement('textarea');
-     textArea.className = 'text-area';
-     textArea.placeholder = `ขั้นตอนที่ ${i+1}...`;
-     textArea.value = item.text || '';
-     textArea.addEventListener('input', () => {
-       item.text = textArea.value;
-     });
+     let textArea = null;
+     if(showCaption){
+       textArea = document.createElement('textarea');
+       textArea.className = 'text-area';
+       textArea.placeholder = `ขั้นตอนที่ ${i+1}...`;
+       textArea.value = item.text || '';
+       textArea.addEventListener('input', () => {
+         item.text = textArea.value;
+       });
+     }
 
      const remove = document.createElement('button');
      remove.type = 'button';
@@ -387,14 +395,14 @@ button:disabled{opacity:.6;cursor:default}
        render();
      });
 
-     cell.appendChild(textArea);
+     if(textArea) cell.appendChild(textArea);
      cell.appendChild(imageArea);
      cell.appendChild(remove);
 
      cell.addEventListener('click',(e)=>{
        if(e.target !== textArea && e.target !== remove) selectCell(i,cell);
      });
-     textArea.addEventListener('pointerdown',e=>e.stopPropagation());
+     if(textArea) textArea.addEventListener('pointerdown',e=>e.stopPropagation());
 
      cell.addEventListener('wheel',e=>{
        if(!item.src)return;
@@ -545,6 +553,12 @@ button:disabled{opacity:.6;cursor:default}
  $('count').addEventListener('change',render);
  $('cellOrientation').addEventListener('change',render);
 
+ $('toggleCaption').addEventListener('click',()=>{
+   showCaption = !showCaption;
+   $('toggleCaption').textContent = showCaption ? 'ซ่อนช่องคำอธิบาย' : '+ เพิ่มช่องคำอธิบาย';
+   render();
+ });
+
  $('files').addEventListener('change',()=>{
    const selectedFiles=[...$('files').files];
    let p=0;
@@ -666,7 +680,8 @@ button:disabled{opacity:.6;cursor:default}
 
      // ความสูงช่องข้อความต้องสัดส่วนเดียวกับ preview เป๊ะๆ (36px ที่อ้างอิงความกว้าง CANON_W)
      // ไม่เช่นนั้นพื้นที่รูปใน PNG จะเตี้ยกว่าที่เห็นใน preview ทำให้รูปที่ซูม/เลื่อนแล้วโดนตัดขอบล่างหาย
-     const textH=36*(W/CANON_W);
+     // ถ้าปิดช่องคำอธิบายอยู่ (showCaption=false) ให้ไม่มีพื้นที่ข้อความเลย ตรงกับที่เห็นในหน้าโปรแกรม ณ ขณะนั้น
+     const textH=showCaption ? 36*(W/CANON_W) : 0;
      const imageH=cellH-textH;
 
      ctx.save();
@@ -680,7 +695,7 @@ button:disabled{opacity:.6;cursor:default}
 
      // ช่องข้อความด้านบน — ใช้ขนาดตัวอักษรคงที่สัดส่วนเดียวกับที่เห็นตอนพิมพ์ (14px)
      // ไม่ย่อ/ขยายตามความยาวข้อความ เพื่อให้ตัวหนังสือทุกช่องมีขนาดเท่ากันเสมอ
-     if(item?.text){
+     if(showCaption && item?.text){
        ctx.save();
        ctx.beginPath();
        ctx.rect(x,y,cellW,textH);
@@ -700,13 +715,15 @@ button:disabled{opacity:.6;cursor:default}
        ctx.restore();
      }
 
-     // เส้นแบ่งหัวข้อความกับรูป
-     ctx.strokeStyle='#888888';
-     ctx.lineWidth=Math.max(2, W/CANON_W*1.2);
-     ctx.beginPath();
-     ctx.moveTo(x,y+textH);
-     ctx.lineTo(x+cellW,y+textH);
-     ctx.stroke();
+     // เส้นแบ่งหัวข้อความกับรูป (วาดเฉพาะตอนมีช่องคำอธิบายแสดงอยู่)
+     if(showCaption){
+       ctx.strokeStyle='#888888';
+       ctx.lineWidth=Math.max(2, W/CANON_W*1.2);
+       ctx.beginPath();
+       ctx.moveTo(x,y+textH);
+       ctx.lineTo(x+cellW,y+textH);
+       ctx.stroke();
+     }
 
      // พื้นที่ภาพอยู่ด้านล่าง
      ctx.save();
