@@ -132,6 +132,7 @@
   button:active { background: #e8e8e8; }
   button.danger { border-color: #e88; color: #c33; }
   button.danger:hover { background: #fff0f0; }
+  button.active { background: #333; color: #fff; border-color: #333; }
 
   /* iOS scrollbar hint (จะเห็นเมื่อ scroll) */
   #preview::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -143,6 +144,12 @@
     .editor-pane  { width: 100%; height: 20%; border-right: none; border-bottom: 1px solid #ccc; }
     .preview-pane { width: 100%; height: 80%; }
   }
+
+  /* ── Full Preview mode ───────────────────────────── */
+  .full-preview .toolbar { display: none; }
+  .full-preview .editor-pane { display: none !important; }
+  .full-preview .preview-pane { width: 100% !important; height: 100% !important; }
+  .full-preview .container { flex-direction: row !important; }
 </style>
 </head>
 <body>
@@ -150,9 +157,10 @@
 <div class="toolbar">
   <button onclick="copyPNG()">📋 Copy PNG</button>
   <button onclick="downloadPNG()">⬇️ Download PNG</button>
+  <button onclick="exportHTML()">📄 Export HTML</button>
 </div>
 
-<div class="container">
+<div class="container" id="container">
 
   <!-- Editor -->
   <div class="editor-pane">
@@ -171,6 +179,7 @@ A[Start] --> B[Process] --> C[End]</textarea>
       <button onclick="zoomOut()">🔍－</button>
       <button onclick="resetZoom()">↺ Reset</button>
       <span class="zoom-label" id="zoomLabel">100%</span>
+      <button id="fullPreviewBtn" onclick="toggleFullPreview()">⛶ Full Preview</button>
     </div>
     <div id="preview">
       <div id="preview-inner"></div>
@@ -186,12 +195,15 @@ const textarea = document.getElementById("code");
 const previewInner = document.getElementById("preview-inner");
 const previewEl = document.getElementById("preview");
 const zoomLabel = document.getElementById("zoomLabel");
+const container = document.getElementById("container");
+const fullPreviewBtn = document.getElementById("fullPreviewBtn");
 
 let currentSVG = "";
 let zoomLevel = 1;
 const ZOOM_STEP = 0.15;
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 10;
+let isFullPreview = false;
 
 // ── Render ───────────────────────────────────────────
 async function renderMermaid() {
@@ -264,6 +276,19 @@ previewEl.addEventListener("touchend", (e) => {
   }
   lastTap = now;
 }, { passive: false });
+
+// ── Full Preview toggle ───────────────────────────────
+function toggleFullPreview() {
+  isFullPreview = !isFullPreview;
+  document.body.classList.toggle("full-preview", isFullPreview);
+  fullPreviewBtn.textContent = isFullPreview ? "✕ Exit Full" : "⛶ Full Preview";
+  fullPreviewBtn.classList.toggle("active", isFullPreview);
+}
+
+// Esc key exits full preview
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && isFullPreview) toggleFullPreview();
+});
 
 // ── SVG → PNG ─────────────────────────────────────────
 function svgToPngBlob(svgText) {
@@ -351,6 +376,50 @@ async function downloadPNG() {
   } catch (err) {
     alert("Download failed: " + err);
   }
+}
+
+// ── Export standalone HTML ────────────────────────────
+function exportHTML() {
+  if (!currentSVG) return alert("ยังไม่มี diagram");
+
+  const escapedCode = textarea.value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mermaid Diagram</title>
+<style>
+  body { font-family: Arial; margin: 0; padding: 24px; background: #fff; }
+  #diagram { max-width: 100%; overflow: auto; }
+  #diagram svg { max-width: 100%; height: auto; }
+  details { margin-top: 20px; color: #555; }
+  pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow: auto; }
+</style>
+</head>
+<body>
+<div id="diagram">
+${currentSVG}
+</div>
+<details>
+  <summary>Mermaid source</summary>
+  <pre>${escapedCode}</pre>
+</details>
+</body>
+</html>`;
+
+  const blob = new Blob([htmlDoc], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "diagram.html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
