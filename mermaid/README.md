@@ -1,46 +1,30 @@
 ```mermaid
-flowchart TB
-    T["🎯 ทั้งคู่คือ 'ที่จัดระเบียบงาน'<br/>จะได้ไม่ลืมว่าใครทำอะไร"]
+flowchart TD
+    subgraph P["😩 ปัญหาเดิม: ห้องเรียนที่ไม่มีบัตรพนักงาน"]
+        direction TB
+        A["🏢 ห้องประชุม<br/>ไม่มีบัตรประจำตัว"] --> B["🚪 มีลิงก์ประชุม<br/>ยืนรอหน้าประตู"]
+        B --> C["🧑‍💻 เจ้าหน้าที่ IT<br/>ต้องวิ่งมากด Admit ทุกครั้ง"]
+        A -.->|"ทางลัด: ฝากกุญแจของคนอื่นไว้"| D["🔑 ล็อกอินบัญชีคนไว้ในคอม<br/>ทิ้งกุญแจไว้ที่ประตู"]
+        D --> E["😱 คนนอกเดินมาใช้ได้<br/>ข้อมูลไม่ปลอดภัย"]
+    end
 
-    T --> L["📌 Trello<br/>เหมือน 'กระดานติดโน้ตในห้องเรียน'"]
-    T --> R["🗂️ Microsoft Planner<br/>เหมือน 'แฟ้มงานของครู'"]
+    P ==>|"✨ แก้ไข"| S
 
-    L --> L1["🎨 ลากการ์ดง่ายๆ<br/>ตกแต่งได้สนุก"]
-    L --> L2["🆓 เริ่มใช้ฟรีได้<br/>ใช้กับใครก็ได้"]
-    L --> L3["🎈 เหมาะกับงานเล็ก<br/>เช่น จัดงานวันเกิด"]
+    subgraph S["😊 วิธีแก้: ให้ห้องมีบัตรพนักงานของตัวเอง"]
+        direction TB
+        F["🪪 สร้างบัญชีของห้องประชุม<br/>เหมือนบัตรพนักงานประจำห้อง"] --> G["💻 ล็อกอินไว้ในเครื่องห้องประชุม<br/>ใช้ Teams Rooms"]
+        G --> H["🛡️ ระบบรู้ว่า<br/>ห้องนี้คือคนในองค์กร"]
+        H --> I["✅ เข้าประชุมอัตโนมัติ<br/>ไม่ต้องรอ IT กด Admit"]
+        H --> J["🔒 ตั้งสิทธิ์ให้น้อยที่สุด<br/>บัตรใช้ได้แค่ในห้องนี้"]
+        K["👤 คนนอกองค์กร"] --> L["⏳ ยังต้องรอในห้องรอ<br/>ให้คนในกดอนุญาต"]
+    end
 
-    R --> R1["📊 มีกราฟดูว่างานไปถึงไหน<br/>เรียบร้อย เป็นระเบียบ"]
-    R --> R2["🏢 อยู่ในชุด Microsoft<br/>ใช้กับ Teams, Outlook ได้"]
-    R --> R3["🏫 เหมาะกับงานของบริษัท<br/>หรือโรงเรียนที่ใช้ Microsoft"]
+    S ==> Z["💡 ห้องมีบัตรของตัวเอง = เข้าเองได้ + คนนอกยังเข้าไม่ได้"]
 
-    L1 --> S["🤝 สิ่งที่เหมือนกัน"]
-    R1 --> S
-
-    S --> S1["📝 ยังไม่ทำ"]
-    S1 --> S2["🏃 กำลังทำ"]
-    S2 --> S3["✅ เสร็จแล้ว"]
-
-    L3 --> Q{"🤔 เลือกอันไหนดี?"}
-    R3 --> Q
-
-    Q --> Q1["🎉 อยากสนุก ง่าย ยืดหยุ่น<br/>👉 Trello"]
-    Q --> Q2["📈 อยากเป็นระเบียบ ดูภาพรวม<br/>👉 Planner"]
-
-    M["💡 จำง่ายๆ:<br/>Trello = กระดานติดโน้ตสีสวย<br/>Planner = แฟ้มงานเป็นระเบียบ<br/>ทั้งคู่ช่วยให้งานเสร็จ"]
-    Q1 --> M
-    Q2 --> M
-
-    classDef top fill:#EDE7F6,stroke:#7E57C2,stroke-width:3px,color:#333
-    classDef trello fill:#E3F2FD,stroke:#2196F3,stroke-width:2px,color:#333
-    classDef planner fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#333
-    classDef same fill:#FFF4CC,stroke:#F4B400,stroke-width:2px,color:#333
-    classDef ask fill:#FCE4EC,stroke:#EC407A,stroke-width:3px,color:#333
-    classDef memo fill:#FFFDE7,stroke:#FBC02D,stroke-width:3px,color:#333
-
-    class T top
-    class L,L1,L2,L3 trello
-    class R,R1,R2,R3 planner
-    class S,S1,S2,S3 same
-    class Q,Q1,Q2 ask
-    class M memo
+    style P fill:#ffe5e5,stroke:#e74c3c,stroke-width:2px
+    style S fill:#e5ffe9,stroke:#27ae60,stroke-width:2px
+    style Z fill:#fff8d6,stroke:#f39c12,stroke-width:3px
+    style E fill:#ffb3b3,stroke:#e74c3c
+    style I fill:#b3ffc6,stroke:#27ae60
+    style L fill:#fff0b3,stroke:#f39c12
 ```
