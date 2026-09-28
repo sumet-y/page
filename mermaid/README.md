@@ -1,42 +1,46 @@
 ```mermaid
-flowchart LR
-    A["🎒 Trello<br/>เหมือน 'กระดานติดโน้ตในห้องเรียน'"]
+flowchart TB
+    T["🎯 ทั้งคู่คือ 'ที่จัดระเบียบงาน'<br/>จะได้ไม่ลืมว่าใครทำอะไร"]
 
-    A --> B["📋 กระดาน<br/>= โปรเจกต์ใหญ่<br/>เช่น 'งานวันเกิดเพื่อน'"]
+    T --> L["📌 Trello<br/>เหมือน 'กระดานติดโน้ตในห้องเรียน'"]
+    T --> R["🗂️ Microsoft Planner<br/>เหมือน 'แฟ้มงานของครู'"]
 
-    B --> C["📝 ยังไม่ทำ"]
-    B --> D["🏃 กำลังทำ"]
-    B --> E["✅ เสร็จแล้ว"]
+    L --> L1["🎨 ลากการ์ดง่ายๆ<br/>ตกแต่งได้สนุก"]
+    L --> L2["🆓 เริ่มใช้ฟรีได้<br/>ใช้กับใครก็ได้"]
+    L --> L3["🎈 เหมาะกับงานเล็ก<br/>เช่น จัดงานวันเกิด"]
 
-    C --> C1["🎈 ซื้อลูกโป่ง"]
-    C --> C2["🎂 สั่งเค้ก"]
+    R --> R1["📊 มีกราฟดูว่างานไปถึงไหน<br/>เรียบร้อย เป็นระเบียบ"]
+    R --> R2["🏢 อยู่ในชุด Microsoft<br/>ใช้กับ Teams, Outlook ได้"]
+    R --> R3["🏫 เหมาะกับงานของบริษัท<br/>หรือโรงเรียนที่ใช้ Microsoft"]
 
-    D --> D1["💌 เขียนการ์ดเชิญ"]
+    L1 --> S["🤝 สิ่งที่เหมือนกัน"]
+    R1 --> S
 
-    E --> E1["🎵 เลือกเพลง"]
+    S --> S1["📝 ยังไม่ทำ"]
+    S1 --> S2["🏃 กำลังทำ"]
+    S2 --> S3["✅ เสร็จแล้ว"]
 
-    C2 -. "ลากไปวาง 👆" .-> D
-    D1 -. "ลากไปวาง 👆" .-> E
+    L3 --> Q{"🤔 เลือกอันไหนดี?"}
+    R3 --> Q
 
-    F["👫 เพื่อนๆ ช่วยกันดูและทำได้"]
-    B --- F
+    Q --> Q1["🎉 อยากสนุก ง่าย ยืดหยุ่น<br/>👉 Trello"]
+    Q --> Q2["📈 อยากเป็นระเบียบ ดูภาพรวม<br/>👉 Planner"]
 
-    G["💡 จำง่ายๆ:<br/>Trello = กระดานโน้ตดิจิทัล<br/>ย้ายการ์ดจาก 'ยังไม่ทำ' ไป 'เสร็จแล้ว'"]
-    E --> G
+    M["💡 จำง่ายๆ:<br/>Trello = กระดานติดโน้ตสีสวย<br/>Planner = แฟ้มงานเป็นระเบียบ<br/>ทั้งคู่ช่วยให้งานเสร็จ"]
+    Q1 --> M
+    Q2 --> M
 
-    classDef todo fill:#FFE5E5,stroke:#E57373,stroke-width:2px,color:#333
-    classDef doing fill:#FFF4CC,stroke:#F4B400,stroke-width:2px,color:#333
-    classDef done fill:#DFF5E1,stroke:#4CAF50,stroke-width:2px,color:#333
-    classDef board fill:#E3F2FD,stroke:#2196F3,stroke-width:3px,color:#333
-    classDef root fill:#EDE7F6,stroke:#7E57C2,stroke-width:3px,color:#333
-    classDef friends fill:#FCE4EC,stroke:#EC407A,stroke-width:2px,color:#333
+    classDef top fill:#EDE7F6,stroke:#7E57C2,stroke-width:3px,color:#333
+    classDef trello fill:#E3F2FD,stroke:#2196F3,stroke-width:2px,color:#333
+    classDef planner fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#333
+    classDef same fill:#FFF4CC,stroke:#F4B400,stroke-width:2px,color:#333
+    classDef ask fill:#FCE4EC,stroke:#EC407A,stroke-width:3px,color:#333
     classDef memo fill:#FFFDE7,stroke:#FBC02D,stroke-width:3px,color:#333
 
-    class A root
-    class B board
-    class C,C1,C2 todo
-    class D,D1 doing
-    class E,E1 done
-    class F friends
-    class G memo
+    class T top
+    class L,L1,L2,L3 trello
+    class R,R1,R2,R3 planner
+    class S,S1,S2,S3 same
+    class Q,Q1,Q2 ask
+    class M memo
 ```
