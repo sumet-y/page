@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>A4 Collage Maker</title>
+<style>
+*{box-sizing:border-box}
+html,body{
+ -webkit-text-size-adjust:100%;
+ touch-action:manipulation;
+}
+button,select,input,.file-btn{
+ touch-action:manipulation;
+ -webkit-tap-highlight-color:transparent;
+}
+body{margin:0;background:#eef1f5;font-family:Arial,Tahoma,sans-serif;color:#222}
+
+/* ===== Top bar: เลือกภาพ + Copy PNG (อยู่บนสุดเสมอ) ===== */
+.topbar{
+ position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d7dbe0;
+ padding:10px 14px;display:flex;gap:9px;align-items:center
+}
+.topbar .file-btn{flex:1}
+.topbar #copyPNG{flex:1}
+
+select,input[type=number],button{height:40px;border:1px solid #bfc5cc;border-radius:6px;background:#fff;padding:0 10px;font:inherit}
+button{cursor:pointer;font-weight:700}
+button:hover{filter:brightness(.97)}
+button:disabled{opacity:.6;cursor:default}
+.btn-blue{background:#0d6efd;color:#fff;border-color:#0d6efd}
+.btn-green{background:#198754;color:#fff;border-color:#198754}
+.btn-red{background:#dc3545;color:#fff;border-color:#dc3545}
+.file-btn{height:40px;display:flex;align-items:center;justify-content:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer}
+.file-btn input{display:none}
+
+.toast{
+ position:fixed;left:50%;top:16px;transform:translate(-50%,-140%);
+ background:#222;color:#fff;padding:10px 18px;border-radius:8px;
+ font-size:14px;font-weight:700;z-index:100;
+ box-shadow:0 4px 14px rgba(0,0,0,.25);
+ opacity:0;transition:transform .25s ease,opacity .25s ease;
+ pointer-events:none;white-space:nowrap
+}
+.toast.show{transform:translate(-50%,0);opacity:1}
+
+/* ===== ส่วนแสดงรูป (อยู่ถัดจาก top bar) ===== */
+.workspace{padding:18px 14px;display:flex;justify-content:center}
+.paper-wrap{background:#d7dbe0;padding:16px;border-radius:8px;overflow:auto;max-width:100%}
+.a4{position:relative;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.25);overflow:hidden}
+.portrait{width:794px;height:1123px}
+.landscape{width:1123px;height:794px}
+
+.collage{position:absolute;inset:0;display:grid;gap:var(--gap);padding:var(--margin);background:#fff}
+.cell{
+ position:relative;overflow:hidden;background:#fff;
+ border:2px solid #888;border-radius:0;
+ cursor:grab;touch-action:none;user-select:none;
+ display:flex;flex-direction:column
+}
+.cell.selected{box-shadow:0 0 0 3px #0d6efd}
+.text-area{
+ flex:0 0 36px;height:36px;min-height:36px;
+ width:100%;border:0;border-bottom:1px solid #aaa;
+ padding:5px 9px;resize:none;outline:none;
+ overflow:hidden;white-space:nowrap;
+ font:14px/24px Arial,Tahoma,sans-serif;color:#222;
+ background:#fff
+}
+.text-area:focus{background:#fffdf0}
+.image-area{
+ position:relative;overflow:hidden;background:#f4f4f4;
+ flex:1;min-height:0
+}
+.image-area img{
+ position:absolute;left:50%;top:50%;
+ width:100%;height:100%;object-fit:contain;background:transparent;
+ transform-origin:center center;pointer-events:none;user-select:none;
+ display:block
+}
+.cell.empty .image-area:after{
+ content:attr(data-num);position:absolute;inset:0;
+ display:flex;align-items:center;justify-content:center;
+ color:#aaa;font-size:26px;font-weight:700;pointer-events:none
+}
+.cell.empty img{display:none}
+.cell .remove{
+ position:absolute;right:6px;top:41px;z-index:10;
+ width:30px;height:30px;padding:0;border:0;border-radius:50%;
+ background:#dc3545;color:#fff;font-size:20px;line-height:30px
+}
+.cell.empty .remove{display:none}
+.cell.no-caption .remove{top:6px}
+
+.btn-outline{background:#fff;color:#0d6efd;border-color:#0d6efd}
+
+/* ===== ส่วนตั้งค่าอื่นๆ (อยู่ด้านล่างสุด) ===== */
+.settings{max-width:900px;margin:0 auto;padding:0 14px 28px;display:flex;flex-direction:column;gap:14px}
+.toolbar{
+ background:#fff;border:1px solid #cfd4da;border-radius:8px;
+ padding:12px;display:flex;flex-wrap:wrap;gap:9px;align-items:center
+}
+.toolbar .group{display:flex;align-items:center;gap:6px}
+.toolbar label{font-size:13px;font-weight:700;white-space:nowrap}
+.btn-row{display:flex;gap:9px}
+.btn-row button{white-space:nowrap}
+
+.panel{touch-action:manipulation;
+ background:#fff;border:1px solid #cfd4da;
+ border-radius:8px;padding:13px
+}
+.panel h3{margin:0 0 10px;font-size:16px}
+.zoom-row{display:flex;align-items:center;gap:7px;max-width:280px}
+.zoom-row button{width:42px;font-size:20px;padding:0}
+.zoom-value{flex:1;text-align:center;font-weight:700}
+.panel .wide{width:100%;max-width:280px;margin-top:8px;display:block}
+.direction{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:220px}
+.direction button{height:40px;font-size:18px}
+.direction .up{grid-column:2}.direction .left{grid-column:1}.direction .center{grid-column:2}.direction .right{grid-column:3}.direction .down{grid-column:2}
+.panel .delete{background:#dc3545;color:#fff;border-color:#dc3545}
+
+.status{font-size:12px;color:#666;margin-top:10px}
+
+/* Mobile */
+@media(max-width:700px){
+ .topbar{padding:8px;gap:8px}
+ .file-btn,.topbar #copyPNG{height:46px;font-size:14px}
+
+ .workspace{padding:10px 8px}
+ .paper-wrap{width:100%;max-width:100%;padding:6px;border-radius:6px;overflow:hidden}
+ .a4{width:100%;height:auto;aspect-ratio:210 / 297;box-shadow:0 2px 10px rgba(0,0,0,.22)}
+ .a4.landscape{aspect-ratio:297 / 210}
+
+ .settings{padding:0 8px 20px;gap:10px}
+ .toolbar{flex-direction:column;align-items:stretch;padding:10px}
+ .toolbar .group{width:100%;display:grid;grid-template-columns:78px 1fr;align-items:center;gap:8px}
+ .toolbar select,.toolbar button{width:100%;min-width:0;height:44px;font-size:14px}
+ .toolbar .btn-row{width:100%}
+ .toolbar .btn-row button{flex:1}
+
+ .panel{padding:12px}
+ .panel h3{font-size:16px}
+ .zoom-row{max-width:none}
+ .zoom-row button{height:44px;width:48px}
+ .direction{max-width:260px;margin:12px auto 0}
+ .direction button{height:44px}
+ .panel .wide{max-width:none;height:42px;font-size:14px}
+
+ .text-area{flex-basis:36px;height:36px;min-height:36px;font-size:14px;line-height:24px}
+ .cell .remove{top:41px;width:28px;height:28px;line-height:28px}
+}
+
+/* Very small phones */
+@media(max-width:380px){
+ .toolbar .group{grid-template-columns:1fr}
+ .btn-row{flex-direction:column}
+ .workspace{padding-left:4px;padding-right:4px}
+ .paper-wrap{padding:3px}
+}
+</style>
+</head>
+<body>
+
+<!-- แถวบนสุด: เลือกภาพ + Copy PNG -->
+<div class="topbar">
+ <label class="file-btn">+ เลือกภาพ
+  <input id="files" type="file" accept="image/*" multiple>
+ </label>
+ <button id="copyPNG" class="btn-blue">Copy PNG</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ส่วนแสดงรูป -->
+<div class="workspace">
+ <div class="paper-wrap">
+  <div id="paper" class="a4 portrait">
+   <div id="collage" class="collage"></div>
+  </div>
+ </div>
+</div>
+
+<!-- ตั้งค่าอื่นๆ อยู่ด้านล่าง -->
+<div class="settings">
+ <div class="toolbar">
+  <div class="group">
+   <label>กระดาษ</label>
+   <select id="orientation">
+    <option value="portrait">A4 แนวตั้ง</option>
+    <option value="landscape">A4 แนวนอน</option>
+   </select>
+  </div>
+
+  <div class="group">
+   <label>จำนวนช่อง</label>
+   <select id="count">
+    <option value="1">1 ช่อง</option>
+    <option value="2">2 ช่อง</option>
+    <option value="3">3 ช่อง</option>
+    <option value="4" selected>4 ช่อง</option>
+    <option value="5">5 ช่อง</option>
+    <option value="6">6 ช่อง</option>
+    <option value="7">7 ช่อง</option>
+    <option value="8">8 ช่อง</option>
+    <option value="9">9 ช่อง</option>
+    <option value="10">10 ช่อง</option>
+    <option value="11">11 ช่อง</option>
+    <option value="12">12 ช่อง</option>
+   </select>
+  </div>
+
+  <div class="group">
+   <label>รูปแบบช่อง</label>
+   <select id="cellOrientation">
+    <option value="portrait" selected>แนวตั้ง</option>
+    <option value="landscape">แนวนอน</option>
+   </select>
+  </div>
+
+  <button id="toggleCaption" type="button" class="btn-outline">+ เพิ่มช่องคำอธิบาย</button>
+
+  <div class="btn-row">
+   <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
+   <button id="downloadPNG" class="btn-green">บันทึกรูปภาพ</button>
+  </div>
+
+  <div class="group resolution-group">
+   <label>ขนาดไฟล์</label>
+   <select id="fileSize" title="ตอนบันทึกรูปภาพ (.jpg) ระบบจะปรับคุณภาพให้ได้ขนาดไฟล์ใกล้เคียงที่เลือกจริง ส่วนตอน Copy PNG จะใช้ความละเอียดตามที่เลือก แต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะ (PNG ไม่สูญเสียคุณภาพ ปรับขนาดไฟล์ไม่ได้)">
+    <option value="small">ประมาณ 300 KB</option>
+    <option value="medium" selected>ประมาณ 650 KB</option>
+    <option value="large">ประมาณ 1.2 MB</option>
+    <option value="xlarge">ประมาณ 2.2 MB</option>
+   </select>
+  </div>
+ </div>
+
+ <div class="panel">
+  <h3>ปรับรูปที่เลือก</h3>
+
+  <div class="zoom-row">
+   <button id="zoomOut" type="button">−</button>
+   <div id="zoomValue" class="zoom-value">100%</div>
+   <button id="zoomIn" type="button">+</button>
+  </div>
+
+  <div class="direction">
+   <button class="up" data-move="up" type="button">↑</button>
+   <button class="left" data-move="left" type="button">←</button>
+   <button class="center" data-move="center" type="button">○</button>
+   <button class="right" data-move="right" type="button">→</button>
+   <button class="down" data-move="down" type="button">↓</button>
+  </div>
+
+  <button id="resetSelected" class="wide" type="button">รีเซ็ตรูปที่เลือก</button>
+  <button id="deleteSelected" class="wide delete" type="button">ลบรูปที่เลือก</button>
+
+  <div class="status" id="status">ยังไม่ได้เลือกรูป</div>
+ </div>
+</div>
+
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const paper = $('paper');
+ const collage = $('collage');
+ let items = [];
+ let selected = -1;
+ let showCaption = false; // ค่าเริ่มต้น: ไม่แสดงช่องคำอธิบาย (กรอบใส่รูปอย่างเดียว)
+
+ // ช่องว่างและขอบตั้งค่าคงที่ ไม่ต้องให้ผู้ใช้ปรับ
+ const GAP = 8;
+ const MARGIN = 8;
+
+ // ความกว้างกระดาษ "มาตรฐาน" อ้างอิงสำหรับปรับสัดส่วนของ margin/gap/ขนาดตัวอักษร
+ // ให้เท่ากันระหว่าง preview กับไฟล์ที่ส่งออก (ไม่เกี่ยวกับตำแหน่งรูปที่ลาก/ซูม
+ // ซึ่งตอนนี้อ้างอิงกับขนาดจริงของแต่ละ image-area โดยตรงแล้ว ดู imageAreaRect ด้านล่าง)
+ const CANON_W = 794;
+
+ const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
+
+ function getLayout(n){
+   let cols,rows;
+   if(n===1)[cols,rows]=[1,1];
+   else if(n===2)[cols,rows]=[2,1];
+   else if(n===3)[cols,rows]=[3,1];
+   else if(n===4)[cols,rows]=[2,2];
+   else if(n===5)[cols,rows]=[3,2];
+   else if(n===6)[cols,rows]=[3,2];
+   else if(n===7)[cols,rows]=[4,2];
+   else if(n===8)[cols,rows]=[4,2];
+   else if(n===9)[cols,rows]=[3,3];
+   else if(n===10)[cols,rows]=[5,2];
+   else if(n===11)[cols,rows]=[4,3];
+   else[cols,rows]=[4,3];
+
+   // สลับแถว/คอลัมน์ เพื่อให้แต่ละช่องเป็นทรงแนวนอน (กว้าง) แทนที่จะเป็นแนวตั้ง (สูง) เสมอ
+   if($('cellOrientation').value==='landscape'){
+     return [rows,cols];
+   }
+   return [cols,rows];
+ }
+
+ function ensureItem(i){
+   if(!items[i]) items[i] = {src:null,scale:1,x:0,y:0,text:''};
+   return items[i];
+ }
+
+ // ตำแหน่งรูปที่ลาก/เลื่อน (item.x, item.y) เก็บเป็น "สัดส่วน" เทียบกับขนาดจริงของ
+ // image-area ในช่องนั้นๆ (ไม่ใช่พิกเซลตายตัว และไม่ใช่สัดส่วนเทียบความกว้างกระดาษ)
+ // เพราะ margin/gap เป็นพิกเซลคงที่ ทำให้สัดส่วนช่องต่อกระดาษบนมือถือ (จอเล็ก)
+ // ไม่เท่ากับสัดส่วนตอนส่งออกไฟล์ (คำนวณแบบ proportional) — ถ้าอิงความกว้างกระดาษจะ
+ // ทำให้ตำแหน่ง/การครอปรูปตอนบันทึกหรือคัดลอกไม่ตรงกับที่เห็นในหน้าโปรแกรม
+ // การอิงกับขนาดจริงของ image-area โดยตรงจึงถูกต้องเสมอไม่ว่าอุปกรณ์หรือเค้าโครงจะเป็นแบบใด
+ function imageAreaRect(cell){
+   const el = cell.querySelector('.image-area');
+   const r = el.getBoundingClientRect();
+   return {width:r.width||1, height:r.height||1};
+ }
+
+ function updateImage(cell,item){
+   const img = cell.querySelector('img');
+   const rect = imageAreaRect(cell);
+   const px = item.x * rect.width;
+   const py = item.y * rect.height;
+   img.style.transform =
+     `translate(calc(-50% + ${px}px), calc(-50% + ${py}px)) scale(${item.scale})`;
+ }
+
+ function updateSelectedUI(){
+   if(selected >= 0 && items[selected] && items[selected].src){
+     $('zoomValue').textContent = Math.round(items[selected].scale*100) + '%';
+     $('status').textContent = `เลือกภาพที่ ${selected+1}`;
+   }else{
+     $('zoomValue').textContent = '—';
+     $('status').textContent = 'ยังไม่ได้เลือกรูป';
+   }
+ }
+
+ function selectCell(index,cell){
+   selected = index;
+   document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected'));
+   cell.classList.add('selected');
+   updateSelectedUI();
+ }
+
+ function render(){
+   const n = Number($('count').value);
+   const [cols,rows] = getLayout(n);
+
+   if(items.length > n) items.length = n;
+
+   collage.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+   collage.style.gridTemplateRows = `repeat(${rows},1fr)`;
+   collage.style.setProperty('--gap', GAP+'px');
+   collage.style.setProperty('--margin', MARGIN+'px');
+
+   paper.className = 'a4 ' + $('orientation').value;
+   collage.innerHTML = '';
+
+   for(let i=0;i<n;i++){
+     const item = ensureItem(i);
+     const cell = document.createElement('div');
+     cell.className = 'cell' + (item.src ? '' : ' empty') + (showCaption ? '' : ' no-caption');
+     cell.dataset.num = i+1;
+     cell.dataset.index = i;
+
+     const imageArea = document.createElement('div');
+     imageArea.className = 'image-area';
+     const img = document.createElement('img');
+     img.alt = '';
+     if(item.src) img.src = item.src;
+     imageArea.appendChild(img);
+
+     let textArea = null;
+     if(showCaption){
+       textArea = document.createElement('textarea');
+       textArea.className = 'text-area';
+       textArea.placeholder = `ขั้นตอนที่ ${i+1}...`;
+       textArea.value = item.text || '';
+       textArea.addEventListener('input', () => {
+         item.text = textArea.value;
+       });
+     }
+
+     const remove = document.createElement('button');
+     remove.type = 'button';
+     remove.className = 'remove';
+     remove.textContent = '×';
+
+     remove.addEventListener('click',e=>{
+       e.stopPropagation();
+       items[i] = {src:null,scale:1,x:0,y:0,text:''};
+       if(selected===i) selected=-1;
+       render();
+     });
+
+     if(textArea) cell.appendChild(textArea);
+     cell.appendChild(imageArea);
+     cell.appendChild(remove);
+
+     cell.addEventListener('click',(e)=>{
+       if(e.target !== textArea && e.target !== remove) selectCell(i,cell);
+     });
+     if(textArea) textArea.addEventListener('pointerdown',e=>e.stopPropagation());
+
+     cell.addEventListener('wheel',e=>{
+       if(!item.src)return;
+       e.preventDefault();
+       selectCell(i,cell);
+       item.scale = clamp(item.scale + (e.deltaY < 0 ? .1 : -.1), .5, 4);
+       updateImage(cell,item);
+       updateSelectedUI();
+     },{passive:false});
+
+     // รองรับทั้งลากด้วยนิ้วเดียว (ย้ายรูป) และบีบสองนิ้ว (ซูมรูป) บนมือถือ
+     const pointers = new Map();
+     let dragStart = null;
+     let dragFactorX = 1;
+     let dragFactorY = 1;
+     let pinchStartDist = 0;
+     let pinchStartScale = 1;
+
+     const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+     cell.addEventListener('pointerdown',e=>{
+       if(!item.src)return;
+       if(e.target === remove)return;
+
+       selectCell(i,cell);
+       try{ cell.setPointerCapture(e.pointerId); }catch(err){}
+       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+       if(pointers.size===1){
+         const rect=imageAreaRect(cell);
+         dragFactorX = 1/rect.width;
+         dragFactorY = 1/rect.height;
+         dragStart={x:e.clientX,y:e.clientY,ox:item.x,oy:item.y};
+       }else if(pointers.size===2){
+         const pts=[...pointers.values()];
+         pinchStartDist=dist(pts[0],pts[1]);
+         pinchStartScale=item.scale;
+         dragStart=null;
+       }
+     });
+
+     cell.addEventListener('pointermove',e=>{
+       if(!pointers.has(e.pointerId))return;
+       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+       if(pointers.size===2){
+         const pts=[...pointers.values()];
+         const d=dist(pts[0],pts[1]);
+         if(pinchStartDist>0){
+           item.scale=clamp(pinchStartScale*(d/pinchStartDist),.5,4);
+           updateImage(cell,item);
+           updateSelectedUI();
+         }
+       }else if(pointers.size===1 && dragStart){
+         // แปลง delta พิกเซลจริงบนจอ ให้เป็น "สัดส่วน" เทียบขนาดจริงของ image-area
+         // เพื่อให้ตำแหน่งรูปตรงกันทั้ง preview และตอนบันทึก/คัดลอกไฟล์ ไม่ว่าอุปกรณ์ไหน
+         item.x = dragStart.ox + (e.clientX - dragStart.x) * dragFactorX;
+         item.y = dragStart.oy + (e.clientY - dragStart.y) * dragFactorY;
+         updateImage(cell,item);
+       }
+     });
+
+     const endPointer=e=>{
+       pointers.delete(e.pointerId);
+       if(pointers.size<2)pinchStartDist=0;
+
+       if(pointers.size===1){
+         const rect=imageAreaRect(cell);
+         dragFactorX = 1/rect.width;
+         dragFactorY = 1/rect.height;
+         const [[,p]]=[...pointers.entries()];
+         dragStart={x:p.x,y:p.y,ox:item.x,oy:item.y};
+       }else if(pointers.size===0){
+         dragStart=null;
+       }
+     };
+
+     cell.addEventListener('pointerup',endPointer);
+     cell.addEventListener('pointercancel',endPointer);
+
+     collage.appendChild(cell);
+     updateImage(cell,item);
+   }
+
+   updateSelectedUI();
+ }
+
+ function zoom(delta){
+   if(selected<0 || !items[selected]?.src)return;
+   const item=items[selected];
+   item.scale=clamp(item.scale+delta,.5,4);
+   const cell=collage.querySelector(`[data-index="${selected}"]`);
+   if(cell)updateImage(cell,item);
+   updateSelectedUI();
+ }
+
+ $('zoomIn').addEventListener('click',()=>zoom(.1));
+ $('zoomOut').addEventListener('click',()=>zoom(-.1));
+
+ $('resetSelected').addEventListener('click',()=>{
+   if(selected<0 || !items[selected]?.src)return;
+   items[selected].scale=1;
+   items[selected].x=0;
+   items[selected].y=0;
+   render();
+ });
+
+ $('deleteSelected').addEventListener('click',()=>{
+   if(selected<0 || !items[selected]?.src)return;
+   items[selected]={src:null,scale:1,x:0,y:0};
+   selected=-1;
+   render();
+ });
+
+ document.querySelectorAll('[data-move]').forEach(btn=>{
+   btn.addEventListener('click',()=>{
+     if(selected<0 || !items[selected]?.src)return;
+     const item=items[selected];
+     const dir=btn.dataset.move;
+     const cell=collage.querySelector(`[data-index="${selected}"]`);
+
+     if(dir==='center'){
+       item.x=0;item.y=0;
+     }else{
+       const rect = cell ? imageAreaRect(cell) : {width:200,height:200};
+       const stepX = 10/rect.width;  // เลื่อนประมาณ 10px จริงบนหน้าจอไม่ว่าจอขนาดไหน
+       const stepY = 10/rect.height;
+
+       if(dir==='up')item.y-=stepY;
+       if(dir==='down')item.y+=stepY;
+       if(dir==='left')item.x-=stepX;
+       if(dir==='right')item.x+=stepX;
+     }
+
+     if(cell)updateImage(cell,item);
+   });
+ });
+
+ $('clearAll').addEventListener('click',()=>{
+   if(confirm('ต้องการล้างรูปทั้งหมดหรือไม่?')){
+     items=[];
+     selected=-1;
+     render();
+   }
+ });
+
+ $('orientation').addEventListener('change',render);
+ $('count').addEventListener('change',render);
+ $('cellOrientation').addEventListener('change',render);
+
+ $('toggleCaption').addEventListener('click',()=>{
+   showCaption = !showCaption;
+   $('toggleCaption').textContent = showCaption ? 'ซ่อนช่องคำอธิบาย' : '+ เพิ่มช่องคำอธิบาย';
+   render();
+ });
+
+ $('files').addEventListener('change',()=>{
+   const selectedFiles=[...$('files').files];
+   let p=0;
+
+   for(let i=0;i<Number($('count').value) && p<selectedFiles.length;i++){
+     if(items[i]?.src)continue;
+
+     const file=selectedFiles[p++];
+     const index=i;
+     const reader=new FileReader();
+
+     reader.onload=e=>{
+       items[index]={src:e.target.result,scale:1,x:0,y:0,text:''};
+       render();
+     };
+
+     reader.readAsDataURL(file);
+   }
+
+   $('files').value='';
+ });
+
+ let toastTimer=null;
+ function showToast(text){
+   const el=$('toast');
+   el.textContent=text;
+   clearTimeout(toastTimer);
+   el.classList.add('show');
+   toastTimer=setTimeout(()=>el.classList.remove('show'),1800);
+ }
+
+ $('copyPNG').addEventListener('click',async()=>{
+   const btn=$('copyPNG');
+   if(!navigator.clipboard || !window.ClipboardItem){
+     alert('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการคัดลอกรูปภาพ กรุณาใช้ปุ่มบันทึกรูปภาพแทน');
+     return;
+   }
+
+   btn.disabled=true;
+   const originalText=btn.textContent;
+   btn.textContent='กำลังคัดลอก...';
+
+   try{
+     // ส่ง Promise<Blob> เข้า ClipboardItem โดยตรง เพื่อให้ทำงานได้ใน Safari/iOS
+     // ซึ่งต้องสร้าง ClipboardItem แบบ synchronous ภายใน user gesture
+     const item=new ClipboardItem({'image/png':exportForCopy()});
+     await navigator.clipboard.write([item]);
+     showToast('คัดลอกรูปแล้ว ✓');
+   }catch(err){
+     console.error(err);
+     alert('ไม่สามารถคัดลอกรูปได้ กรุณาลองใหม่ หรือใช้ปุ่มบันทึกรูปภาพแทน');
+   }finally{
+     btn.disabled=false;
+     btn.textContent=originalText;
+   }
+ });
+
+/*
+  บันทึกรูปภาพ:
+  ไม่ใช้ foreignObject แล้ว
+  วาดลง Canvas โดยตรง จึงทำงานใน Browser ได้เสถียรกว่า
+  บันทึกเป็น .jpg เพื่อให้ปรับคุณภาพควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
+  (PNG เป็น lossless ปรับขนาดไฟล์ตามที่เลือกไม่ได้)
+ */
+ $('downloadPNG').addEventListener('click',async()=>{
+   const btn=$('downloadPNG');
+   btn.disabled=true;
+   btn.textContent='กำลังสร้างไฟล์...';
+
+   try{
+     await exportDownload();
+   }catch(err){
+     console.error(err);
+     alert('ไม่สามารถสร้างไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
+   }finally{
+     btn.disabled=false;
+     btn.textContent='บันทึกรูปภาพ';
+   }
+ });
+
+ async function loadImage(src){
+   return new Promise((resolve,reject)=>{
+     const img=new Image();
+     img.onload=()=>resolve(img);
+     img.onerror=reject;
+     img.src=src;
+   });
+ }
+
+ async function buildCanvas(scale){
+   const W=Math.round(1654*scale);
+   const H=$('orientation').value==='portrait'
+     ? Math.round(W*297/210)
+     : Math.round(W*210/297);
+
+   const canvas=document.createElement('canvas');
+   canvas.width=W;
+   canvas.height=H;
+
+   const ctx=canvas.getContext('2d');
+   ctx.fillStyle='#ffffff';
+   ctx.fillRect(0,0,W,H);
+
+   const gapPx=GAP*(W/CANON_W);
+   const marginPx=MARGIN*(W/CANON_W);
+
+   const n=Number($('count').value);
+   const [cols,rows]=getLayout(n);
+
+   const usableW=W-marginPx*2;
+   const usableH=H-marginPx*2;
+   const cellW=(usableW-gapPx*(cols-1))/cols;
+   const cellH=(usableH-gapPx*(rows-1))/rows;
+
+   for(let i=0;i<n;i++){
+     const item=items[i];
+     const x=marginPx+(i%cols)*(cellW+gapPx);
+     const y=marginPx+Math.floor(i/cols)*(cellH+gapPx);
+
+     // ความสูงช่องข้อความต้องสัดส่วนเดียวกับ preview เป๊ะๆ (36px ที่อ้างอิงความกว้าง CANON_W)
+     // ไม่เช่นนั้นพื้นที่รูปใน PNG จะเตี้ยกว่าที่เห็นใน preview ทำให้รูปที่ซูม/เลื่อนแล้วโดนตัดขอบล่างหาย
+     // ถ้าปิดช่องคำอธิบายอยู่ (showCaption=false) ให้ไม่มีพื้นที่ข้อความเลย ตรงกับที่เห็นในหน้าโปรแกรม ณ ขณะนั้น
+     const textH=showCaption ? 36*(W/CANON_W) : 0;
+     const imageH=cellH-textH;
+
+     ctx.save();
+
+     // กรอบทั้งการ์ด
+     ctx.fillStyle='#ffffff';
+     ctx.strokeStyle='#888888';
+     ctx.lineWidth=Math.max(3, W/CANON_W*1.5);
+     ctx.fillRect(x,y,cellW,cellH);
+     ctx.strokeRect(x,y,cellW,cellH);
+
+     // ช่องข้อความด้านบน — ใช้ขนาดตัวอักษรคงที่สัดส่วนเดียวกับที่เห็นตอนพิมพ์ (14px)
+     // ไม่ย่อ/ขยายตามความยาวข้อความ เพื่อให้ตัวหนังสือทุกช่องมีขนาดเท่ากันเสมอ
+     if(showCaption && item?.text){
+       ctx.save();
+       ctx.beginPath();
+       ctx.rect(x,y,cellW,textH);
+       ctx.clip();
+       ctx.fillStyle='#222';
+
+       const fontSize=14*(W/CANON_W);
+       ctx.font=`${fontSize}px Arial`;
+       ctx.textBaseline='middle';
+
+       const padLeft=9*(W/CANON_W);
+       const rawText=(item.text||'').replace(/\s+/g,' ').trim();
+
+       if(rawText){
+         ctx.fillText(rawText,x+padLeft,y+textH/2);
+       }
+       ctx.restore();
+     }
+
+     // เส้นแบ่งหัวข้อความกับรูป (วาดเฉพาะตอนมีช่องคำอธิบายแสดงอยู่)
+     if(showCaption){
+       ctx.strokeStyle='#888888';
+       ctx.lineWidth=Math.max(2, W/CANON_W*1.2);
+       ctx.beginPath();
+       ctx.moveTo(x,y+textH);
+       ctx.lineTo(x+cellW,y+textH);
+       ctx.stroke();
+     }
+
+     // พื้นที่ภาพอยู่ด้านล่าง
+     ctx.save();
+     ctx.beginPath();
+     ctx.rect(x,y+textH,cellW,imageH);
+     ctx.clip();
+
+     if(item?.src){
+       const img=await loadImage(item.src);
+       const scaleContain=Math.min(cellW/img.naturalWidth,imageH/img.naturalHeight);
+       const finalScale=scaleContain*item.scale;
+       const drawW=img.naturalWidth*finalScale;
+       const drawH=img.naturalHeight*finalScale;
+       // item.x/item.y เป็น "สัดส่วน" เทียบขนาดจริงของ image-area (ดู updateImage ใน preview)
+       // จึงต้องคูณด้วยขนาด image-area ของช่องนี้ในไฟล์ที่ export (cellW, imageH) โดยตรง
+       // ไม่ใช่คูณกับสัดส่วนความกว้างกระดาษ (W/CANON_W) แบบเดิม ซึ่งทำให้ตำแหน่ง/การครอป
+       // ไม่ตรงกับ preview โดยเฉพาะเมื่อ margin/gap เป็นพิกเซลคงที่บนอุปกรณ์จอเล็ก
+       const dx=x+(cellW-drawW)/2 + item.x*cellW;
+       const dy=y+textH+(imageH-drawH)/2 + item.y*imageH;
+       ctx.drawImage(img,dx,dy,drawW,drawH);
+     }else{
+       ctx.fillStyle='#f4f4f4';
+       ctx.fillRect(x,y+textH,cellW,imageH);
+     }
+     ctx.restore();
+
+     ctx.restore();
+   }
+
+   return canvas;
+ }
+
+ // พรีเซ็ตขนาดไฟล์: กำหนดทั้งความละเอียด (scale) และเป้าหมายขนาดไฟล์ (targetKB)
+ // หมายเหตุ: PNG เป็นไฟล์แบบไม่สูญเสียคุณภาพ (lossless) จึงไม่มีทางบีบให้ได้ขนาดไฟล์ตามที่ต้องการ
+ // (ไฟล์ PNG จะใหญ่/เล็กตามความซับซ้อนของภาพเท่านั้น ปรับ "คุณภาพ" ไม่ได้)
+ // ปุ่ม "บันทึกรูปภาพ" จึงบันทึกเป็น .jpg แทน ซึ่งสามารถปรับคุณภาพเพื่อควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
+ // ส่วนปุ่ม Copy PNG ยังคงใช้ PNG (คัดลอกรูปภาพผ่านคลิปบอร์ดต้องใช้ PNG เพื่อให้ใช้ได้ในทุกอุปกรณ์ รวมถึง iPhone)
+ // โดยจะอ้างอิงความละเอียดตามที่เลือกเช่นกัน เพียงแต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะเหมือนไฟล์ JPG
+ const SIZE_PRESETS={
+   small:  {scale:1.0, targetKB:300},
+   medium: {scale:1.3, targetKB:650},
+   large:  {scale:1.6, targetKB:1200},
+   xlarge: {scale:2.0, targetKB:2200},
+ };
+
+ function currentPreset(){
+   return SIZE_PRESETS[$('fileSize').value] || SIZE_PRESETS.medium;
+ }
+
+ async function encodeJpegToTarget(canvas, targetBytes){
+   let lo=0.05, hi=0.95, best=null;
+   for(let i=0;i<9;i++){
+     const q=(lo+hi)/2;
+     const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',q));
+     if(!blob) continue;
+     if(!best || Math.abs(blob.size-targetBytes) < Math.abs(best.size-targetBytes)) best=blob;
+     if(blob.size>targetBytes) hi=q; else lo=q;
+   }
+   return best;
+ }
+
+ // ปรับ "ความละเอียด" เป็นตัวช่วยอีกชั้น เผื่อกรณีที่ปรับแค่คุณภาพ (JPEG quality)
+ // อย่างเดียวไม่พอจะเข้าใกล้ขนาดไฟล์เป้าหมาย เช่น รูปเรียบๆ ที่บีบอัดง่ายมาก (ไฟล์เล็กกว่าเป้าแม้คุณภาพสูงสุด)
+ // หรือรูปที่มีรายละเอียด/สัญญาณรบกวนเยอะมาก (ไฟล์ใหญ่กว่าเป้าแม้คุณภาพต่ำสุด)
+ async function exportDownload(){
+   const preset=currentPreset();
+   const targetBytes=preset.targetKB*1024;
+
+   let scale=preset.scale;
+   let blob=null;
+
+   for(let attempt=0;attempt<3;attempt++){
+     const canvas=await buildCanvas(scale);
+     blob=await encodeJpegToTarget(canvas,targetBytes);
+     if(!blob)throw new Error('JPEG blob failed');
+
+     if(blob.size > targetBytes*1.4 && scale > 0.5){
+       scale *= 0.75; // ไฟล์ใหญ่เกินไปแม้คุณภาพต่ำสุดแล้ว ลดความละเอียดลงแล้วลองใหม่
+     }else if(blob.size < targetBytes*0.6 && scale < 3.2){
+       scale *= 1.3; // ไฟล์เล็กเกินไปแม้คุณภาพสูงสุดแล้ว (รูปเรียบมาก) เพิ่มความละเอียดแล้วลองใหม่
+     }else{
+       break;
+     }
+   }
+
+   triggerDownload(blob,'jpg');
+ }
+
+ function triggerDownload(blob,ext){
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=url;
+
+   const stamp=new Date();
+   const pad=v=>String(v).padStart(2,'0');
+   const randomPart=Math.random().toString(36).slice(2,8).toUpperCase();
+   a.download=`A4-Collage-${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}-${randomPart}.${ext}`;
+
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+
+ async function exportForCopy(){
+   const preset=currentPreset();
+   const canvas=await buildCanvas(preset.scale);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw new Error('PNG blob failed');
+   return blob;
+ }
+
+ render();
+})();
+</script>
+</body>
+</html>
