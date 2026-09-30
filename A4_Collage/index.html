@@ -31,6 +31,7 @@ button:disabled{opacity:.6;cursor:default}
 .btn-blue{background:#0d6efd;color:#fff;border-color:#0d6efd}
 .btn-green{background:#198754;color:#fff;border-color:#198754}
 .btn-red{background:#dc3545;color:#fff;border-color:#dc3545}
+.btn-orange{background:#fd7e14;color:#fff;border-color:#fd7e14}
 .file-btn{height:40px;display:flex;align-items:center;justify-content:center;padding:0 12px;background:#0d6efd;color:#fff;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer}
 .file-btn input{display:none}
 
@@ -222,11 +223,12 @@ button:disabled{opacity:.6;cursor:default}
   <div class="btn-row">
    <button id="clearAll" class="btn-red">ล้างทั้งหมด</button>
    <button id="downloadPNG" class="btn-green">บันทึกรูปภาพ</button>
+   <button id="downloadPDF" class="btn-orange">บันทึก PDF</button>
   </div>
 
   <div class="group resolution-group">
    <label>ขนาดไฟล์</label>
-   <select id="fileSize" title="ตอนบันทึกรูปภาพ (.jpg) ระบบจะปรับคุณภาพให้ได้ขนาดไฟล์ใกล้เคียงที่เลือกจริง ส่วนตอน Copy PNG จะใช้ความละเอียดตามที่เลือก แต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะ (PNG ไม่สูญเสียคุณภาพ ปรับขนาดไฟล์ไม่ได้)">
+   <select id="fileSize" title="ตอนบันทึกรูปภาพ (.jpg) และ PDF ระบบจะปรับคุณภาพให้ได้ขนาดไฟล์ใกล้เคียงที่เลือกจริง ส่วนตอน Copy PNG จะใช้ความละเอียดตามที่เลือก แต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะ (PNG ไม่สูญเสียคุณภาพ ปรับขนาดไฟล์ไม่ได้)">
     <option value="small">ประมาณ 300 KB</option>
     <option value="medium" selected>ประมาณ 650 KB</option>
     <option value="large">ประมาณ 1.2 MB</option>
@@ -273,8 +275,7 @@ button:disabled{opacity:.6;cursor:default}
  const MARGIN = 8;
 
  // ความกว้างกระดาษ "มาตรฐาน" อ้างอิงสำหรับปรับสัดส่วนของ margin/gap/ขนาดตัวอักษร
- // ให้เท่ากันระหว่าง preview กับไฟล์ที่ส่งออก (ไม่เกี่ยวกับตำแหน่งรูปที่ลาก/ซูม
- // ซึ่งตอนนี้อ้างอิงกับขนาดจริงของแต่ละ image-area โดยตรงแล้ว ดู imageAreaRect ด้านล่าง)
+ // ให้เท่ากันระหว่าง preview กับไฟล์ที่ส่งออก
  const CANON_W = 794;
 
  const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
@@ -307,11 +308,7 @@ button:disabled{opacity:.6;cursor:default}
  }
 
  // ตำแหน่งรูปที่ลาก/เลื่อน (item.x, item.y) เก็บเป็น "สัดส่วน" เทียบกับขนาดจริงของ
- // image-area ในช่องนั้นๆ (ไม่ใช่พิกเซลตายตัว และไม่ใช่สัดส่วนเทียบความกว้างกระดาษ)
- // เพราะ margin/gap เป็นพิกเซลคงที่ ทำให้สัดส่วนช่องต่อกระดาษบนมือถือ (จอเล็ก)
- // ไม่เท่ากับสัดส่วนตอนส่งออกไฟล์ (คำนวณแบบ proportional) — ถ้าอิงความกว้างกระดาษจะ
- // ทำให้ตำแหน่ง/การครอปรูปตอนบันทึกหรือคัดลอกไม่ตรงกับที่เห็นในหน้าโปรแกรม
- // การอิงกับขนาดจริงของ image-area โดยตรงจึงถูกต้องเสมอไม่ว่าอุปกรณ์หรือเค้าโครงจะเป็นแบบใด
+ // image-area ในช่องนั้นๆ เพื่อให้ตำแหน่ง/การครอปตอนบันทึกตรงกับ preview ไม่ว่าอุปกรณ์ไหน
  function imageAreaRect(cell){
    const el = cell.querySelector('.image-area');
    const r = el.getBoundingClientRect();
@@ -457,8 +454,6 @@ button:disabled{opacity:.6;cursor:default}
            updateSelectedUI();
          }
        }else if(pointers.size===1 && dragStart){
-         // แปลง delta พิกเซลจริงบนจอ ให้เป็น "สัดส่วน" เทียบขนาดจริงของ image-area
-         // เพื่อให้ตำแหน่งรูปตรงกันทั้ง preview และตอนบันทึก/คัดลอกไฟล์ ไม่ว่าอุปกรณ์ไหน
          item.x = dragStart.ox + (e.clientX - dragStart.x) * dragFactorX;
          item.y = dragStart.oy + (e.clientY - dragStart.y) * dragFactorY;
          updateImage(cell,item);
@@ -528,7 +523,7 @@ button:disabled{opacity:.6;cursor:default}
        item.x=0;item.y=0;
      }else{
        const rect = cell ? imageAreaRect(cell) : {width:200,height:200};
-       const stepX = 10/rect.width;  // เลื่อนประมาณ 10px จริงบนหน้าจอไม่ว่าจอขนาดไหน
+       const stepX = 10/rect.width;
        const stepY = 10/rect.height;
 
        if(dir==='up')item.y-=stepY;
@@ -603,7 +598,6 @@ button:disabled{opacity:.6;cursor:default}
 
    try{
      // ส่ง Promise<Blob> เข้า ClipboardItem โดยตรง เพื่อให้ทำงานได้ใน Safari/iOS
-     // ซึ่งต้องสร้าง ClipboardItem แบบ synchronous ภายใน user gesture
      const item=new ClipboardItem({'image/png':exportForCopy()});
      await navigator.clipboard.write([item]);
      showToast('คัดลอกรูปแล้ว ✓');
@@ -616,13 +610,7 @@ button:disabled{opacity:.6;cursor:default}
    }
  });
 
-/*
-  บันทึกรูปภาพ:
-  ไม่ใช้ foreignObject แล้ว
-  วาดลง Canvas โดยตรง จึงทำงานใน Browser ได้เสถียรกว่า
-  บันทึกเป็น .jpg เพื่อให้ปรับคุณภาพควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
-  (PNG เป็น lossless ปรับขนาดไฟล์ตามที่เลือกไม่ได้)
- */
+ // บันทึกรูปภาพ (.jpg): วาดลง Canvas โดยตรง แล้วปรับคุณภาพให้ได้ขนาดไฟล์ใกล้เคียงที่เลือก
  $('downloadPNG').addEventListener('click',async()=>{
    const btn=$('downloadPNG');
    btn.disabled=true;
@@ -636,6 +624,23 @@ button:disabled{opacity:.6;cursor:default}
    }finally{
      btn.disabled=false;
      btn.textContent='บันทึกรูปภาพ';
+   }
+ });
+
+ // บันทึก PDF: ใช้ภาพ JPEG เดียวกับปุ่มบันทึกรูปภาพ ฝังลงหน้า A4 เต็มหน้า
+ $('downloadPDF').addEventListener('click',async()=>{
+   const btn=$('downloadPDF');
+   btn.disabled=true;
+   btn.textContent='กำลังสร้าง PDF...';
+
+   try{
+     await exportPDF();
+   }catch(err){
+     console.error(err);
+     alert('ไม่สามารถสร้าง PDF ได้ กรุณาลองใหม่อีกครั้ง');
+   }finally{
+     btn.disabled=false;
+     btn.textContent='บันทึก PDF';
    }
  });
 
@@ -678,9 +683,8 @@ button:disabled{opacity:.6;cursor:default}
      const x=marginPx+(i%cols)*(cellW+gapPx);
      const y=marginPx+Math.floor(i/cols)*(cellH+gapPx);
 
-     // ความสูงช่องข้อความต้องสัดส่วนเดียวกับ preview เป๊ะๆ (36px ที่อ้างอิงความกว้าง CANON_W)
-     // ไม่เช่นนั้นพื้นที่รูปใน PNG จะเตี้ยกว่าที่เห็นใน preview ทำให้รูปที่ซูม/เลื่อนแล้วโดนตัดขอบล่างหาย
-     // ถ้าปิดช่องคำอธิบายอยู่ (showCaption=false) ให้ไม่มีพื้นที่ข้อความเลย ตรงกับที่เห็นในหน้าโปรแกรม ณ ขณะนั้น
+     // ความสูงช่องข้อความต้องสัดส่วนเดียวกับ preview (36px ที่อ้างอิง CANON_W)
+     // ถ้าปิดช่องคำอธิบายอยู่ ให้ไม่มีพื้นที่ข้อความเลย
      const textH=showCaption ? 36*(W/CANON_W) : 0;
      const imageH=cellH-textH;
 
@@ -693,8 +697,7 @@ button:disabled{opacity:.6;cursor:default}
      ctx.fillRect(x,y,cellW,cellH);
      ctx.strokeRect(x,y,cellW,cellH);
 
-     // ช่องข้อความด้านบน — ใช้ขนาดตัวอักษรคงที่สัดส่วนเดียวกับที่เห็นตอนพิมพ์ (14px)
-     // ไม่ย่อ/ขยายตามความยาวข้อความ เพื่อให้ตัวหนังสือทุกช่องมีขนาดเท่ากันเสมอ
+     // ช่องข้อความด้านบน — ขนาดตัวอักษรคงที่ (14px ตามสัดส่วน)
      if(showCaption && item?.text){
        ctx.save();
        ctx.beginPath();
@@ -715,7 +718,7 @@ button:disabled{opacity:.6;cursor:default}
        ctx.restore();
      }
 
-     // เส้นแบ่งหัวข้อความกับรูป (วาดเฉพาะตอนมีช่องคำอธิบายแสดงอยู่)
+     // เส้นแบ่งหัวข้อความกับรูป (เฉพาะตอนมีช่องคำอธิบาย)
      if(showCaption){
        ctx.strokeStyle='#888888';
        ctx.lineWidth=Math.max(2, W/CANON_W*1.2);
@@ -737,10 +740,7 @@ button:disabled{opacity:.6;cursor:default}
        const finalScale=scaleContain*item.scale;
        const drawW=img.naturalWidth*finalScale;
        const drawH=img.naturalHeight*finalScale;
-       // item.x/item.y เป็น "สัดส่วน" เทียบขนาดจริงของ image-area (ดู updateImage ใน preview)
-       // จึงต้องคูณด้วยขนาด image-area ของช่องนี้ในไฟล์ที่ export (cellW, imageH) โดยตรง
-       // ไม่ใช่คูณกับสัดส่วนความกว้างกระดาษ (W/CANON_W) แบบเดิม ซึ่งทำให้ตำแหน่ง/การครอป
-       // ไม่ตรงกับ preview โดยเฉพาะเมื่อ margin/gap เป็นพิกเซลคงที่บนอุปกรณ์จอเล็ก
+       // item.x/item.y เป็นสัดส่วนเทียบขนาด image-area ของช่องนั้น
        const dx=x+(cellW-drawW)/2 + item.x*cellW;
        const dy=y+textH+(imageH-drawH)/2 + item.y*imageH;
        ctx.drawImage(img,dx,dy,drawW,drawH);
@@ -757,11 +757,8 @@ button:disabled{opacity:.6;cursor:default}
  }
 
  // พรีเซ็ตขนาดไฟล์: กำหนดทั้งความละเอียด (scale) และเป้าหมายขนาดไฟล์ (targetKB)
- // หมายเหตุ: PNG เป็นไฟล์แบบไม่สูญเสียคุณภาพ (lossless) จึงไม่มีทางบีบให้ได้ขนาดไฟล์ตามที่ต้องการ
- // (ไฟล์ PNG จะใหญ่/เล็กตามความซับซ้อนของภาพเท่านั้น ปรับ "คุณภาพ" ไม่ได้)
- // ปุ่ม "บันทึกรูปภาพ" จึงบันทึกเป็น .jpg แทน ซึ่งสามารถปรับคุณภาพเพื่อควบคุมขนาดไฟล์ให้ใกล้เคียงค่าที่เลือกได้จริง
- // ส่วนปุ่ม Copy PNG ยังคงใช้ PNG (คัดลอกรูปภาพผ่านคลิปบอร์ดต้องใช้ PNG เพื่อให้ใช้ได้ในทุกอุปกรณ์ รวมถึง iPhone)
- // โดยจะอ้างอิงความละเอียดตามที่เลือกเช่นกัน เพียงแต่ขนาดไฟล์จริงจะไม่ตรงเป๊ะเหมือนไฟล์ JPG
+ // PNG เป็น lossless ปรับขนาดไฟล์ไม่ได้ จึงใช้ JPG สำหรับปุ่มบันทึกรูปภาพและ PDF
+ // ส่วน Copy PNG ใช้ PNG (คลิปบอร์ดต้องใช้ PNG เพื่อให้ใช้ได้ทุกอุปกรณ์รวมถึง iPhone)
  const SIZE_PRESETS={
    small:  {scale:1.0, targetKB:300},
    medium: {scale:1.3, targetKB:650},
@@ -785,31 +782,80 @@ button:disabled{opacity:.6;cursor:default}
    return best;
  }
 
- // ปรับ "ความละเอียด" เป็นตัวช่วยอีกชั้น เผื่อกรณีที่ปรับแค่คุณภาพ (JPEG quality)
- // อย่างเดียวไม่พอจะเข้าใกล้ขนาดไฟล์เป้าหมาย เช่น รูปเรียบๆ ที่บีบอัดง่ายมาก (ไฟล์เล็กกว่าเป้าแม้คุณภาพสูงสุด)
- // หรือรูปที่มีรายละเอียด/สัญญาณรบกวนเยอะมาก (ไฟล์ใหญ่กว่าเป้าแม้คุณภาพต่ำสุด)
- async function exportDownload(){
+ // สร้าง JPEG ให้ใกล้ขนาดเป้าหมาย โดยปรับทั้งคุณภาพและความละเอียดถ้าจำเป็น
+ // คืนทั้ง blob และ canvas (ใช้ขนาด canvas เป็นขนาดพิกเซลของภาพใน PDF)
+ async function buildJpegBlob(){
    const preset=currentPreset();
    const targetBytes=preset.targetKB*1024;
 
    let scale=preset.scale;
    let blob=null;
+   let canvas=null;
 
    for(let attempt=0;attempt<3;attempt++){
-     const canvas=await buildCanvas(scale);
+     canvas=await buildCanvas(scale);
      blob=await encodeJpegToTarget(canvas,targetBytes);
      if(!blob)throw new Error('JPEG blob failed');
 
      if(blob.size > targetBytes*1.4 && scale > 0.5){
-       scale *= 0.75; // ไฟล์ใหญ่เกินไปแม้คุณภาพต่ำสุดแล้ว ลดความละเอียดลงแล้วลองใหม่
+       scale *= 0.75;
      }else if(blob.size < targetBytes*0.6 && scale < 3.2){
-       scale *= 1.3; // ไฟล์เล็กเกินไปแม้คุณภาพสูงสุดแล้ว (รูปเรียบมาก) เพิ่มความละเอียดแล้วลองใหม่
+       scale *= 1.3;
      }else{
        break;
      }
    }
+   return {blob,canvas};
+ }
 
+ async function exportDownload(){
+   const {blob}=await buildJpegBlob();
    triggerDownload(blob,'jpg');
+ }
+
+ // สร้างไฟล์ PDF 1 หน้า ฝังภาพ JPEG เต็มหน้า (ไม่ต้องใช้ไลบรารีภายนอก)
+ function makePdf(jpeg,imgW,imgH,pageW,pageH){
+   const enc=new TextEncoder();
+   const parts=[], offsets=[];
+   let len=0;
+   const push=d=>{
+     const b=typeof d==='string'?enc.encode(d):d;
+     parts.push(b); len+=b.length;
+   };
+   const obj=(n,body)=>{
+     offsets[n]=len;
+     push(`${n} 0 obj\n${body}\nendobj\n`);
+   };
+   const pw=pageW.toFixed(2), ph=pageH.toFixed(2);
+   const content=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+
+   push('%PDF-1.4\n');
+   obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+   obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+   obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+
+   offsets[4]=len;
+   push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+   push(jpeg);
+   push('\nendstream\nendobj\n');
+
+   obj(5,`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+
+   const xref=len;
+   let x='xref\n0 6\n0000000000 65535 f \n';
+   for(let i=1;i<=5;i++) x+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+   push(x+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+
+   return new Blob(parts,{type:'application/pdf'});
+ }
+
+ async function exportPDF(){
+   const {blob,canvas}=await buildJpegBlob();
+   const bytes=new Uint8Array(await blob.arrayBuffer());
+   const portrait=$('orientation').value==='portrait';
+   const pw=portrait?595.28:841.89; // A4 หน่วย pt
+   const ph=portrait?841.89:595.28;
+   triggerDownload(makePdf(bytes,canvas.width,canvas.height,pw,ph),'pdf');
  }
 
  function triggerDownload(blob,ext){
