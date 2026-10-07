@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รวมไฟล์ PDF</title>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+:root{--blue:#2563eb;--blue-dark:#1d4ed8;--bg:#f4f7fb;--ink:#172033;--muted:#64748b;--line:#dbe3ef;--green:#15803d;--red:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:36px auto;padding:0 18px}
+header{margin-bottom:22px}
+h1{font-size:28px;margin:0 0 8px}
+.subtitle{color:var(--muted);font-size:14px;line-height:1.6}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 28px #1720330a}
+.dropzone{border:2px dashed #a9bde4;border-radius:14px;background:#f8fbff;padding:30px 16px;text-align:center;cursor:pointer;transition:.15s}
+.dropzone.drag{background:#eaf2ff;border-color:var(--blue)}
+.fileicon{font-size:38px;margin-bottom:8px}
+.dropzone strong{display:block;font-size:17px;margin-bottom:7px}
+.dropzone p{margin:0 0 14px;color:var(--muted);font-size:13px}
+button,.choose{border:0;border-radius:9px;padding:10px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.primary{background:var(--blue);color:#fff}.primary:hover{background:var(--blue-dark)}
+.secondary{background:#edf2f8;color:#263449}.secondary:hover{background:#e2e8f0}
+.danger{background:#fff0f0;color:var(--red)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=file]{display:none}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0 12px;flex-wrap:wrap}
+.toolbar h2{font-size:17px;margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.file-list{display:flex;flex-direction:column;gap:9px}
+.file-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;min-width:0}
+.pdf-icon{width:42px;height:46px;border-radius:8px;background:#fff0f0;color:#c62828;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+.file-info{min-width:0;flex:1}
+.filename{font-weight:700;font-size:14px;overflow-wrap:anywhere}
+.filesize{font-size:12px;color:var(--muted);margin-top:5px}
+.file-actions{display:flex;gap:5px;flex-shrink:0}
+.iconbtn{padding:8px 10px;min-width:34px}
+.empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:10px}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px}
+.summary{font-size:13px;color:var(--muted)}
+.merge{font-size:15px;padding:13px 20px}
+.status{display:none;margin-top:16px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5}
+.status.show{display:block}.status.info{background:#eff6ff;color:#1d4ed8}.status.ok{background:#f0fdf4;color:#166534}.status.error{background:#fef2f2;color:#b91c1c}
+.note{margin-top:16px;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:560px){.wrap{margin:22px auto}.panel{padding:14px}h1{font-size:24px}.file-row{gap:8px}.file-actions{gap:3px}.iconbtn{padding:7px;min-width:30px}.toolbar{align-items:flex-start}.merge{width:100%}.bottom{align-items:stretch}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📑 รวมไฟล์ PDF</h1>
+    <div class="subtitle">เลือก PDF หลายไฟล์ จัดลำดับ แล้วรวมเป็นไฟล์เดียวได้ทันที</div>
+  </header>
+  <main class="panel">
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="เลือกหรือลากไฟล์ PDF มาวาง">
+      <div class="fileicon">📄</div>
+      <strong>ลากไฟล์ PDF มาวางที่นี่</strong>
+      <p>หรือเลือกไฟล์จากเครื่องของคุณ (เลือกได้หลายไฟล์)</p>
+      <label class="choose primary" for="fileInput">＋ เลือกไฟล์ PDF</label>
+    </div>
+    <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple>
+    <div class="toolbar">
+      <h2>รายการไฟล์ <span id="count">(0)</span></h2>
+      <div class="actions">
+        <button class="secondary" id="addMore">＋ เพิ่มไฟล์</button>
+        <button class="secondary" id="clearAll">ล้างรายการ</button>
+      </div>
+    </div>
+    <div class="file-list" id="fileList"><div class="empty">ยังไม่มีไฟล์ PDF — เลือกไฟล์เพื่อเริ่มต้น</div></div>
+    <div class="bottom">
+      <div class="summary" id="summary">เรียงไฟล์จากบนลงล่างตามลำดับที่จะรวม</div>
+      <button class="primary merge" id="mergeBtn" disabled>รวม PDF และดาวน์โหลด ↓</button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="note">🔒 ไฟล์จะถูกประมวลผลในเบราว์เซอร์ของคุณ ไม่ได้อัปโหลดไปยังเซิร์ฟเวอร์นี้<br>หมายเหตุ: ต้องเชื่อมต่ออินเทอร์เน็ตเพื่อโหลดไลบรารีสำหรับรวม PDF ในครั้งแรก</div>
+  </main>
+</div>
+<script>
+(() => {
+  const input = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const fileList = document.getElementById('fileList');
+  const count = document.getElementById('count');
+  const summary = document.getElementById('summary');
+  const mergeBtn = document.getElementById('mergeBtn');
+  const status = document.getElementById('status');
+  let files = [];
+
+  const formatSize = bytes => bytes < 1024*1024
+    ? (bytes/1024).toFixed(1)+' KB'
+    : (bytes/(1024*1024)).toFixed(2)+' MB';
+  const totalSize = () => files.reduce((sum, item) => sum + item.file.size, 0);
+  function showStatus(message, type='info') {
+    status.textContent = message;
+    status.className = 'status show ' + type;
+  }
+  function addFiles(fileListInput) {
+    const incoming = Array.from(fileListInput || []);
+    let added = 0, rejected = 0;
+    for (const file of incoming) {
+      if (!(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) { rejected++; continue; }
+      if (files.some(item => item.file.name === file.name && item.file.size === file.size && item.file.lastModified === file.lastModified)) continue;
+      files.push({ id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())), file });
+      added++;
+    }
+    render();
+    if (rejected) showStatus(`ข้าม ${rejected} ไฟล์ เพราะไม่ใช่ PDF`, 'error');
+    else if (added) showStatus(`เพิ่มไฟล์แล้ว ${added} ไฟล์`, 'ok');
+    else if (incoming.length) showStatus('ไม่มีไฟล์ PDF ใหม่ที่เพิ่มเข้ามา', 'info');
+  }
+  function render() {
+    count.textContent = `(${files.length})`;
+    summary.textContent = files.length
+      ? `${files.length} ไฟล์ · ขนาดรวม ${formatSize(totalSize())} · ใช้ปุ่ม ↑ ↓ เพื่อจัดลำดับ`
+      : 'เรียงไฟล์จากบนลงล่างตามลำดับที่จะรวม';
+    mergeBtn.disabled = files.length < 2;
+    fileList.innerHTML = '';
+    if (!files.length) {
+      fileList.innerHTML = '<div class="empty">ยังไม่มีไฟล์ PDF — เลือกไฟล์เพื่อเริ่มต้น</div>';
+      return;
+    }
+    files.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      const icon = document.createElement('div');
+      icon.className = 'pdf-icon'; icon.textContent = 'PDF';
+      const info = document.createElement('div'); info.className = 'file-info';
+      const name = document.createElement('div'); name.className = 'filename'; name.textContent = `${index+1}. ${item.file.name}`;
+      const size = document.createElement('div'); size.className = 'filesize'; size.textContent = formatSize(item.file.size);
+      info.append(name, size);
+      const actions = document.createElement('div'); actions.className = 'file-actions';
+      const up = document.createElement('button'); up.className = 'secondary iconbtn'; up.textContent = '↑'; up.title = 'เลื่อนขึ้น'; up.setAttribute('aria-label','เลื่อนขึ้น');
+      up.disabled = index === 0; up.onclick = () => move(index, index-1);
+      const down = document.createElement('button'); down.className = 'secondary iconbtn'; down.textContent = '↓'; down.title = 'เลื่อนลง'; down.setAttribute('aria-label','เลื่อนลง');
+      down.disabled = index === files.length-1; down.onclick = () => move(index, index+1);
+      const remove = document.createElement('button'); remove.className = 'danger iconbtn'; remove.textContent = '✕'; remove.title = 'นำออก'; remove.setAttribute('aria-label','นำไฟล์ออก');
+      remove.onclick = () => { files.splice(index,1); render(); showStatus('นำไฟล์ออกจากรายการแล้ว','info'); };
+      actions.append(up,down,remove); row.append(icon,info,actions); fileList.append(row);
+    });
+  }
+  function move(from, to) {
+    if (to < 0 || to >= files.length) return;
+    const [item] = files.splice(from,1); files.splice(to,0,item); render();
+  }
+  input.addEventListener('change', e => { addFiles(e.target.files); input.value = ''; });
+  document.getElementById('addMore').addEventListener('click', () => input.click());
+  document.getElementById('clearAll').addEventListener('click', () => {
+    files = []; render(); status.className = 'status'; status.textContent = '';
+  });
+  dropzone.addEventListener('click', e => { if (!e.target.closest('label')) input.click(); });
+  dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+  mergeBtn.addEventListener('click', async () => {
+    if (files.length < 2) return;
+    if (!window.PDFLib) { showStatus('โหลดเครื่องมือรวม PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้า','error'); return; }
+    mergeBtn.disabled = true;
+    mergeBtn.textContent = 'กำลังรวมไฟล์…';
+    showStatus('กำลังรวมไฟล์ PDF กรุณารอสักครู่','info');
+    try {
+      const mergedPdf = await PDFLib.PDFDocument.create();
+      for (let i=0; i<files.length; i++) {
+        showStatus(`กำลังประมวลผลไฟล์ ${i+1} จาก ${files.length}: ${files[i].file.name}`,'info');
+        const bytes = await files[i].file.arrayBuffer();
+        const pdf = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: false });
+        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        pages.forEach(page => mergedPdf.addPage(page));
+      }
+      const mergedBytes = await mergedPdf.save();
+      const blob = new Blob([mergedBytes], {type:'application/pdf'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'merged.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showStatus(`รวมสำเร็จ! รวม ${files.length} ไฟล์แล้ว ดาวน์โหลดชื่อ merged.pdf`, 'ok');
+    } catch (err) {
+      console.error(err);
+      showStatus('รวมไฟล์ไม่สำเร็จ อาจมีไฟล์เสียหายหรือมีรหัสผ่านป้องกัน กรุณาตรวจสอบไฟล์แล้วลองใหม่', 'error');
+    } finally {
+      mergeBtn.disabled = files.length < 2;
+      mergeBtn.textContent = 'รวม PDF และดาวน์โหลด ↓';
+    }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
